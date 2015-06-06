@@ -20,32 +20,48 @@
 
 (def direction-steps {:N 8 :S -8 :W -1 :E 1 :NE 9 :SE -7 :SW -9 :NW 7})
 
-(defn direction-vector [index direction]
+(defn direction-vector [index max-reach direction]
   (let [step-size (direction-steps direction) limit (if (pos? step-size) 64 -1)]
-    (for [next (range (+ index step-size) limit step-size) :while (neighboring-squares? next (- next step-size))] next)))
+    (take max-reach (for [next (range (+ index step-size) limit step-size) :while (neighboring-squares? next (- next step-size))] next))))
 
-(defprotocol Piece
-  (valid-moves [origin-index position])
-  )
+(defn piece-color [piece] (if (nil? piece) nil (if (contains? #{:P :N :B :R :Q :K} piece) :white :black)))
+
+(defn occupied-indexes [board color] (set (filter #(= color (piece-color (board %))) (range 0 64))))
+
+(defn empty-square? [board index] (nil? (get board index)))
+
+(defn reachable-indexes [from-index board max-reach directions]
+  (remove
+    (occupied-indexes board (piece-color (get board from-index)))
+    (flatten
+      (for [direction directions]
+        (concat
+          (take-while #(empty-square? board %) (direction-vector from-index max-reach direction))
+          (take 1 (drop-while #(empty-square? board %) (direction-vector from-index max-reach direction))))))))
+
+(defprotocol Piece (find-moves [self index board]))
 
 (defrecord King [color] Piece
-  
-  )
+  (find-moves [_ from-index board]
+    (reachable-indexes from-index board 1 [:N :E :S :W :NE :SE :SW :NW])))
 
 (defrecord Queen [color] Piece
-  )
+  (find-moves [_ from-index board]
+    (reachable-indexes from-index board 7 [:N :E :S :W :NE :SE :SW :NW])))
 
 (defrecord Rook [color] Piece
-  )
+  (find-moves [_ from-index board]
+    (reachable-indexes from-index board 7 [:N :E :S :W])))
 
 (defrecord Bishop [color] Piece
-  )
+  (find-moves [_ from-index board]
+    (reachable-indexes from-index board 7 [:NE :SE :SW :NW])))
 
 (defrecord Knight [color] Piece
-  )
+  (find-moves [_ from-index board] nil))
 
 (defrecord Pawn [color] Piece
-  )
+  (find-moves [_ from-index board] nil))
 
 (def all-pieces
   {:K {:type (->King [:white]) :initial-squares [:e1]} :k {:type (->King [:black]) :initial-squares [:e8]}
@@ -59,8 +75,10 @@
 (def empty-board (vec (repeat 64 nil)))
 
 (defn place-piece [board [piece square]]
-  (assoc board (to-index square) piece)
-  )
+  (assoc board (to-index square) piece))
+
+(defn place-pieces [board piece-positions]
+  (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square])))
 
 (def start-position
   (reduce place-piece empty-board
@@ -68,3 +86,8 @@
                 square (get-in all-pieces [piece :initial-squares])] [piece square])))
 
 (defn lookup [board square] (board (to-index square)))
+
+
+
+
+;  (use 'clojure.set)

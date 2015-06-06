@@ -1,6 +1,8 @@
 (ns chess.board-test
   (:require [clojure.test :refer :all]
-            [chess.board :refer :all]))
+            [chess.board :refer :all]
+            [chess.fen :refer :all]
+            ))
 
 (deftest test-to-index
   (testing "square-to-index conversion"
@@ -9,25 +11,20 @@
     (is (= 8 (to-index :a2)))
     (is (= 11 (to-index :d2)))
     (is (= 54 (to-index :g7)))
-    (is (= 63 (to-index :h8)))
-    )
-  )
+    (is (= 63 (to-index :h8)))))
 
 (deftest test-to-square
   (testing "index-to-square conversion"
     (is (= :a1 (to-square 0)))
     (is (= :a5 (to-square 32)))
-    (is (= :h8 (to-square 63))))
-  )
+    (is (= :h8 (to-square 63)))))
 
 (deftest test-rank
   (testing "index to rank conversion"
     (is (= 0 (rank 0)))
     (is (= 0 (rank 7)))
     (is (= 7 (rank 56)))
-    (is (= 7 (rank 63)))
-    )
-  )
+    (is (= 7 (rank 63)))))
 
 (deftest test-file
   (testing "index to file conversion"
@@ -35,9 +32,7 @@
     (is (= 7 (file 7)))
     (is (= 4 (file 12)))
     (is (= 4 (file 20)))
-    (is (= 7 (file 63)))
-    )
-  )
+    (is (= 7 (file 63)))))
 
 (deftest test-neighboring-squares
   (testing "center square"
@@ -52,7 +47,8 @@
     (is (false? (neighboring-squares? (to-index :d4) (to-index :d4)))))
   )
 
-(defn direction-square-vector [square direction] (map to-square (direction-vector (to-index square) direction)))
+(defn direction-square-vector [square direction]
+  (map to-square (direction-vector (to-index square) 7 direction)))
 
 (deftest test-direction-vector
   (testing "north-direction"
@@ -87,16 +83,87 @@
     (is (= '() (direction-square-vector :h5 :SE))))
   )
 
-(deftest test-place-piece
-  (contains? (place-piece empty-board [:R :g2]) :R)
-  )
-
 (deftest test-start-position
   (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] start-position)))
+
+(deftest test-place-piece
+  (is (= "8/8/8/8/8/8/6r1/8" (to-fen-board (place-piece empty-board [:r :g2])))))
+
+(deftest test-place-pieces
+  (is (= "8/6K1/8/8/4B3/1r6/8/8" (to-fen-board (place-pieces empty-board [:r :b3 :B :e4 :K :g7])))))
 
 (deftest test-lookup
   (testing "white rooks"
     (is (= :R (lookup start-position :a1) (lookup start-position :h1))))
   (testing "black knights"
-    (is (= :n (lookup start-position :b8) (lookup start-position :g8))))
-  )
+    (is (= :n (lookup start-position :b8) (lookup start-position :g8)))))
+
+(deftest test-piece-color
+  (testing "white pieces"
+    (is (= :white (piece-color :P) (piece-color :B) (piece-color :N) (piece-color :R) (piece-color :Q) (piece-color :K))))
+  (testing "black pieces"
+    (is (= :black (piece-color :p) (piece-color :b) (piece-color :n) (piece-color :r) (piece-color :q) (piece-color :k))))
+  (testing "empty squares"
+    (is (nil? (piece-color nil))))
+  (testing "start position"
+    (is (:white piece-color (get start-position 0)))
+    (is (:black piece-color (get start-position 63)))
+    ))
+
+(deftest test-occupied-indexes
+  (testing "occupied by white"
+    (is (= (set (range 0 16)) (occupied-indexes start-position :white))))
+  (testing "occupied by black"
+    (is (= (set (range 48 64)) (occupied-indexes start-position :black)))))
+
+(deftest test-empty-square
+  (testing "empty square"
+    (is (true? (empty-square? start-position 30))))
+  (testing "non-empty square"
+    (is (false? (empty-square? start-position 58)))))
+
+(defn squares-in-reach
+  ([piece square] (squares-in-reach piece square nil))
+  ([piece square additional-pieces]
+   (let [board-with-moving-piece (place-piece empty-board [piece square])
+         board-with-pieces (place-pieces board-with-moving-piece additional-pieces)]
+     (set
+       (map to-square
+            (find-moves (get-in all-pieces [piece :type]) (to-index square) board-with-pieces))))))
+
+(deftest test-find-moves-on-empty-board
+  (testing "king on empty board"
+    (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (squares-in-reach :K :d4)))
+    (is (= #{:a2 :b1 :b2} (squares-in-reach :k :a1))))
+  (testing "queen on empty-board"
+    (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4
+             :e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (squares-in-reach :Q :d4)))
+    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1
+             :b2 :c3 :d4 :e5 :f6 :g7 :h8} (squares-in-reach :q :a1))))
+  (testing "rook on empty-board"
+    (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (squares-in-reach :R :d4)))
+    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (squares-in-reach :r :a1))))
+  (testing "bishop on empty-board"
+    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (squares-in-reach :B :d4)))
+    (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (squares-in-reach :b :a1)))))
+
+(deftest test-find-moves-on-non-empty-board
+  (testing "king on empty board"
+    (is (= #{:d5 :d3 :c4 :e5 :e3 :c3} (squares-in-reach :K :d4 [:Q :e4 :R :c5 :b :d3]))))
+  (testing "queen on non-empty-board"
+    (is (= #{:b1 :c1 :d1 :e1} (squares-in-reach :Q :a1 [:B :b2 :K :a2 :r :e1]))))
+  (testing "rook on empty-board"
+    (is (= #{:d5 :d6 :d7 :d8 :c4 :b4 :a4 :e4 :f4} (squares-in-reach :R :d4 [:B :d3 :q :f4]))))
+  (testing "bishop on empty-board"
+    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (squares-in-reach :B :d4 [:K :c3 :r :b6])))))
+
+
+
+
+;(testing "rook on empty-board"
+;  (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (squares-in-reach :R :d4 empty-board)))
+;  (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (squares-in-reach :r :a1 empty-board))))
+;(testing "bishop on empty-board"
+;  (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (squares-in-reach :B :d4 empty-board)))
+;  (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (squares-in-reach :b :a1 empty-board)))))
+
