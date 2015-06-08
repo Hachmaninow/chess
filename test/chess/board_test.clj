@@ -34,18 +34,16 @@
     (is (= 4 (file 20)))
     (is (= 7 (file 63)))))
 
-(deftest test-neighboring-squares
-  (testing "center square"
-    (is (true? (neighboring-squares? (to-index :d4) (to-index :e4))))
-    (is (false? (neighboring-squares? (to-index :d4) (to-index :f4)))))
-  (testing "corner square"
-    (is (true? (neighboring-squares? (to-index :a1) (to-index :b1))))
-    (is (true? (neighboring-squares? (to-index :a1) (to-index :a2))))
-    (is (true? (neighboring-squares? (to-index :a1) (to-index :b2))))
-    (is (false? (neighboring-squares? (to-index :a1) (to-index :b3)))))
-  (testing "same square"
-    (is (false? (neighboring-squares? (to-index :d4) (to-index :d4)))))
-  )
+(deftest test-distance
+  (testing "neighboring-squares"
+    (is (= 1 (distance 10 11)))
+    (is (= 1 (distance 10 18)))
+    (is (= 1 (distance 10 3))))
+  (testing "neighboring-squares"
+    (is (= 7 (distance 7 8)))
+    (is (= 7 (distance 0 63))))
+  (testing "same-square"
+    (is (= 0 (distance 42 42)))))
 
 (defn direction-square-vector [square direction]
   (map to-square (direction-vector (to-index square) 7 direction)))
@@ -135,27 +133,43 @@
   (testing "king on empty board"
     (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (squares-in-reach :K :d4)))
     (is (= #{:a2 :b1 :b2} (squares-in-reach :k :a1))))
-  (testing "queen on empty-board"
+  (testing "queen on empty board"
     (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4
              :e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (squares-in-reach :Q :d4)))
     (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1
              :b2 :c3 :d4 :e5 :f6 :g7 :h8} (squares-in-reach :q :a1))))
-  (testing "rook on empty-board"
+  (testing "rook on empty board"
     (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (squares-in-reach :R :d4)))
     (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (squares-in-reach :r :a1))))
-  (testing "bishop on empty-board"
+  (testing "bishop on empty board"
     (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (squares-in-reach :B :d4)))
-    (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (squares-in-reach :b :a1)))))
+    (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (squares-in-reach :b :a1))))
+  (testing "knight on empty board"
+    (is (= #{:f6 :g5 :g3 :f2 :d2 :c3 :c5 :d6} (squares-in-reach :n :e4)))
+    (is (= #{:g6 :f7} (squares-in-reach :N :h8))))
+  (testing "pawn on empty board"
+    (is (= #{:a5} (squares-in-reach :P :a4)))
+    (is (= #{:e3 :e4} (squares-in-reach :P :e2)))
+    (is (= #{:d1} (squares-in-reach :p :d2)))
+    (is (= #{:g6 :g5} (squares-in-reach :p :g7))))
+  )
 
 (deftest test-find-moves-on-non-empty-board
-  (testing "king on empty board"
+  (testing "king on non-empty board"
     (is (= #{:d5 :d3 :c4 :e5 :e3 :c3} (squares-in-reach :K :d4 [:Q :e4 :R :c5 :b :d3]))))
-  (testing "queen on non-empty-board"
+  (testing "queen on non-empty board"
     (is (= #{:b1 :c1 :d1 :e1} (squares-in-reach :Q :a1 [:B :b2 :K :a2 :r :e1]))))
-  (testing "rook on empty-board"
+  (testing "rook on non-empty board"
     (is (= #{:d5 :d6 :d7 :d8 :c4 :b4 :a4 :e4 :f4} (squares-in-reach :R :d4 [:B :d3 :q :f4]))))
-  (testing "bishop on empty-board"
-    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (squares-in-reach :B :d4 [:K :c3 :r :b6])))))
+  (testing "bishop on non-empty board"
+    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (squares-in-reach :B :d4 [:K :c3 :r :b6]))))
+  (testing "knight on non-empty board"
+    (is (= #{:e2 :f5 :e6 :c2 :f3 :b3 :b5} (squares-in-reach :N :d4 [:K :e3 :R :c6 :q :b3]))))
+  (testing "pawn on non-empty board"
+    (is (= #{:a5 :b5} (squares-in-reach :P :a4 [:p :h5 :b :b5])))
+    (is (= #{:d6 :f6} (squares-in-reach :p :e7 [:N :e6 :Q :f6 :R :d6])))
+
+  ))
 
 
 

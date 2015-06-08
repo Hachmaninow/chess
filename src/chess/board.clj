@@ -1,5 +1,9 @@
 (ns chess.board)
 
+(defn piece-color [piece] (if (nil? piece) nil (if (contains? #{:P :N :B :R :Q :K} piece) :white :black)))
+
+(defn opponent [color] (if (= color :white) :black :white))
+
 (defn rank [index] (int (/ index 8)))
 
 (defn file [index] (int (rem index 8)))
@@ -11,20 +15,14 @@
 
 (defn to-square [index] (keyword (str (char (+ (file index) (int \a))) (inc (rank index)))))
 
-(defn neighboring-squares? [i1 i2]
-  (let [rd (- (rank i1) (rank i2)) fd (- (file i1) (file i2))]
-    (and
-      (or (= 1 rd) (= 0 rd) (= -1 rd))
-      (or (= 1 fd) (= 0 fd) (= -1 fd))
-      (not= 0 rd fd))))
+(defn distance [i1 i2]
+  (max (Math/abs (- (rank i1) (rank i2))) (Math/abs (- (file i1) (file i2)))))
 
 (def direction-steps {:N 8 :S -8 :W -1 :E 1 :NE 9 :SE -7 :SW -9 :NW 7})
 
 (defn direction-vector [index max-reach direction]
   (let [step-size (direction-steps direction) limit (if (pos? step-size) 64 -1)]
-    (take max-reach (for [next (range (+ index step-size) limit step-size) :while (neighboring-squares? next (- next step-size))] next))))
-
-(defn piece-color [piece] (if (nil? piece) nil (if (contains? #{:P :N :B :R :Q :K} piece) :white :black)))
+    (take max-reach (for [next (range (+ index step-size) limit step-size) :while (= 1 (distance next (- next step-size)))] next))))
 
 (defn occupied-indexes [board color] (set (filter #(= color (piece-color (board %))) (range 0 64))))
 
@@ -58,10 +56,23 @@
     (reachable-indexes from-index board 7 [:NE :SE :SW :NW])))
 
 (defrecord Knight [color] Piece
-  (find-moves [_ from-index board] nil))
+  (find-moves [_ from-index board]
+    (let [knight-moves [+17 +10 -6 -15 -17 -10 +6 +15]]
+      (remove
+        (occupied-indexes board (piece-color (get board from-index)))
+        (filter #(and (= (distance % from-index) 2) (< % 64) (>= % 0)) (map #(+ from-index %) knight-moves))))))
 
 (defrecord Pawn [color] Piece
-  (find-moves [_ from-index board] nil))
+  (find-moves [_ from-index board]
+    (remove nil?
+            (let [color (piece-color (get board from-index)) op (if (= :white color) + -)
+                  origin-rank (if (= :white color) 1 6)
+                  s1 (op from-index 8) s2 (op from-index 16) s3 (op from-index 7) s4 (op from-index 9)]
+              (vector
+                (when (empty-square? board s1) s1)          ; single-step forward
+                (when (and (= (rank from-index) origin-rank) (empty-square? board s1) (empty-square? board s2)) s2) ; double-step forward
+                (when (and (= (distance from-index s3) 1) (= (piece-color (get board s3)) (opponent color))) s3) ; take
+                (when (and (= (distance from-index s4) 1) (= (piece-color (get board s4)) (opponent color))) s4)))))) ; take
 
 (def all-pieces
   {:K {:type (->King [:white]) :initial-squares [:e1]} :k {:type (->King [:black]) :initial-squares [:e8]}
@@ -86,8 +97,5 @@
                 square (get-in all-pieces [piece :initial-squares])] [piece square])))
 
 (defn lookup [board square] (board (to-index square)))
-
-
-
 
 ;  (use 'clojure.set)
