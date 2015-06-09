@@ -15,14 +15,40 @@
 
 (defn to-square [index] (keyword (str (char (+ (file index) (int \a))) (inc (rank index)))))
 
+(defn lookup [board square] (board (to-index square)))
+
 (defn distance [i1 i2]
   (max (Math/abs (- (rank i1) (rank i2))) (Math/abs (- (file i1) (file i2)))))
 
+(def initial-squares {:K [:e1] :k [:e8] :Q [:d1] :q [:d8] :R [:a1 :h1] :r [:a8 :h8]
+                      :N [:b1 :g1] :n [:b8 :g8] :B [:c1 :f1] :b [:c8 :f8]
+                      :P [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2] :p [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]})
+
+(def empty-board (vec (repeat 64 nil)))
+
+(defn place-piece [board [piece square]]
+  (assoc board (to-index square) piece))
+
+(defn place-pieces [board piece-positions]
+  (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square])))
+
+(def start-position
+  (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))
+
+(defn setup
+  ([] (setup start-position))
+  ([board] {:board board :player-to-move :white})
+  ([board options] (conj {:board board :player-to-move :white} options)))
+
 (def direction-steps {:N 8 :S -8 :W -1 :E 1 :NE 9 :SE -7 :SW -9 :NW 7})
+(def straight [:N :E :S :W])
+(def diagonal [:NE :SE :SW :NW])
+(def straight-and-diagonal (concat straight diagonal))
 
 (defn direction-vector [index max-reach direction]
   (let [step-size (direction-steps direction) limit (if (pos? step-size) 64 -1)]
-    (take max-reach (for [next (range (+ index step-size) limit step-size) :while (= 1 (distance next (- next step-size)))] next))))
+    (take max-reach
+          (for [next (range (+ index step-size) limit step-size) :while (= 1 (distance next (- next step-size)))] next))))
 
 (defn occupied-indexes [board color] (set (filter #(= color (piece-color (board %))) (range 0 64))))
 
@@ -37,65 +63,38 @@
           (take-while #(empty-square? board %) (direction-vector from-index max-reach direction))
           (take 1 (drop-while #(empty-square? board %) (direction-vector from-index max-reach direction))))))))
 
-(defprotocol Piece (find-moves [self index board]))
 
-(defrecord King [color] Piece
-  (find-moves [_ from-index board]
-    (reachable-indexes from-index board 1 [:N :E :S :W :NE :SE :SW :NW])))
 
-(defrecord Queen [color] Piece
-  (find-moves [_ from-index board]
-    (reachable-indexes from-index board 7 [:N :E :S :W :NE :SE :SW :NW])))
+(defmulti candidate-indexes (fn [game idx] (keyword (clojure.string/upper-case (subs (str (get-in game [:board idx])) 1)))))
 
-(defrecord Rook [color] Piece
-  (find-moves [_ from-index board]
-    (reachable-indexes from-index board 7 [:N :E :S :W])))
+(defmethod candidate-indexes :K [game idx] (reachable-indexes idx (game :board) 1 straight-and-diagonal))
 
-(defrecord Bishop [color] Piece
-  (find-moves [_ from-index board]
-    (reachable-indexes from-index board 7 [:NE :SE :SW :NW])))
+(defmethod candidate-indexes :Q [game idx] (reachable-indexes idx (game :board) 7 straight-and-diagonal))
 
-(defrecord Knight [color] Piece
-  (find-moves [_ from-index board]
-    (let [knight-moves [+17 +10 -6 -15 -17 -10 +6 +15]]
-      (remove
-        (occupied-indexes board (piece-color (get board from-index)))
-        (filter #(and (= (distance % from-index) 2) (< % 64) (>= % 0)) (map #(+ from-index %) knight-moves))))))
+(defmethod candidate-indexes :R [game idx] (reachable-indexes idx (game :board) 7 straight))
 
-(defrecord Pawn [color] Piece
-  (find-moves [_ from-index board]
-    (remove nil?
-            (let [color (piece-color (get board from-index)) op (if (= :white color) + -)
-                  origin-rank (if (= :white color) 1 6)
-                  s1 (op from-index 8) s2 (op from-index 16) s3 (op from-index 7) s4 (op from-index 9)]
-              (vector
-                (when (empty-square? board s1) s1)          ; single-step forward
-                (when (and (= (rank from-index) origin-rank) (empty-square? board s1) (empty-square? board s2)) s2) ; double-step forward
-                (when (and (= (distance from-index s3) 1) (= (piece-color (get board s3)) (opponent color))) s3) ; take
-                (when (and (= (distance from-index s4) 1) (= (piece-color (get board s4)) (opponent color))) s4)))))) ; take
+(defmethod candidate-indexes :B [game idx] (reachable-indexes idx (game :board) 7 diagonal))
 
-(def all-pieces
-  {:K {:type (->King [:white]) :initial-squares [:e1]} :k {:type (->King [:black]) :initial-squares [:e8]}
-   :Q {:type (->Queen [:white]) :initial-squares [:d1]} :q {:type (->Queen [:black]) :initial-squares [:d8]}
-   :R {:type (->Rook [:white]) :initial-squares [:a1 :h1]} :r {:type (->Rook [:black]) :initial-squares [:a8 :h8]}
-   :N {:type (->Knight [:white]) :initial-squares [:b1 :g1]} :n {:type (->Knight [:black]) :initial-squares [:b8 :g8]}
-   :B {:type (->Bishop [:white]) :initial-squares [:c1 :f1]} :b {:type (->Bishop [:black]) :initial-squares [:c8 :f8]}
-   :P {:type (->Pawn [:white]) :initial-squares [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2]} :p {:type (->Pawn [:black]) :initial-squares [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]}
-   })
+(defmethod candidate-indexes :N [_ idx]
+  (let [knight-moves [+17 +10 -6 -15 -17 -10 +6 +15]]
+    (filter #(and (= (distance % idx) 2) (< % 64) (>= % 0)) (map #(+ idx %) knight-moves))))
 
-(def empty-board (vec (repeat 64 nil)))
+(defmethod candidate-indexes :P [game idx]
+  (let [board (game :board) color (game :player-to-move)
+        op (if (= :white color) + -) origin-rank (if (= :white color) 1 6)
+        s1 (op idx 8) s2 (op idx 16) s3 (op idx 7) s4 (op idx 9)]
+    (vector
+      (when (empty-square? board s1) s1)                    ; single-step forward
+      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) s2) ; double-step forward
+      (when (and (= (distance idx s3) 1) (= (piece-color (get board s3)) (opponent color))) s3) ; take
+      (when (and (= (distance idx s4) 1) (= (piece-color (get board s4)) (opponent color))) s4))))
 
-(defn place-piece [board [piece square]]
-  (assoc board (to-index square) piece))
+(defn find-moves-for-index [game occupations idx]
+  (let [candidates (remove nil? (remove occupations (candidate-indexes game idx)))]
+    (map #(into {} {:from idx :to %}) candidates)))
 
-(defn place-pieces [board piece-positions]
-  (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square])))
+(defn valid-moves [game]
+  (let [occupations (occupied-indexes (game :board) (game :player-to-move))]
+    (mapcat #(find-moves-for-index game occupations %) occupations)))
 
-(def start-position
-  (reduce place-piece empty-board
-          (for [piece (keys all-pieces)
-                square (get-in all-pieces [piece :initial-squares])] [piece square])))
-
-(defn lookup [board square] (board (to-index square)))
-
-;  (use 'clojure.set)
+;  (use 'chess.board)
