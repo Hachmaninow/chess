@@ -117,10 +117,10 @@
   (testing "non-empty square"
     (is (false? (empty-square? start-position 58)))))
 
-(defn attacked-squares
+(defn accessible-squares
   "Find all valid target squares for the specified piece being located on the specified square on
   a board together with the specified additional pieces."
-  ([piece square] (attacked-squares piece square nil))
+  ([piece square] (accessible-squares piece square nil))
   ([piece square additional-pieces]
    (let [board (place-pieces (place-piece empty-board [piece square]) additional-pieces)
          turn (piece-color piece)
@@ -130,49 +130,46 @@
 
 (deftest test-attacked-indexes-on-empty-board
   (testing "king on empty board"
-    (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (attacked-squares :K :d4)))
-    (is (= #{:a2 :b1 :b2} (attacked-squares :k :a1))))
+    (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (accessible-squares :K :d4)))
+    (is (= #{:a2 :b1 :b2} (accessible-squares :k :a1))))
   (testing "queen on empty board"
     (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4
-             :e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (attacked-squares :Q :d4)))
+             :e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (accessible-squares :Q :d4)))
     (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1
-             :b2 :c3 :d4 :e5 :f6 :g7 :h8} (attacked-squares :q :a1))))
+             :b2 :c3 :d4 :e5 :f6 :g7 :h8} (accessible-squares :q :a1))))
   (testing "rook on empty board"
-    (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (attacked-squares :R :d4)))
-    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (attacked-squares :r :a1))))
+    (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (accessible-squares :R :d4)))
+    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (accessible-squares :r :a1))))
   (testing "bishop on empty board"
-    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (attacked-squares :B :d4)))
-    (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (attacked-squares :b :a1))))
+    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (accessible-squares :B :d4)))
+    (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (accessible-squares :b :a1))))
   (testing "knight on empty board"
-    (is (= #{:f6 :g5 :g3 :f2 :d2 :c3 :c5 :d6} (attacked-squares :n :e4)))
-    (is (= #{:g6 :f7} (attacked-squares :N :h8)))))
+    (is (= #{:f6 :g5 :g3 :f2 :d2 :c3 :c5 :d6} (accessible-squares :n :e4)))
+    (is (= #{:g6 :f7} (accessible-squares :N :h8))))
+  (testing "pawn on empty board"
+    (is (= #{:e3 :e4} (accessible-squares :P :e2)))
+    (is (= #{:g6 :g5} (accessible-squares :p :g7)))
+    (is (= #{:g8} (accessible-squares :P :g7)))
+  ))
 
 (deftest test-attacked-indexes-on-non-empty-board
   (testing "king on non-empty board"
-    (is (= #{:d5 :d3 :c4 :e5 :e3 :c3} (attacked-squares :K :d4 [:Q :e4 :R :c5 :b :d3])))
-    (is (= #{:d1 :d2 :e2 :f2 :f1} (attacked-squares :K :e1 [:R :a1 :R :h1]))))
+    (is (= #{:d5 :d3 :c4 :e5 :e3 :c3} (accessible-squares :K :d4 [:Q :e4 :R :c5 :b :d3])))
+    (is (= #{:d1 :d2 :e2 :f2 :f1} (accessible-squares :K :e1 [:R :a1 :R :h1]))))
   (testing "queen on non-empty board"
-    (is (= #{:b1 :c1 :d1 :e1} (attacked-squares :Q :a1 [:B :b2 :K :a2 :r :e1]))))
+    (is (= #{:b1 :c1 :d1 :e1} (accessible-squares :Q :a1 [:B :b2 :K :a2 :r :e1]))))
   (testing "rook on non-empty board"
-    (is (= #{:d5 :d6 :d7 :d8 :c4 :b4 :a4 :e4 :f4} (attacked-squares :R :d4 [:B :d3 :q :f4]))))
+    (is (= #{:d5 :d6 :d7 :d8 :c4 :b4 :a4 :e4 :f4} (accessible-squares :R :d4 [:B :d3 :q :f4]))))
   (testing "bishop on non-empty board"
-    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (attacked-squares :B :d4 [:K :c3 :r :b6]))))
+    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (accessible-squares :B :d4 [:K :c3 :r :b6]))))
   (testing "knight on non-empty board"
-    (is (= #{:e6 :f5 :f3 :e2 :c2 :b3 :b5} (attacked-squares :N :d4 [:K :e3 :R :c6 :q :b3]))))
+    (is (= #{:e6 :f5 :f3 :e2 :c2 :b3 :b5} (accessible-squares :N :d4 [:K :e3 :R :c6 :q :b3]))))
   (testing "pawn on non-empty board"
-    (is (= #{:b5 :a5} (attacked-squares :P :a4 [:p :h5 :b :b5])))
-    (is (= #{:a5} (attacked-squares :P :a4 [:B :b5])))
-    (is (= #{:d6 :f6} (attacked-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
-;
-;(deftest test-forward-pawn-moves
-;  (testing "pawn on empty board"
-;    (is (= #{:a5} (set (map #(to-index %) (find-forward-pawn-moves(empty-board :white to-index(:a4)))))))
-;    (is (= #{:e3 :e4} (set (map #(to-index %) (find-forward-pawn-moves(empty-board :white to-index(:e2)))))))
-;    (is (= #{:g6 :g5} (set (map #(to-index %) (find-forward-pawn-moves(empty-board :black to-index(:g7)))))))))
-;;  (testing "pawn on non-empty-board"
-;    (is (= #{} (set (map (to-index %) (forward-pawn-moves(empty-board :black to-index(:g7))))))))
-;    (is (= #{} (attacked-squares :p :e7 [:N :e6])))))
-;    
+    (is (= #{:b5 :a5} (accessible-squares :P :a4 [:p :h5 :b :b5])))
+    (is (= #{:a5} (accessible-squares :P :a4 [:B :b5])))
+    (is (= #{:e3} (accessible-squares :P :e2 [:b :e4])))
+    (is (= #{} (accessible-squares :p :h7 [:p :h6])))
+    (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
 
 ;(deftest test-find-castlings
 ;  (is (= '(nil nil) (find-castlings (setup))))

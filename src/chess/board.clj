@@ -126,8 +126,8 @@
             (every? (partial empty-square? board)) (rest (rules :transfer-indexes)))) ; only tail of transfer-indexes must be empty, as the first is occupied by the king
       {:origin (get-in rules [:piece-movements 3]) :piece-movements (get rules :piece-movements) :special-move castling-type}))
 
-;(defn find-castlings [board turn castling-rights]
-;  (map (partial check-castling board turn (castling-rights turn))(castlings turn)))
+(defn find-castlings [board turn castling-rights]
+  (map (partial check-castling board turn (castling-rights turn))(castlings turn)))
 
 
 ;
@@ -143,8 +143,3 @@
           (map #(find-attacking-moves board turn occupations %) occupations)
           (map #(when (or (= (get board %) :p) (= (get board %) :P)) (find-forward-pawn-moves board turn %)) occupations))))))
 
-
-
-
-
-                ;(find-castlings board turn castling-rights)
