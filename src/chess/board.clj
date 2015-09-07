@@ -1,4 +1,5 @@
-(ns chess.board)
+(ns chess.board
+  (:require [clojure.set]))
 
 (defn piece-color [piece] (if (nil? piece) nil (if (contains? #{:P :N :B :R :Q :K} piece) :white :black)))
 
@@ -10,8 +11,7 @@
 
 (defn to-index [square]
   (let [square-name (name square) file (first square-name) rank (second square-name)]
-    (+ (- (int file) (int \a)) (* 8 (- (int rank) (int \1)))))
-  )
+    (+ (- (int file) (int \a)) (* 8 (- (int rank) (int \1))))))
 
 (defn to-square [index] (keyword (str (char (+ (file index) (int \a))) (inc (rank index)))))
 
@@ -35,18 +35,6 @@
 (def start-position
   (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))
 
-(defn guess-castling-rights [board]
-  {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :0-0)
-                             (when (and (= :K (lookup board :e1)) (= :R (lookup board :a1))) :0-0-0)]))
-   :black (set (remove nil? [(when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :0-0)
-                             (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :0-0-0)]))})
-
-(defn setup
-  ([] (setup start-position))
-  ([board] {:board board :player-to-move :white :castling-rights (guess-castling-rights board)})
-  ([board options] (conj (setup board) options)))
-
-(defn switch-player [game] (assoc game :player-to-move (opponent (game :player-to-move))))
 
 (def direction-steps {:N 8 :S -8 :W -1 :E 1 :NE 9 :SE -7 :SW -9 :NW 7})
 (def straight [:N :E :S :W])
@@ -75,58 +63,77 @@
   "Returns the type of the piece represented by the keyword of the respective white piece irrelevant of the color."
   (keyword (clojure.string/upper-case (subs (str piece) 1))))
 
-(defmulti attacked-indexes (fn [game idx] (piece-type (get-in game [:board idx]))))
+;
+; attacks
+;
 
-(defmethod attacked-indexes :K [game idx] (reachable-indexes idx (game :board) 1 straight-and-diagonal))
+(defmulti attacked-indexes (fn [board turn idx] (piece-type (get board idx))))
 
-(defmethod attacked-indexes :Q [game idx] (reachable-indexes idx (game :board) 7 straight-and-diagonal))
+(defmethod attacked-indexes :K [board _ idx] (reachable-indexes idx board 1 straight-and-diagonal))
 
-(defmethod attacked-indexes :R [game idx] (reachable-indexes idx (game :board) 7 straight))
+(defmethod attacked-indexes :Q [board _ idx] (reachable-indexes idx board 7 straight-and-diagonal))
 
-(defmethod attacked-indexes :B [game idx] (reachable-indexes idx (game :board) 7 diagonal))
+(defmethod attacked-indexes :R [board _ idx] (reachable-indexes idx board 7 straight))
 
-(defmethod attacked-indexes :N [_ idx]
+(defmethod attacked-indexes :B [board _ idx] (reachable-indexes idx board 7 diagonal))
+
+(defmethod attacked-indexes :N [_ _ idx]
   (let [knight-moves [+17 +10 -6 -15 -17 -10 +6 +15]]
     (filter #(and (= (distance % idx) 2) (< % 64) (>= % 0)) (map #(+ idx %) knight-moves))))
 
-(defmethod attacked-indexes :P [game idx]
-  (let [board (game :board) color (game :player-to-move)
-        op (if (= :white color) + -) s1 (op idx 7) s2 (op idx 9)]
+(defmethod attacked-indexes :P [board turn idx]
+  (let [op (if (= :white turn) + -) s1 (op idx 7) s2 (op idx 9)]
     (vector
-      (when (and (= (distance idx s1) 1) (= (piece-color (get board s1)) (opponent color))) s1)
-      (when (and (= (distance idx s2) 1) (= (piece-color (get board s2)) (opponent color))) s2))))
+      (when (and (= (distance idx s1) 1) (= (piece-color (get board s1)) (opponent turn))) s1)  ; TODO: simplify with (opponent turn)
+      (when (and (= (distance idx s2) 1) (= (piece-color (get board s2)) (opponent turn))) s2))))
 
-(defn all-attacked-indexes [game]
-  (set (mapcat #(attacked-indexes game %) (occupied-indexes (game :board) (game :player-to-move)))))
+(defn all-attacked-indexes [board turn]
+  "Return a set of all indexes that are being attacked by at at least one piece on the specified board by the specified player."
+  (set (mapcat #(attacked-indexes board turn %) (occupied-indexes board turn))))
 
-(defn find-attacking-moves-for-index [game occupations idx]
-  (let [candidates (remove occupations (attacked-indexes game idx))]
-    (map #(when % {:move [idx %]}) candidates)))
+(defn find-attacking-moves-for-index [board turn occupations idx]
+  "Return all moves from a given index of player on a board with given occupied indexes."
+  (let [piece (get board idx) candidates (remove occupations (attacked-indexes board turn idx))]
+    (map #(when % {:origin idx :piece-movements [piece % nil idx]}) candidates)))
 
-(defn find-forward-pawn-moves [game idx]
-  (let [board (game :board) color (game :player-to-move)
-        op (if (= :white color) + -) origin-rank (if (= :white color) 1 6) s1 (op idx 8) s2 (op idx 16)]
+
+;
+; special pawn moves
+;
+
+(defn find-forward-pawn-moves [board turn idx]
+  (let [piece (get :board idx) op (if (= turn :white) + -) origin-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
     (vector
-      (when (empty-square? board s1) {:move [idx s1]})      ; single-step forward
-      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:move [idx s2]})))) ; double-step forward
+      (when (empty-square? board s1) {:origin idx :piece-movements [piece s1 nil idx]}) ; single-step forward
+      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:origin idx :piece-movements [piece s2 nil idx]})))) ; double-step forward
+
+
+;
+; castlings
+;
 
 (def castlings
-  {:white {:0-0   {:king-move [(to-index :e1) (to-index :g1)] :rook-move [(to-index :h1) (to-index :f1)] :transfer-indexes (map to-index [:e1 :f1 :g1])}
-           :0-0-0 {:king-move [(to-index :e1) (to-index :c1)] :rook-move [(to-index :a1) (to-index :d1)] :transfer-indexes (map to-index [:e1 :d1 :c1 :b1])}}
-   :black {:0-0   {:king-move [(to-index :e8) (to-index :g8)] :rook-move [(to-index :h8) (to-index :f8)] :transfer-indexes (map to-index [:e8 :f8 :g8])}
-           :0-0-0 {:king-move [(to-index :e8) (to-index :c8)] :rook-move [(to-index :a8) (to-index :d8)] :transfer-indexes (map to-index [:e8 :d8 :c8 :b8])}}})
+  {:white {:0-0   {:piece-movements [:K (to-index :g1) nil (to-index :e1) :R (to-index :f1) nil (to-index :h1)] :transfer-indexes (map to-index [:e1 :f1 :g1])}
+           :0-0-0 {:piece-movements [:K (to-index :c1) nil (to-index :e1) :R (to-index :d1) nil (to-index :a1)] :transfer-indexes (map to-index [:e1 :d1 :c1 :b1])}}
+   :black {:0-0   {:piece-movements [:K (to-index :g8) nil (to-index :e8) :R (to-index :f8) nil (to-index :h8)] :transfer-indexes (map to-index [:e8 :f8 :g8])}
+           :0-0-0 {:piece-movements [:K (to-index :c8) nil (to-index :e8) :R (to-index :d8) nil (to-index :a8)] :transfer-indexes (map to-index [:e8 :d8 :c8 :b8])}}})
 
-(defn check-castling [game attacked-indexes-by-opponent [castling-type rules]]
-  (when (and
-          (get-in game [:castling-rights (game :player-to-move) castling-type])
-          (empty? (clojure.set/intersection attacked-indexes-by-opponent (set (take 3 (rules :transfer-indexes))))) ; only three transfer indexes must not be attacked by opponent
-          (every? (partial empty-square? (game :board)) (rest (rules :transfer-indexes)))) ; only last two indexes must be empty
-    {:move (get rules :king-move) :secondary-move (get rules :rook-move) :special-move castling-type}))
+(defn check-castling [board turn castling-rights [castling-type rules]]
+  (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))]
+    (when (and
+            (get castling-rights castling-type)
+            (empty? (clojure.set/intersection attacked-indexes-by-opponent (set (take 3 (rules :transfer-indexes))))) ; only three transfer-indexes must not be attacked by opponent
+            (every? (partial empty-square? board)) (rest (rules :transfer-indexes)))) ; only tail of transfer-indexes must be empty, as the first is occupied by the king
+      {:origin (get-in rules [:piece-movements 3]) :piece-movements (get rules :piece-movements) :special-move castling-type}))
 
-(defn find-castlings [game]
-  (let [player (game :player-to-move) castlings (castlings player)
-        attacked-indexes-by-opponent (all-attacked-indexes (switch-player game))]
-    (map (partial check-castling game attacked-indexes-by-opponent) castlings)))
+(defn find-castlings [board turn castling-rights]
+  (map (partial check-castling board turn (castling-rights turn))(castlings turn)))
+
+
+;
+; find moves
+;
+
 
 (defn find-moves [game]
   (let [board (game :board) occupations (occupied-indexes board (game :player-to-move))]
@@ -135,11 +142,4 @@
               (concat
                 (map #(find-attacking-moves-for-index game occupations %) occupations)
                 (map #(when (or (= (get board %) :p) (= (get board %) :P)) (find-forward-pawn-moves game %)) occupations)
-                (find-castlings game)
-                )))))
-;
-
-(defn valid-moves [game]
-  (find-moves game))
-
-;  (use 'chess.board)
+                (find-castlings game))))))

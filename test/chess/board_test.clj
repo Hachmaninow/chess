@@ -1,7 +1,8 @@
 (ns chess.board-test
   (:require [clojure.test :refer :all]
             [chess.board :refer :all]
-            [chess.fen :refer :all]))
+            [chess.fen :refer :all]
+            [spyscope.core :refer :all]))
 
 (deftest test-piece-color
   (is (= :white (piece-color :P) (piece-color :B) (piece-color :N) (piece-color :R) (piece-color :Q) (piece-color :K)))
@@ -62,18 +63,6 @@
 (deftest test-start-position
   (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] start-position)))
 
-(deftest test-guess-castling-rights
-  (is (= {:white #{:0-0 :0-0-0} :black #{:0-0 :0-0-0}} (guess-castling-rights start-position)))
-  (is (= {:white #{:0-0-0} :black #{:0-0}} (guess-castling-rights (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
-  (is (= {:white #{} :black #{}} (guess-castling-rights (place-pieces empty-board [:K :e2 :R :a1])))))
-
-(deftest test-setup
-  (is (= start-position ((setup) :board)))
-  (is (= :white ((setup) :player-to-move))))
-
-(deftest test-switch-player
-  (is (= :black ((switch-player (setup)) :player-to-move)))
-  (is (= :white ((switch-player (switch-player (setup))) :player-to-move))))
 
 (defn direction-square-vector [square direction]
   (map to-square (direction-vector (to-index square) 7 direction)))
@@ -128,72 +117,83 @@
   (testing "non-empty square"
     (is (false? (empty-square? start-position 58)))))
 
-(defn target-squares
+(defn attacked-squares
   "Find all valid target squares for the specified piece being located on the specified square on
   a board together with the specified additional pieces."
-  ([piece square] (target-squares piece square nil))
+  ([piece square] (attacked-squares piece square nil))
   ([piece square additional-pieces]
    (let [board (place-pieces (place-piece empty-board [piece square]) additional-pieces)
-         game (setup board {:player-to-move (piece-color piece)})
-         all-valid-moves (valid-moves game)
-         moves-from-idx (filter #(= (first (% :move)) (to-index square)) all-valid-moves)]
-     (set (map #(to-square (last (% :move))) moves-from-idx)))))
+         turn (piece-color piece)
+         attacked-indexes (attacked-indexes board turn (to-index square))] 
+     (set (map #(to-square %) (remove nil? attacked-indexes))))))
 
-(deftest test-attacking-moves-on-empty-board
+(deftest test-attacked-indexes-on-empty-board
   (testing "king on empty board"
-    (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (target-squares :K :d4)))
-    (is (= #{:a2 :b1 :b2} (target-squares :k :a1))))
+    (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (attacked-squares :K :d4)))
+    (is (= #{:a2 :b1 :b2} (attacked-squares :k :a1))))
   (testing "queen on empty board"
     (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4
-             :e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (target-squares :Q :d4)))
+             :e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (attacked-squares :Q :d4)))
     (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1
-             :b2 :c3 :d4 :e5 :f6 :g7 :h8} (target-squares :q :a1))))
+             :b2 :c3 :d4 :e5 :f6 :g7 :h8} (attacked-squares :q :a1))))
   (testing "rook on empty board"
-    (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (target-squares :R :d4)))
-    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (target-squares :r :a1))))
+    (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (attacked-squares :R :d4)))
+    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (attacked-squares :r :a1))))
   (testing "bishop on empty board"
-    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (target-squares :B :d4)))
-    (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (target-squares :b :a1))))
+    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (attacked-squares :B :d4)))
+    (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (attacked-squares :b :a1))))
   (testing "knight on empty board"
-    (is (= #{:f6 :g5 :g3 :f2 :d2 :c3 :c5 :d6} (target-squares :n :e4)))
-    (is (= #{:g6 :f7} (target-squares :N :h8))))
-  (testing "pawn on empty board"
-    (is (= #{:a5} (target-squares :P :a4)))
-    (is (= #{:e3 :e4} (target-squares :P :e2)))
-    (is (= #{:d1} (target-squares :p :d2)))
-    (is (= #{:g6 :g5} (target-squares :p :g7)))))
+    (is (= #{:f6 :g5 :g3 :f2 :d2 :c3 :c5 :d6} (attacked-squares :n :e4)))
+    (is (= #{:g6 :f7} (attacked-squares :N :h8)))))
 
-(deftest test-valid-moves-on-non-empty-board
+(deftest test-attacked-indexes-on-non-empty-board
   (testing "king on non-empty board"
-    (is (= #{:d5 :d3 :c4 :e5 :e3 :c3} (target-squares :K :d4 [:Q :e4 :R :c5 :b :d3])))
-    (is (= #{:d1 :d2 :e2 :f2 :f1 :g1 :c1} (target-squares :K :e1 [:R :a1 :R :h1]))))
+    (is (= #{:d5 :d3 :c4 :e5 :e3 :c3} (attacked-squares :K :d4 [:Q :e4 :R :c5 :b :d3])))
+    (is (= #{:d1 :d2 :e2 :f2 :f1} (attacked-squares :K :e1 [:R :a1 :R :h1]))))
   (testing "queen on non-empty board"
-    (is (= #{:b1 :c1 :d1 :e1} (target-squares :Q :a1 [:B :b2 :K :a2 :r :e1]))))
+    (is (= #{:b1 :c1 :d1 :e1} (attacked-squares :Q :a1 [:B :b2 :K :a2 :r :e1]))))
   (testing "rook on non-empty board"
-    (is (= #{:d5 :d6 :d7 :d8 :c4 :b4 :a4 :e4 :f4} (target-squares :R :d4 [:B :d3 :q :f4]))))
+    (is (= #{:d5 :d6 :d7 :d8 :c4 :b4 :a4 :e4 :f4} (attacked-squares :R :d4 [:B :d3 :q :f4]))))
   (testing "bishop on non-empty board"
-    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (target-squares :B :d4 [:K :c3 :r :b6]))))
+    (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (attacked-squares :B :d4 [:K :c3 :r :b6]))))
   (testing "knight on non-empty board"
-    (is (= #{:e2 :f5 :e6 :c2 :f3 :b3 :b5} (target-squares :N :d4 [:K :e3 :R :c6 :q :b3]))))
+    (is (= #{:e6 :f5 :f3 :e2 :c2 :b3 :b5 :c6} (attacked-squares :N :d4 [:K :e3 :R :c6 :q :b3]))))
   (testing "pawn on non-empty board"
-    (is (= #{:a5 :b5} (target-squares :P :a4 [:p :h5 :b :b5])))
-    (is (= #{:d6 :f6} (target-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
+    (is (= #{:b5} (attacked-squares :P :a4 [:p :h5 :b :b5])))
+    (is (= #{} (attacked-squares :P :a4 [:B :b5])))
+    (is (= #{:d6 :f6} (attacked-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
+;
+;(deftest test-forward-pawn-moves
+;  (testing "pawn on empty board"
+;    (is (= #{:a5} (set (map #(to-index %) (find-forward-pawn-moves(empty-board :white to-index(:a4)))))))
+;    (is (= #{:e3 :e4} (set (map #(to-index %) (find-forward-pawn-moves(empty-board :white to-index(:e2)))))))
+;    (is (= #{:g6 :g5} (set (map #(to-index %) (find-forward-pawn-moves(empty-board :black to-index(:g7)))))))))
+;;  (testing "pawn on non-empty-board"
+;    (is (= #{} (set (map (to-index %) (forward-pawn-moves(empty-board :black to-index(:g7))))))))
+;    (is (= #{} (attacked-squares :p :e7 [:N :e6])))))
+;    
 
-(deftest test-find-castlings
-  (is (= '(nil nil) (find-castlings (setup))))
-  (is (= '({:move [4 6] :secondary-move [7 5] :special-move :0-0} {:move [4 2] :secondary-move [0 3] :special-move :0-0-0})
-         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1])))))
-  (is (= '(nil {:move [60 58] :secondary-move [56 59] :special-move :0-0-0})
-         (find-castlings (switch-player (setup (place-pieces empty-board [:k :e8 :r :a8]))))))
-  (is (= '(nil nil)
-         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :b :e3])))))
-  (is (= '({:move [4 6] :secondary-move [7 5] :special-move :0-0} {:move [4 2] :secondary-move [0 3] :special-move :0-0-0})
-         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :b :e4])))))
-  (is (= '(nil nil)
-         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :r :e8])))))
-  (is (= '(nil nil)
-         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :n :b1 :n :g1])))))
-  )
+;(deftest test-find-castlings
+;  (is (= '(nil nil) (find-castlings (setup))))
+;  (is (= '({:origin 4 :piece-movements [:K 6 nil 4 :R 5 nil 7] :special-move :0-0} {:origin 4 :piece-movements [:K 2 nil 4 :R 3 nil 0] :special-move :0-0-0})
+;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1])))))
+;  (is (= '(nil {:origin 60 :piece-movements [:K 58 nil 60 :R 59 nil 56] :special-move :0-0-0})
+;         (find-castlings (switch-player (setup (place-pieces empty-board [:k :e8 :r :a8]))))))
+;  (is (= '(nil nil)
+;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :b :e3])))))
+;  (is (= '({:origin 4 :piece-movements [:K 6 nil 4 :R 5 nil 7] :special-move :0-0} {:origin 4 :piece-movements [:K 2 nil 4 :R 3 nil 0] :special-move :0-0-0})
+;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :b :e4])))))
+;  (is (= '(nil nil)
+;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :r :e8])))))
+;  (is (= '(nil nil)
+;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :n :b1 :n :g1])))))
+;  )
+
+;(deftest test-make-move
+;  (let [valid-moves (find-moves (setup)) move-list #spy/p (map move-to-str valid-moves)]
+;    (print move-list)
+;    ))
+
 ;
 ;(deftest test-attacks
 ;  (testing "attacks on empty board"
