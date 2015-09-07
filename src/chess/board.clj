@@ -20,6 +20,9 @@
 (defn distance [i1 i2]
   (max (Math/abs (- (rank i1) (rank i2))) (Math/abs (- (file i1) (file i2)))))
 
+(defn indexes-between [i1 i2]
+  (range (min i1 i2) (inc (max i1 i2))))
+
 (def initial-squares {:K [:e1] :k [:e8] :Q [:d1] :q [:d8] :R [:a1 :h1] :r [:a8 :h8]
                       :N [:b1 :g1] :n [:b8 :g8] :B [:c1 :f1] :b [:c8 :f8]
                       :P [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2] :p [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]})
@@ -29,8 +32,9 @@
 (defn place-piece [board [piece square]]
   (assoc board (to-idx square) piece))
 
-(defn place-pieces [board piece-positions]
-  (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square])))
+(defn place-pieces  
+  ([piece-positions] (place-pieces empty-board piece-positions))
+  ([board piece-positions] (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square]))))
 
 (def start-position
   (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))
@@ -84,7 +88,7 @@
 (defmethod attacked-indexes :P [board turn idx]
   (let [op (if (= :white turn) + -) s1 (op idx 7) s2 (op idx 9)]
     (vector
-      (when (and (= (distance idx s1) 1) (= (piece-color (get board s1)) (opponent turn))) s1)  ; TODO: simplify with (opponent turn)
+      (when (and (= (distance idx s1) 1) (= (piece-color (get board s1)) (opponent turn))) s1)  
       (when (and (= (distance idx s2) 1) (= (piece-color (get board s2)) (opponent turn))) s2))))
 
 (defn all-attacked-indexes [board turn]
@@ -113,21 +117,25 @@
 ;
 
 (def castlings
-  {:white {:0-0   {:from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1) :transfer-indexes (map to-idx [:e1 :f1 :g1])}
-           :0-0-0 {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :transfer-indexes (map to-idx [:e1 :d1 :c1 :b1])}}
-   :black {:0-0   {:from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8) :transfer-indexes (map to-idx [:e8 :f8 :g8])}
-           :0-0-0 {:from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8) :transfer-indexes (map to-idx [:e8 :d8 :c8 :b8])}}})
+  {:white {:O-O   {:from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
+           :O-O-O {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1)}}
+   :black {:O-O   {:from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
+           :O-O-O {:from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
 
 (defn check-castling [board turn castling-rights [castling-type rules]]
-  (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))]
+  (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))
+        kings-transfer (indexes-between (rules :from) (rules :to))
+        rooks-transfer (indexes-between (rules :rook-from) (rules :rook-to))]
     (when (and
-            (get castling-rights castling-type)
-            (empty? (clojure.set/intersection attacked-indexes-by-opponent (set (take 3 (rules :transfer-indexes))))) ; only three transfer-indexes must not be attacked by opponent
-            (every? (partial empty-square? board)) (rest (rules :transfer-indexes)))) ; only tail of transfer-indexes must be empty, as the first is occupied by the king
-      {:origin (get-in rules [:piece-movements 3]) :piece-movements (get rules :piece-movements) :special-move castling-type}))
+        (get castling-rights castling-type)
+        ;(every? (partial empty-square? board) kings-transfer)
+        ;(every? (partial empty-square? board) rooks-transfer)
+        ;(empty? (clojure.set/intersection attacked-indexes-by-opponent kings-transfer))
+        )
+      (assoc (rules castling-type) :type castling-type))))
 
 (defn find-castlings [board turn castling-rights]
-  (map (partial check-castling board turn (castling-rights turn))(castlings turn)))
+  (map (partial check-castling board turn castling-rights) (castlings turn)))
 
 
 ;

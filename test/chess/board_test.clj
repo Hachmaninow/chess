@@ -54,11 +54,10 @@
   (testing "same-square"
     (is (= 0 (distance 42 42)))))
 
-(deftest test-place-piece
-  (is (= "8/8/8/8/8/8/6r1/8" (to-fen-board (place-piece empty-board [:r :g2])))))
-
-(deftest test-place-pieces
-  (is (= "8/6K1/8/8/4B3/1r6/8/8" (to-fen-board (place-pieces empty-board [:r :b3 :B :e4 :K :g7])))))
+(deftest test-indexes-between
+  (is (= '(4 5 6) (indexes-between (to-idx :e1) (to-idx :g1))))
+  (is (= '(4 5 6) (indexes-between (to-idx :g1) (to-idx :e1))))
+  (is (= '(5 6 7) (indexes-between (to-idx :h1) (to-idx :f1)))))
 
 (deftest test-start-position
   (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] start-position)))
@@ -171,8 +170,10 @@
     (is (= #{} (accessible-squares :p :h7 [:p :h6])))
     (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
 
-;(deftest test-find-castlings
-;  (is (= '(nil nil) (find-castlings (setup))))
+(deftest test-find-castlings
+  (is (= '(nil nil) (find-castlings start-position :white #{:O-O :O-O-O})))
+  (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O :O-O-O}))))
+
 ;  (is (= '({:origin 4 :piece-movements [:K 6 nil 4 :R 5 nil 7] :special-move :0-0} {:origin 4 :piece-movements [:K 2 nil 4 :R 3 nil 0] :special-move :0-0-0})
 ;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1])))))
 ;  (is (= '(nil {:origin 60 :piece-movements [:K 58 nil 60 :R 59 nil 56] :special-move :0-0-0})
@@ -185,7 +186,7 @@
 ;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :r :e8])))))
 ;  (is (= '(nil nil)
 ;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :n :b1 :n :g1])))))
-;  )
+  )
 
 ;(deftest test-make-move
 ;  (let [valid-moves (find-moves (setup)) move-list #spy/p (map move-to-str valid-moves)]
