@@ -28,20 +28,20 @@
     (is (= 4 (file 20)))
     (is (= 7 (file 63)))))
 
-(deftest test-to-index
-  (testing "square-to-index conversion"
-    (is (= 0 (to-index :a1)))
-    (is (= 7 (to-index :h1)))
-    (is (= 8 (to-index :a2)))
-    (is (= 11 (to-index :d2)))
-    (is (= 54 (to-index :g7)))
-    (is (= 63 (to-index :h8)))))
+(deftest test-to-idx
+  (testing "square-to-idx conversion"
+    (is (= 0 (to-idx :a1)))
+    (is (= 7 (to-idx :h1)))
+    (is (= 8 (to-idx :a2)))
+    (is (= 11 (to-idx :d2)))
+    (is (= 54 (to-idx :g7)))
+    (is (= 63 (to-idx :h8)))))
 
-(deftest test-to-square
-  (testing "index-to-square conversion"
-    (is (= :a1 (to-square 0)))
-    (is (= :a5 (to-square 32)))
-    (is (= :h8 (to-square 63)))))
+(deftest test-to-sqr
+  (testing "index-to-sqr conversion"
+    (is (= :a1 (to-sqr 0)))
+    (is (= :a5 (to-sqr 32)))
+    (is (= :h8 (to-sqr 63)))))
 
 (deftest test-distance
   (testing "neighboring-squares"
@@ -65,7 +65,7 @@
 
 
 (defn direction-square-vector [square direction]
-  (map to-square (direction-vector (to-index square) 7 direction)))
+  (map to-sqr (direction-vector (to-idx square) 7 direction)))
 
 (deftest test-direction-vector
   (testing "north-direction"
@@ -125,8 +125,8 @@
    (let [board (place-pieces (place-piece empty-board [piece square]) additional-pieces)
          turn (piece-color piece)
          all-valid-moves (find-moves board turn)
-         moves-from-idx (filter #(= (to-index square) (% :from)) all-valid-moves)] 
-     (set (map #(to-square (% :to)) moves-from-idx)))))
+         moves-from-idx (filter #(= (to-idx square) (% :from)) all-valid-moves)] 
+     (set (map #(to-sqr (% :to)) moves-from-idx)))))
 
 (deftest test-attacked-indexes-on-empty-board
   (testing "king on empty board"
@@ -195,6 +195,6 @@
 ;
 ;(deftest test-attacks
 ;  (testing "attacks on empty board"
-;    (is (= true (attacks? (setup (place-piece empty-board [:R :d4])) :white (to-index :h4))))
-;    (is (= true (attacks? (setup (place-piece empty-board [:b :d4])) :black (to-index :a1))))
-;    (is (= false (attacks? (setup (place-piece empty-board [:Q :d4])) :white (to-index :h5))))))
+;    (is (= true (attacks? (setup (place-piece empty-board [:R :d4])) :white (to-idx :h4))))
+;    (is (= true (attacks? (setup (place-piece empty-board [:b :d4])) :black (to-idx :a1))))
+;    (is (= false (attacks? (setup (place-piece empty-board [:Q :d4])) :white (to-idx :h5))))))

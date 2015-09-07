@@ -9,13 +9,13 @@
 
 (defn file [index] (int (rem index 8)))
 
-(defn to-index [square]
+(defn to-idx [square]
   (let [square-name (name square) file (first square-name) rank (second square-name)]
     (+ (- (int file) (int \a)) (* 8 (- (int rank) (int \1))))))
 
-(defn to-square [index] (keyword (str (char (+ (file index) (int \a))) (inc (rank index)))))
+(defn to-sqr [index] (keyword (str (char (+ (file index) (int \a))) (inc (rank index)))))
 
-(defn lookup [board square] (board (to-index square)))
+(defn lookup [board square] (board (to-idx square)))
 
 (defn distance [i1 i2]
   (max (Math/abs (- (rank i1) (rank i2))) (Math/abs (- (file i1) (file i2)))))
@@ -27,7 +27,7 @@
 (def empty-board (vec (repeat 64 nil)))
 
 (defn place-piece [board [piece square]]
-  (assoc board (to-index square) piece))
+  (assoc board (to-idx square) piece))
 
 (defn place-pieces [board piece-positions]
   (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square])))
@@ -113,10 +113,10 @@
 ;
 
 (def castlings
-  {:white {:0-0   {:from (to-index :e1) :to (to-index :g1) :rook-from (to-index :h1) :rook-to (to-index :f1) :transfer-indexes (map to-index [:e1 :f1 :g1])}
-           :0-0-0 {:from (to-index :e1) :to (to-index :c1) :rook-from (to-index :a1) :rook-to (to-index :d1) :transfer-indexes (map to-index [:e1 :d1 :c1 :b1])}}
-   :black {:0-0   {:from (to-index :e8) :to (to-index :g8) :rook-from (to-index :h8) :rook-to (to-index :f8) :transfer-indexes (map to-index [:e8 :f8 :g8])}
-           :0-0-0 {:from (to-index :e8) :to (to-index :c8) :rook-from (to-index :a8) :rook-to (to-index :d8) :transfer-indexes (map to-index [:e8 :d8 :c8 :b8])}}})
+  {:white {:0-0   {:from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1) :transfer-indexes (map to-idx [:e1 :f1 :g1])}
+           :0-0-0 {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :transfer-indexes (map to-idx [:e1 :d1 :c1 :b1])}}
+   :black {:0-0   {:from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8) :transfer-indexes (map to-idx [:e8 :f8 :g8])}
+           :0-0-0 {:from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8) :transfer-indexes (map to-idx [:e8 :d8 :c8 :b8])}}})
 
 (defn check-castling [board turn castling-rights [castling-type rules]]
   (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))]
