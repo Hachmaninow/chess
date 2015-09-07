@@ -91,10 +91,10 @@
   "Return a set of all indexes that are being attacked by at at least one piece on the specified board by the specified player."
   (set (mapcat #(attacked-indexes board turn %) (occupied-indexes board turn))))
 
-(defn find-attacking-moves-for-index [board turn occupations idx]
-  "Return all moves from a given index of player on a board with given occupied indexes."
+(defn find-attacking-moves [board turn occupations idx]
+  "Return all attacking moves from a given index of player on a board with given occupied indexes."
   (let [piece (get board idx) candidates (remove occupations (attacked-indexes board turn idx))]
-    (map #(when % {:origin idx :piece-movements [piece % nil idx]}) candidates)))
+    (map #(when % {:from idx :to %}) candidates)))
 
 
 ;
@@ -104,8 +104,8 @@
 (defn find-forward-pawn-moves [board turn idx]
   (let [piece (get :board idx) op (if (= turn :white) + -) origin-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
     (vector
-      (when (empty-square? board s1) {:origin idx :piece-movements [piece s1 nil idx]}) ; single-step forward
-      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:origin idx :piece-movements [piece s2 nil idx]})))) ; double-step forward
+      (when (empty-square? board s1) {:from idx :to s1}) ; single-step forward
+      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:from idx :to s2})))) ; double-step forward
 
 
 ;
@@ -113,10 +113,10 @@
 ;
 
 (def castlings
-  {:white {:0-0   {:piece-movements [:K (to-index :g1) nil (to-index :e1) :R (to-index :f1) nil (to-index :h1)] :transfer-indexes (map to-index [:e1 :f1 :g1])}
-           :0-0-0 {:piece-movements [:K (to-index :c1) nil (to-index :e1) :R (to-index :d1) nil (to-index :a1)] :transfer-indexes (map to-index [:e1 :d1 :c1 :b1])}}
-   :black {:0-0   {:piece-movements [:K (to-index :g8) nil (to-index :e8) :R (to-index :f8) nil (to-index :h8)] :transfer-indexes (map to-index [:e8 :f8 :g8])}
-           :0-0-0 {:piece-movements [:K (to-index :c8) nil (to-index :e8) :R (to-index :d8) nil (to-index :a8)] :transfer-indexes (map to-index [:e8 :d8 :c8 :b8])}}})
+  {:white {:0-0   {:from (to-index :e1) :to (to-index :g1) :rook-from (to-index :h1) :rook-to (to-index :f1) :transfer-indexes (map to-index [:e1 :f1 :g1])}
+           :0-0-0 {:from (to-index :e1) :to (to-index :c1) :rook-from (to-index :a1) :rook-to (to-index :d1) :transfer-indexes (map to-index [:e1 :d1 :c1 :b1])}}
+   :black {:0-0   {:from (to-index :e8) :to (to-index :g8) :rook-from (to-index :h8) :rook-to (to-index :f8) :transfer-indexes (map to-index [:e8 :f8 :g8])}
+           :0-0-0 {:from (to-index :e8) :to (to-index :c8) :rook-from (to-index :a8) :rook-to (to-index :d8) :transfer-indexes (map to-index [:e8 :d8 :c8 :b8])}}})
 
 (defn check-castling [board turn castling-rights [castling-type rules]]
   (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))]
@@ -126,20 +126,25 @@
             (every? (partial empty-square? board)) (rest (rules :transfer-indexes)))) ; only tail of transfer-indexes must be empty, as the first is occupied by the king
       {:origin (get-in rules [:piece-movements 3]) :piece-movements (get rules :piece-movements) :special-move castling-type}))
 
-(defn find-castlings [board turn castling-rights]
-  (map (partial check-castling board turn (castling-rights turn))(castlings turn)))
+;(defn find-castlings [board turn castling-rights]
+;  (map (partial check-castling board turn (castling-rights turn))(castlings turn)))
 
 
 ;
-; find moves
+; find all possible moves on the board (without regard of game situations 
 ;
 
-
-(defn find-moves [game]
-  (let [board (game :board) occupations (occupied-indexes board (game :player-to-move))]
+(defn find-moves [board turn]
+  "Find all possible moves on the given board and player without considering the game situation."
+  (let [occupations (occupied-indexes board turn)]
     (remove nil?
-            (flatten
-              (concat
-                (map #(find-attacking-moves-for-index game occupations %) occupations)
-                (map #(when (or (= (get board %) :p) (= (get board %) :P)) (find-forward-pawn-moves game %)) occupations)
-                (find-castlings game))))))
+      (flatten
+        (concat
+          (map #(find-attacking-moves board turn occupations %) occupations)
+          (map #(when (or (= (get board %) :p) (= (get board %) :P)) (find-forward-pawn-moves board turn %)) occupations))))))
+
+
+
+
+
+                ;(find-castlings board turn castling-rights)

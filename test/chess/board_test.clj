@@ -124,8 +124,9 @@
   ([piece square additional-pieces]
    (let [board (place-pieces (place-piece empty-board [piece square]) additional-pieces)
          turn (piece-color piece)
-         attacked-indexes (attacked-indexes board turn (to-index square))] 
-     (set (map #(to-square %) (remove nil? attacked-indexes))))))
+         all-valid-moves (find-moves board turn)
+         moves-from-idx (filter #(= (to-index square) (% :from)) all-valid-moves)] 
+     (set (map #(to-square (% :to)) moves-from-idx)))))
 
 (deftest test-attacked-indexes-on-empty-board
   (testing "king on empty board"
@@ -157,10 +158,10 @@
   (testing "bishop on non-empty board"
     (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c5 :b6} (attacked-squares :B :d4 [:K :c3 :r :b6]))))
   (testing "knight on non-empty board"
-    (is (= #{:e6 :f5 :f3 :e2 :c2 :b3 :b5 :c6} (attacked-squares :N :d4 [:K :e3 :R :c6 :q :b3]))))
+    (is (= #{:e6 :f5 :f3 :e2 :c2 :b3 :b5} (attacked-squares :N :d4 [:K :e3 :R :c6 :q :b3]))))
   (testing "pawn on non-empty board"
-    (is (= #{:b5} (attacked-squares :P :a4 [:p :h5 :b :b5])))
-    (is (= #{} (attacked-squares :P :a4 [:B :b5])))
+    (is (= #{:b5 :a5} (attacked-squares :P :a4 [:p :h5 :b :b5])))
+    (is (= #{:a5} (attacked-squares :P :a4 [:B :b5])))
     (is (= #{:d6 :f6} (attacked-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
 ;
 ;(deftest test-forward-pawn-moves
