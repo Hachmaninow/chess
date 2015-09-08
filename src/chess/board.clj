@@ -127,15 +127,20 @@
         kings-transfer (indexes-between (rules :from) (rules :to))
         rooks-transfer (indexes-between (rules :rook-from) (rules :rook-to))]
     (when (and
-        (get castling-rights castling-type)
-        ;(every? (partial empty-square? board) kings-transfer)
+        (contains? castling-rights castling-type)
+        (every? (partial empty-square? board) kings-transfer)
         ;(every? (partial empty-square? board) rooks-transfer)
         ;(empty? (clojure.set/intersection attacked-indexes-by-opponent kings-transfer))
         )
-      (assoc (rules castling-type) :type castling-type))))
+      castling-type))
+)
+;      (assoc (rules castling-type) :type castling-type))))
 
 (defn find-castlings [board turn castling-rights]
   (map (partial check-castling board turn castling-rights) (castlings turn)))
+
+(find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O :O-O-O})
+
 
 
 ;
