@@ -36,9 +36,8 @@
   ([piece-positions] (place-pieces empty-board piece-positions))
   ([board piece-positions] (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square]))))
 
-(def start-position
+(def init-board
   (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))
-
 
 (def direction-steps {:N 8 :S -8 :W -1 :E 1 :NE 9 :SE -7 :SW -9 :NW 7})
 (def straight [:N :E :S :W])

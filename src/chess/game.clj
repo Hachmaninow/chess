@@ -8,7 +8,7 @@
                              (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :0-0-0)]))})
 
 (defn setup
-  ([] (setup start-position))
+  ([] (setup init-board))
   ([board] {:board board :player-to-move :white :castling-rights (guess-castling-rights board)})
   ([board options] (conj (setup board) options)))
 

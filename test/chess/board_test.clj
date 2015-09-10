@@ -59,8 +59,8 @@
   (is (= '(4 5 6) (indexes-between (to-idx :g1) (to-idx :e1))))
   (is (= '(5 6 7) (indexes-between (to-idx :h1) (to-idx :f1)))))
 
-(deftest test-start-position
-  (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] start-position)))
+(deftest test-init-board
+  (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] init-board)))
 
 
 (defn direction-square-vector [square direction]
@@ -100,21 +100,21 @@
 
 (deftest test-lookup
   (testing "white rooks"
-    (is (= :R (lookup start-position :a1) (lookup start-position :h1))))
+    (is (= :R (lookup init-board :a1) (lookup init-board :h1))))
   (testing "black knights"
-    (is (= :n (lookup start-position :b8) (lookup start-position :g8)))))
+    (is (= :n (lookup init-board :b8) (lookup init-board :g8)))))
 
 (deftest test-occupied-indexes
   (testing "occupied by white"
-    (is (= (set (range 0 16)) (occupied-indexes start-position :white))))
+    (is (= (set (range 0 16)) (occupied-indexes init-board :white))))
   (testing "occupied by black"
-    (is (= (set (range 48 64)) (occupied-indexes start-position :black)))))
+    (is (= (set (range 48 64)) (occupied-indexes init-board :black)))))
 
 (deftest test-empty-square
   (testing "empty square"
-    (is (true? (empty-square? start-position 30))))
+    (is (true? (empty-square? init-board 30))))
   (testing "non-empty square"
-    (is (false? (empty-square? start-position 58)))))
+    (is (false? (empty-square? init-board 58)))))
 
 (defn accessible-squares
   "Find all valid target squares for the specified piece being located on the specified square on
@@ -178,7 +178,7 @@
     (is (= '(:O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O}))))
     (is (= '(:O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O-O})))))
   (testing "passage is occupied with piece"
-    (is (= '() (find-castlings start-position :white #{:O-O :O-O-O})))
+    (is (= '() (find-castlings init-board :white #{:O-O :O-O-O})))
     (is (= '(:O-O-O) (map #(% :type) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8]) :black #{:O-O :O-O-O}))))
     (is (= '() (map #(% :type) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8 :N :b8]) :black #{:O-O :O-O-O})))))
   (testing "the king may not pass an attacked square during castling"
