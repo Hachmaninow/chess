@@ -127,7 +127,7 @@
          moves-from-idx (filter #(= (to-idx square) (% :from)) all-valid-moves)] 
      (set (map #(to-sqr (% :to)) moves-from-idx)))))
 
-(deftest test-attacked-indexes-on-empty-board
+(deftest test-find-moves-on-empty-board
   (testing "king on empty board"
     (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (accessible-squares :K :d4)))
     (is (= #{:a2 :b1 :b2} (accessible-squares :k :a1))))
@@ -151,7 +151,7 @@
     (is (= #{:g6 :g5} (accessible-squares :p :g7)))
     (is (= #{:g8} (accessible-squares :P :g7)))))
 
-(deftest test-attacked-indexes-on-non-empty-board
+(deftest test-find-moves-on-non-empty-board
   (testing "king on non-empty board"
     (is (= #{:d5 :d3 :c4 :e5 :e3 :c3} (accessible-squares :K :d4 [:Q :e4 :R :c5 :b :d3])))
     (is (= #{:d1 :d2 :e2 :f2 :f1} (accessible-squares :K :e1 [:R :a1 :R :h1]))))
@@ -168,7 +168,8 @@
     (is (= #{:a5} (accessible-squares :P :a4 [:B :b5])))
     (is (= #{:e3} (accessible-squares :P :e2 [:b :e4])))
     (is (= #{} (accessible-squares :p :h7 [:p :h6])))
-    (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
+    (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))
+    (is (= #{:d6 :f6 :e6 :e5} (accessible-squares :p :e7 [:N :d6 :Q :f6])))))
 
 (deftest test-find-castlings
   (testing "passage is free"
