@@ -149,8 +149,7 @@
   (testing "pawn on empty board"
     (is (= #{:e3 :e4} (accessible-squares :P :e2)))
     (is (= #{:g6 :g5} (accessible-squares :p :g7)))
-    (is (= #{:g8} (accessible-squares :P :g7)))
-  ))
+    (is (= #{:g8} (accessible-squares :P :g7)))))
 
 (deftest test-attacked-indexes-on-non-empty-board
   (testing "king on non-empty board"
@@ -184,6 +183,8 @@
   (testing "the king may not pass an attacked square during castling"
     (is (= '(:O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :c8]) :white #{:O-O :O-O-O}))))
     (is (= '(:O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :d8]) :white #{:O-O :O-O-O}))))
+    (is (= '() (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :p :e2]) :white #{:O-O :O-O-O})))))
+  (testing "the king must not be in check"
     (is (= '() (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :e8]) :white #{:O-O :O-O-O})))))
   (testing "the rook may pass attacked squares"
     (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white #{:O-O :O-O-O}))))
