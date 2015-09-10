@@ -138,7 +138,8 @@
              :b2 :c3 :d4 :e5 :f6 :g7 :h8} (accessible-squares :q :a1))))
   (testing "rook on empty board"
     (is (= #{:d5 :d6 :d7 :d8 :d3 :d2 :d1 :c4 :b4 :a4 :e4 :f4 :g4 :h4} (accessible-squares :R :d4)))
-    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (accessible-squares :r :a1))))
+    (is (= #{:a2 :a3 :a4 :a5 :a6 :a7 :a8 :b1 :c1 :d1 :e1 :f1 :g1 :h1} (accessible-squares :r :a1)))
+    (is (= #{:a8 :c8 :d8 :e8 :f8 :g8 :h8 :b1 :b2 :b3 :b4 :b5 :b6 :b7} (accessible-squares :r :b8))))
   (testing "bishop on empty board"
     (is (= #{:e5 :f6 :g7 :h8 :e3 :f2 :g1 :c3 :b2 :a1 :c5 :b6 :a7} (accessible-squares :B :d4)))
     (is (= #{:b2 :c3 :d4 :e5 :f6 :g7 :h8} (accessible-squares :b :a1))))
@@ -171,22 +172,22 @@
     (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))))
 
 (deftest test-find-castlings
-  (is (= '(nil nil) (find-castlings start-position :white #{:O-O :O-O-O})))
-  (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O :O-O-O}))))
-
-;  (is (= '({:origin 4 :piece-movements [:K 6 nil 4 :R 5 nil 7] :special-move :0-0} {:origin 4 :piece-movements [:K 2 nil 4 :R 3 nil 0] :special-move :0-0-0})
-;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1])))))
-;  (is (= '(nil {:origin 60 :piece-movements [:K 58 nil 60 :R 59 nil 56] :special-move :0-0-0})
-;         (find-castlings (switch-player (setup (place-pieces empty-board [:k :e8 :r :a8]))))))
-;  (is (= '(nil nil)
-;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :b :e3])))))
-;  (is (= '({:origin 4 :piece-movements [:K 6 nil 4 :R 5 nil 7] :special-move :0-0} {:origin 4 :piece-movements [:K 2 nil 4 :R 3 nil 0] :special-move :0-0-0})
-;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :b :e4])))))
-;  (is (= '(nil nil)
-;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :r :e8])))))
-;  (is (= '(nil nil)
-;         (find-castlings (setup (place-pieces empty-board [:K :e1 :R :a1 :R :h1 :n :b1 :n :g1])))))
-  )
+  (testing "passage is free"
+    (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O :O-O-O}))))
+    (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8]) :black #{:O-O :O-O-O}))))
+    (is (= '(:O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O}))))
+    (is (= '(:O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O-O})))))
+  (testing "passage is occupied with piece"
+    (is (= '() (find-castlings start-position :white #{:O-O :O-O-O})))
+    (is (= '(:O-O-O) (map #(% :type) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8]) :black #{:O-O :O-O-O}))))
+    (is (= '() (map #(% :type) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8 :N :b8]) :black #{:O-O :O-O-O})))))
+  (testing "the king may not pass an attacked square during castling"
+    (is (= '(:O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :c8]) :white #{:O-O :O-O-O}))))
+    (is (= '(:O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :d8]) :white #{:O-O :O-O-O}))))
+    (is (= '() (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :e8]) :white #{:O-O :O-O-O})))))
+  (testing "the rook may pass attacked squares"
+    (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white #{:O-O :O-O-O}))))
+    (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white #{:O-O :O-O-O}))))))
 
 ;(deftest test-make-move
 ;  (let [valid-moves (find-moves (setup)) move-list #spy/p (map move-to-str valid-moves)]

@@ -1,5 +1,5 @@
 (ns chess.board
-  (:require [clojure.set]))
+  (:require [clojure.set] [spyscope.core]))
 
 (defn piece-color [piece] (if (nil? piece) nil (if (contains? #{:P :N :B :R :Q :K} piece) :white :black)))
 
@@ -124,27 +124,20 @@
 
 (defn check-castling [board turn castling-rights [castling-type rules]]
   (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))
-        kings-transfer (indexes-between (rules :from) (rules :to))
-        rooks-transfer (indexes-between (rules :rook-from) (rules :rook-to))]
-    (when (and
+        kings-route (set (indexes-between (rules :from) (rules :to)))  ; all the squares the king passes and which must not be under attack
+        passage  (filter #(not= (rules :rook-from) %) (indexes-between (rules :rook-from) (rules :rook-to)))]  ; all squares between the king and the rook, which must be unoccupied
+    (when 
+      (and
         (contains? castling-rights castling-type)
-        (every? (partial empty-square? board) kings-transfer)
-        ;(every? (partial empty-square? board) rooks-transfer)
-        ;(empty? (clojure.set/intersection attacked-indexes-by-opponent kings-transfer))
-        )
-      castling-type))
-)
-;      (assoc (rules castling-type) :type castling-type))))
+        (every? (partial empty-square? board) passage)
+        (empty? (clojure.set/intersection attacked-indexes-by-opponent kings-route)))
+          (assoc rules :type castling-type))))
 
 (defn find-castlings [board turn castling-rights]
-  (map (partial check-castling board turn castling-rights) (castlings turn)))
-
-(find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O :O-O-O})
-
-
+  (remove nil? (map (partial check-castling board turn castling-rights) (castlings turn))))
 
 ;
-; find all possible moves on the board (without regard of game situations 
+; find all possible moves on the board
 ;
 
 (defn find-moves [board turn]
