@@ -62,6 +62,20 @@
 (deftest test-init-board
   (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] init-board)))
 
+(deftest test-place-pieces
+  (testing "single-piece"
+    (is (= "8/8/8/8/8/8/8/4K3" (to-fen-board (place-pieces [:K :e1])))))
+  (testing "simple-position"
+    (is (= "2k5/3r4/8/3n4/8/8/6Q1/6K1" (to-fen-board (place-pieces [:K :g1 :Q :g2 :k :c8 :r :d7 :n :d5])))))
+  (testing "removing-pieces"
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (to-fen-board (place-pieces init-board [nil :e2 nil :f2])))))
+  (testing "removing-not-existing-pieces"
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (to-fen-board (place-pieces init-board [nil :e4])))))
+  (testing "works with indexes as well"
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (to-fen-board (place-pieces init-board [nil (to-idx :e2) nil (to-idx :f2)])))))
+  (testing "make castling"
+    (is (= "8/8/8/8/8/8/8/2KR4" (to-fen-board (place-pieces (place-pieces [:K (to-idx :e1) :R (to-idx :a1)]) [nil 4 :K 2 nil 0 :R 3]))))
+  ))
 
 (defn direction-square-vector [square direction]
   (map to-sqr (direction-vector (to-idx square) 7 direction)))
@@ -191,14 +205,3 @@
     (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white #{:O-O :O-O-O}))))
     (is (= '(:O-O :O-O-O) (map #(% :type) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white #{:O-O :O-O-O}))))))
 
-;(deftest test-make-move
-;  (let [valid-moves (find-moves (setup)) move-list #spy/p (map move-to-str valid-moves)]
-;    (print move-list)
-;    ))
-
-;
-;(deftest test-attacks
-;  (testing "attacks on empty board"
-;    (is (= true (attacks? (setup (place-piece empty-board [:R :d4])) :white (to-idx :h4))))
-;    (is (= true (attacks? (setup (place-piece empty-board [:b :d4])) :black (to-idx :a1))))
-;    (is (= false (attacks? (setup (place-piece empty-board [:Q :d4])) :white (to-idx :h5))))))

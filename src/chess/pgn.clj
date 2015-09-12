@@ -3,7 +3,7 @@
 
 (def pgn
   (insta/parser
-    "game = move-text
+    "<game> = move-text
      <move-text> = (token space | token Epsilon)+
      <token> = move-number | black-move-number | move
      <space> = <#'\\s+'>
@@ -30,3 +30,7 @@
 (pgn "7... b5 8. e5 b4 9. exf6 bxc3 10. bxc3 exf6 11. Bd3 Qe7+ 12. Ne2 Qf8 13. Qd2 Qe7 14. O-O O-O")
 
 (pgn "34. axb4 Kxb4 35. Qc3+ Ka4 36. Qa3#")
+
+(pgn "Ne6")
+
+(pgn "e8")

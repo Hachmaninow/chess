@@ -32,12 +32,13 @@
 
 (def empty-board (vec (repeat 64 nil)))
 
-(defn place-piece [board [piece square]]
-  (assoc board (to-idx square) piece))
+(defn place-piece [board [piece square-or-index]]
+  (assoc board (if (keyword? square-or-index) (to-idx square-or-index) square-or-index) piece))
 
 (defn place-pieces  
+  "Place the given array of piece-positions on an empty/given board. Piece positions are adjacent elements of piece/square-or-index pairs."
   ([piece-positions] (place-pieces empty-board piece-positions))
-  ([board piece-positions] (reduce place-piece board (for [[piece square] (partition 2 piece-positions)] [piece square]))))
+  ([board piece-positions] (reduce place-piece board (for [[piece square-or-index] (partition 2 piece-positions)] [piece square-or-index]))))
 
 (def init-board
   (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))

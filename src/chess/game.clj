@@ -1,5 +1,5 @@
 (ns chess.game
-  (:require [chess.board :refer :all]))
+  (:require [chess.board :refer :all] [chess.pgn :refer :all]))
 
 (defn guess-castling-rights [board]
   {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :0-0)
@@ -9,19 +9,34 @@
 
 (defn setup
   ([] (setup init-board))
-  ([board] {:board board :player-to-move :white :castling-rights (guess-castling-rights board)})
+  ([board] {:board board :turn :white :move-no 1 :castling-rights (guess-castling-rights board)})
   ([board options] (conj (setup board) options)))
 
-
-
-(defn make-move [game move]
-  {:board          (place-pieces (game :board) (move :piece-movements))
-   :player-to-move (opponent (game :player-to-move))
-   }
-  )
+(defn switch-player [game] (assoc game :turn (opponent (game :turn))))
 
 (defn valid-moves [game]
-  (find-moves game))
+  (find-moves (game :board) (game :turn)))
+
+(defn move-to-piece-movements [board {:keys [:type :from :to :rook-from :rook-to]}]
+  (if (or (= type :O-O) (= type :O-O-O)) 
+    [nil from (board from) to nil rook-from (board rook-from) rook-to]
+    [nil from (board from) to]
+  ))
+
+(defn find-move-by-str [game move-str]
+  "Find the only valid move in the given game that matches the given move-string."
+  (let [all-valid-moves (valid-moves game)
+        parsed-move (pgn move-str)]
+
+    )
+
+  )
+
+(defn make-move [game move]
+  {:board (place-pieces (game :board) (move-to-piece-movements (game :board) move))
+   :turn (opponent (game :turn))
+  }
+)
 
 
-(defn switch-player [game] (assoc game :player-to-move (opponent (game :player-to-move))))
+
