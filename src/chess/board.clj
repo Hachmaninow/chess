@@ -102,7 +102,7 @@
 (defn find-attacking-moves [board turn idx]
   "Return all attacking moves from a given index of player on a board with given occupied indexes."
   (let [piece (get board idx) target-indexes (attacked-indexes board turn idx)]
-    (map #(when % {:from idx :to % :capture (board %)}) target-indexes)))
+    (map #(when % {:piece piece :from idx :to % :capture (board %)}) target-indexes)))
 
 
 ;
@@ -112,8 +112,8 @@
 (defn find-forward-pawn-moves [board turn idx]
   (let [piece (get :board idx) op (if (= turn :white) + -) origin-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
     (vector
-      (when (empty-square? board s1) {:from idx :to s1}) ; single-step forward
-      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:from idx :to s2})))) ; double-step forward
+      (when (empty-square? board s1) {:piece piece :from idx :to s1}) ; single-step forward
+      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:piece piece :from idx :to s2})))) ; double-step forward
 
 (defn find-capturing-pawn-moves [board turn idx]
   (filter #(= (piece-color (% :capture)) (opponent turn)) (remove nil? (find-attacking-moves board turn idx))))
@@ -122,16 +122,15 @@
   (concat (find-forward-pawn-moves board turn idx) (find-capturing-pawn-moves board turn idx)))
 
 
-
 ;
 ; castlings
 ;
 
 (def castlings
-  {:white {:O-O   {:from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
-           :O-O-O {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1)}}
-   :black {:O-O   {:from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
-           :O-O-O {:from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
+  {:white {:O-O   {:piece :K :from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
+           :O-O-O {:piece :K :from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1)}}
+   :black {:O-O   {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
+           :O-O-O {:piece :k :from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
 
 (defn check-castling [board turn castling-rights [castling-type rules]]
   (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))
@@ -142,10 +141,11 @@
         (contains? castling-rights castling-type)
         (every? (partial empty-square? board) passage)
         (empty? (clojure.set/intersection attacked-indexes-by-opponent kings-route)))
-          (assoc rules :type castling-type))))
+          (assoc rules :castling castling-type))))
 
 (defn find-castlings [board turn castling-rights]
   (remove nil? (map (partial check-castling board turn castling-rights) (castlings turn))))
+
 
 ;
 ; find all possible moves on the board

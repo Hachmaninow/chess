@@ -29,6 +29,6 @@
   
   (testing "make-castling"
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (make-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
-    (is (= "4k3/8/8/8/8/8/5P2/3K4") (make-move-on-board [:K :e1 :R :a1] {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :type :O-O-O})))
+    (is (= "4k3/8/8/8/8/8/5P2/3K4") (make-move-on-board [:K :e1 :R :a1] {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :castling :O-O-O})))
   )
 
