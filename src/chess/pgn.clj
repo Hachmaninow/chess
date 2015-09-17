@@ -12,8 +12,8 @@
      move = (simple-pawn-move | capturing-pawn-move | simple-piece-move | capturing-piece-move | castling) call?
      <simple-pawn-move> = to-file to-rank
      <capturing-pawn-move> = from-file capture to-file to-rank
-     <simple-piece-move> = piece to-file to-rank
-     <capturing-piece-move> = piece capture to-file to-rank
+     <simple-piece-move> = piece from-file? from-rank? to-file to-rank
+     <capturing-piece-move> = piece from-file? from-rank? capture to-file to-rank
      castling = (short-castling | long-castling)
      <short-castling> = 'O-O'
      <long-castling> = 'O-O-O'
