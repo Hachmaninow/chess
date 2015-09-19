@@ -1,5 +1,6 @@
-(ns chess.pgn 
-  (:require [instaparse.core :as insta] [chess.board :refer :all]))
+(ns chess.pgn
+  (:require [instaparse.core :as insta]
+            [chess.board :refer :all]))
 
 (def pgn
   (insta/parser
@@ -32,20 +33,27 @@
 
 (pgn "34. axb4 Kxb4 35. Qc3+ Ka4 36. Qa3#")
 
-(defn parse-move [move-string]
-  (into {} (filter vector? (first (pgn move-string)))))
+
+(defn parsed-move-to-hash [parsed-move]
+  (into {} (filter vector? parsed-move)))
+
+(defn parse-move-text [move-text]
+  (map parsed-move-to-hash (filter #(= (first %) :move) (pgn move-text))))
+
+(defn parse-move [move-text]
+  (first (parse-move-text move-text)))
 
 (defn move-matcher [{:keys [:castling :piece :to-file :to-rank :capture :from-file :from-rank]}]
-  (remove nil?  
-    (vector
-      (when castling (fn [move] (= (move :castling) (keyword castling))))
-      (when (and to-file to-rank) (fn [move] (= (move :to) (keyword (apply str to-file to-rank)))))
-      (when piece (fn [move] (= (keyword piece) (piece-type (move :piece)))))  ; if a piece is specified it could be either black or white 
-      (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
-      (when capture (fn [move] (not (nil? (move :capture)))))
-      (when from-file (fn [move] (= (- (int (first from-file)) (int \a)) (file (to-idx (move :from))))))
-      (when from-rank (fn [move] (= (- (int (first from-rank)) (int \1)) (rank (to-idx (move :from))))))
-    )))
+  (remove nil?
+          (vector
+            (when castling (fn [move] (= (move :castling) (keyword castling))))
+            (when (and to-file to-rank) (fn [move] (= (move :to) (to-idx (keyword (apply str to-file to-rank))))))
+            (when piece (fn [move] (= (keyword piece) (piece-type (move :piece))))) ; if a piece is specified it could be either black or white
+            (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
+            (when capture (fn [move] (not (nil? (move :capture)))))
+            (when from-file (fn [move] (= (- (int (first from-file)) (int \a)) (file (move :from)))))
+            (when from-rank (fn [move] (= (- (int (first from-rank)) (int \1)) (rank (move :from)))))
+            )))
 
 (defn matches-parsed-move? [parsed-move move]
   (every? #(% move) (move-matcher parsed-move)))

@@ -1,6 +1,7 @@
 (ns chess.game-test
   (:require [clojure.test :refer :all]
             [chess.board :refer :all]
+            [chess.pgn :refer :all]
             [chess.fen :refer :all]
             [chess.game :refer :all]))
 
@@ -9,26 +10,35 @@
   (is (= {:white #{:0-0-0} :black #{:0-0}} (guess-castling-rights (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
   (is (= {:white #{} :black #{}} (guess-castling-rights (place-pieces empty-board [:K :e2 :R :a1])))))
 
-(deftest test-setup
-  (is (= init-board ((setup) :board)))
-  (is (= :white ((setup) :turn))))
+(deftest test-new-game
+  (is (= init-board ((new-game) :board)))
+  (is (= :white ((new-game) :turn))))
 
 (deftest test-switch-player
-  (is (= :black ((switch-player (setup)) :turn)))
-  (is (= :white ((switch-player (switch-player (setup))) :turn))))
+  (is (= :black ((switch-player (new-game)) :turn)))
+  (is (= :white ((switch-player (switch-player (new-game))) :turn))))
 
 (defn make-move-on-board [piece-positions move]
   "Setup a board with the given piece-positions, then make the given move and return a FEN-representation of the board."
-  (let [game (setup (place-pieces piece-positions))]
+  (let [game (new-game (place-pieces piece-positions))]
     (to-fen-board ((make-move game move) :board))))
 
 (deftest test-make-move
   (testing "make-move updates piece positions"
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (make-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (make-move-on-board [:K :e1 :n :d1] {:from (to-idx :e1) :to (to-idx :d1)})))
-  
   (testing "make-castling"
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (make-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (make-move-on-board [:K :e1 :R :a1] {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :castling :O-O-O})))
   )
+
+(deftest test-select-move
+  (testing "unambiguous valid move"
+    (is (= {:piece :P, :from 12, :to 28} (select-move (new-game) (parse-move "e4"))))
+    (is (= {:piece :N, :from 6, :to 21, :capture nil} (select-move (new-game) (parse-move "Nf3")))))
+  (testing "invalid move"
+    (is (thrown-with-msg? IllegalArgumentException #"No matching moves" (select-move (new-game) (parse-move "Nf5"))))
+    )
+  (testing "invalid move"
+    (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (new-game (place-pieces [:N :e2 :N :g2])) (parse-move "Nf4"))))))
 

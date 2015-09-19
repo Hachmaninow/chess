@@ -110,7 +110,7 @@
 ;
 
 (defn find-forward-pawn-moves [board turn idx]
-  (let [piece (get :board idx) op (if (= turn :white) + -) origin-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
+  (let [piece (get board idx) op (if (= turn :white) + -) origin-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
     (vector
       (when (empty-square? board s1) {:piece piece :from idx :to s1}) ; single-step forward
       (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:piece piece :from idx :to s2})))) ; double-step forward
