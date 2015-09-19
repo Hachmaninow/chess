@@ -1,7 +1,8 @@
 (ns chess.game
   (:require [chess.board :refer :all]
             [chess.pgn :refer :all]
-            [chess.fen :refer :all]))
+            [chess.fen :refer :all]
+            [spyscope.core]))
 
 (defn guess-castling-rights [board]
   {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :0-0)
@@ -16,9 +17,8 @@
             :turn            :white
             :move-no         1
             :castling-rights (guess-castling-rights board)
-            :valid-moves     (find-moves board :white)
-            })
-  )
+            }
+    ))
 
 (defn switch-player [game] (assoc game :turn (opponent (game :turn))))
 
@@ -29,21 +29,28 @@
     ))
 
 (defn make-move [game move]
-  (let [new-board (place-pieces (game :board) (move-to-piece-movements (game :board) move))
-        new-turn (opponent (game :turn))]
-    {
-     :board       new-board
-     :turn        new-turn
-     :valid-moves (find-moves new-board new-turn)
-     }
-    ))
+  {
+   :board (place-pieces (game :board) (move-to-piece-movements (game :board) move))
+   :turn  (opponent (game :turn))
+   })
+
+(defn illegal-due-to-check? [game move]
+  "Check if the given move applied to the given game leaves the king in check which renders the move illegal."
+  (let [game-after-move (make-move game move)
+        opponent-moves (find-moves (game-after-move :board) (game-after-move :turn))]
+    (some #(or (= (% :capture) :K) (= (% :capture) :k)) opponent-moves))) ; Here the color of the king does not matter, as only the right one will occur anyways.
+
+(defn valid-moves [game]
+  "Find all geometrically possible moves on the current board and remove move which are illegal."
+  ( remove #(illegal-due-to-check? game %) (find-moves (game :board) (game :turn))))
 
 (defn select-move [game parsed-move]
-  (let [matching-moves (filter #(matches-parsed-move? parsed-move %) (game :valid-moves))]
+  (let [valid-moves (valid-moves game)
+        matching-moves (filter #(matches-parsed-move? parsed-move %) valid-moves)]
     (condp = (count matching-moves)
       1 (first matching-moves)
-      0 (throw (new IllegalArgumentException (str "No matching moves for: " parsed-move " within valid moves: " (seq (game :valid-moves)))))
-      (throw (new IllegalArgumentException (str "Multiple matching moves: " (seq matching-moves) " for: " parsed-move " within valid moves: " (seq (game :valid-moves))))))
+      0 (throw (new IllegalArgumentException (str "No matching moves for: " parsed-move " within valid moves: " (seq valid-moves))))
+      (throw (new IllegalArgumentException (str "Multiple matching moves: " (seq matching-moves) " for: " parsed-move " within valid moves: " (seq valid-moves)))))
     ))
 
 (defn play-first-move [game parsed-moves]

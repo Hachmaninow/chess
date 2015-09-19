@@ -141,6 +141,15 @@
          moves-from-idx (filter #(= (to-idx square) (% :from)) all-valid-moves)]
      (set (map #(to-sqr (% :to)) moves-from-idx)))))
 
+(deftest test-move-structure
+  (testing "pawn move"
+    (is (= '({:from 12, :piece :P, :to 20} {:from 12, :piece :P, :to 28}) (find-moves (place-pieces [:P :e2]) :white))))
+  (testing "piece capture"
+    (is (= {:piece :N :from 63 :to 46 :capture :p} (first (find-moves (place-pieces [:N :h8 :P :f7 :p :g6 :r :f8]) :white)))))
+  (testing "castlings"
+    (is (= {:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5} (first (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O})))))
+  )
+
 (deftest test-find-moves-on-empty-board
   (testing "king on empty board"
     (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (accessible-squares :K :d4)))
@@ -204,12 +213,3 @@
   (testing "the rook may pass attacked squares"
     (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white #{:O-O :O-O-O}))))
     (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white #{:O-O :O-O-O}))))))
-
-(deftest test-move-structure
-  (testing "pawn move"
-    (is (= '({:from 12, :piece :P, :to 20} {:from 12, :piece :P, :to 28}) (find-moves (place-pieces [:P :e2]) :white))))
-  (testing "piece capture"
-    (is (= {:piece :N :from 63 :to 46 :capture :p} (first (find-moves (place-pieces [:N :h8 :P :f7 :p :g6 :r :f8]) :white)))))
-  (testing "castlings"
-    (is (= {:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5} (first (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O})))))
-  )

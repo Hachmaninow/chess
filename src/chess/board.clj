@@ -67,7 +67,7 @@
           (take 1 (drop-while #(empty-square? board %) (direction-vector from-index max-reach direction))))))))
 
 (defn piece-type [piece]
-  "Returns the type of the piece represented by the keyword of the respective white piece irrelevant of the color."
+  "Returns the type of the piece represented by the keyword of the respective white piece (eg. :k -> :K, :K -> :K)."
   (keyword (clojure.string/upper-case (subs (str piece) 1))))
 
 
