@@ -158,3 +158,20 @@
       (remove nil?
         (mapcat #(if (pawn? board %) (find-pawn-moves board turn %) (find-attacking-moves board turn %)) owned-indexes)))))
 
+(defn gives-check? [board turn]
+  "Check if the given player gives check to the opponent's king on the current board."
+  (some #(or (= (% :capture) :K) (= (% :capture) :k)) (find-moves board turn))) ; Here the color of the king does not matter, as only the right one will occur anyways.
+
+
+;
+; update board
+;
+
+(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to]}]
+  (if (or (= castling :O-O) (= castling :O-O-O))
+    [nil from (board from) to nil rook-from (board rook-from) rook-to]
+    [nil from (board from) to]
+    ))
+
+(defn update-board [board move]
+  (place-pieces board (move-to-piece-movements board move)))

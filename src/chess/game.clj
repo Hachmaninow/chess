@@ -20,29 +20,34 @@
             }
     ))
 
-(defn switch-player [game] (assoc game :turn (opponent (game :turn))))
+(declare valid-moves)
 
-(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to]}]
-  (if (or (= castling :O-O) (= castling :O-O-O))
-    [nil from (board from) to nil rook-from (board rook-from) rook-to]
-    [nil from (board from) to]
-    ))
+(defn call [has-moves is-checked]
+  (cond
+    (and has-moves is-checked) :check
+    (and (not has-moves) is-checked) :checkmate
+    (and (not has-moves) (not is-checked)) :stalemate))
 
-(defn make-move [game move]
-  {
-   :board (place-pieces (game :board) (move-to-piece-movements (game :board) move))
-   :turn  (opponent (game :turn))
-   })
+(defn play-move
+  "Update the given game by playing the given move."
+  [game move]
+  (let [new-board (update-board (:board game) move)
+        new-turn (opponent (:turn game))
+        new-game {:board new-board :turn new-turn}
+        has-moves (> (count (valid-moves new-game)) 0)
+        gives-check (gives-check? new-board (:turn game))]
+    (into new-game {:call (call has-moves gives-check)})))
 
-(defn illegal-due-to-check? [game move]
+(defn illegal-due-to-check?
   "Check if the given move applied to the given game leaves the king in check which renders the move illegal."
-  (let [game-after-move (make-move game move)
-        opponent-moves (find-moves (game-after-move :board) (game-after-move :turn))]
+  [game move]
+  (let [opponent-moves (find-moves (update-board (:board game) move) (opponent (:turn game)))]
     (some #(or (= (% :capture) :K) (= (% :capture) :k)) opponent-moves))) ; Here the color of the king does not matter, as only the right one will occur anyways.
 
-(defn valid-moves [game]
-  "Find all geometrically possible moves on the current board and remove move which are illegal."
-  ( remove #(illegal-due-to-check? game %) (find-moves (game :board) (game :turn))))
+(defn valid-moves
+  "Find all valid moves in the given game considering check situations."
+  [game]
+  (remove #(illegal-due-to-check? game %) (find-moves (:board game) (:turn game))))
 
 (defn select-move [game parsed-move]
   (let [valid-moves (valid-moves game)
@@ -54,7 +59,7 @@
     ))
 
 (defn play-first-move [game parsed-moves]
-  (if (empty? parsed-moves) game (recur (make-move game (select-move game (first parsed-moves))) (rest parsed-moves))))
+  (if (empty? parsed-moves) game (recur (play-move game (select-move game (first parsed-moves))) (rest parsed-moves))))
 
 (defn play [game move-text]
   "For the given game, play the moves contained in the given move-text and return an updated game."

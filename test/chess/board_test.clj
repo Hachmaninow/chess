@@ -213,3 +213,12 @@
   (testing "the rook may pass attacked squares"
     (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white #{:O-O :O-O-O}))))
     (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white #{:O-O :O-O-O}))))))
+
+(deftest test-gives-check
+  (testing "check"
+    (is (true? (gives-check? (place-pieces [:K :e1 :r :a1]) :black)))
+    (is (true? (gives-check? (place-pieces [:K :c3 :n :e4]) :black)))
+    (is (true? (gives-check? (place-pieces [:k :h4 :B :e1]) :white))))
+  (testing "no-check"
+    (is (nil? (gives-check? (place-pieces [:K :e1 :r :a2 :r :a3 :q :a4 :n :e5 :b :g7 :q :h8 :q :a8]) :black)))))
+
