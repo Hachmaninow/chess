@@ -51,7 +51,16 @@
     (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (new-game (place-pieces [:N :e2 :N :g2])) (parse-move "Nf4"))))))
 
 (deftest test-call
+  (testing "normal"
+    (is (nil? (:call (play (new-game) "d4 c5 dxc5"))))
+    )
+  (testing "check"
+    (is :check (:call (play (new-game) "d4 c5 dxc5 Qa5")))
+    )
   (testing "fools mate"
     (is :checkmate (:call (play (new-game) "f3 e5 g4 Qh4")))
+    )
+  (testing "fastest statemate"
+    (is :stalemate (:call (play (new-game) "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")))
     )
   )
