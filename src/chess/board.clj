@@ -70,7 +70,6 @@
   "Returns the type of the piece represented by the keyword of the respective white piece (eg. :k -> :K, :K -> :K)."
   (keyword (clojure.string/upper-case (subs (str piece) 1))))
 
-
 ;
 ; attacks
 ;
@@ -89,7 +88,7 @@
   (let [knight-moves [+17 +10 -6 -15 -17 -10 +6 +15]]
     (filter #(and (= (distance % idx) 2) (< % 64) (>= % 0)) (map #(+ idx %) knight-moves))))
 
-(defmethod attacked-indexes :P [board turn idx]
+(defmethod attacked-indexes :P [_ turn idx]
   (let [op (if (= :white turn) + -) s1 (op idx 7) s2 (op idx 9)]
     (vector
       (when (= (distance idx s1) 1) s1)  

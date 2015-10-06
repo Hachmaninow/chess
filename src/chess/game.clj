@@ -2,6 +2,7 @@
   (:require [chess.board :refer :all]
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
+            [criterium.core :refer :all]
             [spyscope.core]))
 
 (defn guess-castling-rights [board]
@@ -20,7 +21,19 @@
             }
     ))
 
-(declare valid-moves)
+(defn king-covered?
+  "Check if the given move applied to the given game covers the king from opponent's checks."
+  [game move]
+  (let [opponent-moves (find-moves (update-board (:board game) move) (opponent (:turn game)))]
+    (not-any? #(or (= (% :capture) :K) (= (% :capture) :k)) opponent-moves))) ; Here the color of the king does not matter, as only the right one will occur anyways.
+
+(defn valid-moves
+  "Find all valid moves in the given game considering check situations."
+  [game]
+  (filter #(king-covered? game %) (find-moves (:board game) (:turn game))))
+
+(defn has-moves? [game]
+  (some #(king-covered? game %) (find-moves (:board game) (:turn game))))
 
 (defn call [has-moves is-checked]
   (cond
@@ -34,20 +47,14 @@
   (let [new-board (update-board (:board game) move)
         new-turn (opponent (:turn game))
         new-game {:board new-board :turn new-turn}
-        has-moves (> (count (valid-moves new-game)) 0)
+        has-moves (has-moves? new-game)
         gives-check (gives-check? new-board (:turn game))]
     (into new-game {:call (call has-moves gives-check)})))
 
-(defn illegal-due-to-check?
-  "Check if the given move applied to the given game leaves the king in check which renders the move illegal."
-  [game move]
-  (let [opponent-moves (find-moves (update-board (:board game) move) (opponent (:turn game)))]
-    (some #(or (= (% :capture) :K) (= (% :capture) :k)) opponent-moves))) ; Here the color of the king does not matter, as only the right one will occur anyways.
-
-(defn valid-moves
-  "Find all valid moves in the given game considering check situations."
-  [game]
-  (remove #(illegal-due-to-check? game %) (find-moves (:board game) (:turn game))))
+;(let [start (System/currentTimeMillis)]
+;  (play (new-game) "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")
+;  (println (- (System/currentTimeMillis) start))
+;  )
 
 (defn select-move [game parsed-move]
   (let [valid-moves (valid-moves game)
@@ -59,10 +66,13 @@
     ))
 
 (defn play-first-move [game parsed-moves]
-  (if (empty? parsed-moves) game (recur (play-move game (select-move game (first parsed-moves))) (rest parsed-moves))))
+  (if (empty? parsed-moves)
+    game
+    (recur (play-move game (select-move game (first parsed-moves))) (rest parsed-moves))))
 
-(defn play [game move-text]
+(defn play
   "For the given game, play the moves contained in the given move-text and return an updated game."
+  [game move-text]
   (play-first-move game (parse-move-text move-text)))
 
-(to-fen-board ((play (new-game) "e4 e5 Nf3 Nf6") :board))
+; (criterium.core/bench (valid-moves (new-game)))

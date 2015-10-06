@@ -51,6 +51,9 @@
     (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (new-game (place-pieces [:N :e2 :N :g2])) (parse-move "Nf4"))))))
 
 (deftest test-call
+  (testing "simple-move"
+    (is (nil? (:call (play (new-game) "d4"))))
+    )
   (testing "normal"
     (is (nil? (:call (play (new-game) "d4 c5 dxc5"))))
     )
