@@ -3,7 +3,9 @@
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
             [criterium.core :refer :all]
-            [spyscope.core]))
+            [spyscope.core]
+            [taoensso.timbre.profiling]
+            ))
 
 (defn guess-castling-rights [board]
   {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :0-0)
@@ -24,13 +26,17 @@
 (defn king-covered?
   "Check if the given move applied to the given game covers the king from opponent's checks."
   [game move]
-  (let [opponent-moves (find-moves (update-board (:board game) move) (opponent (:turn game)))]
-    (not-any? #(or (= (% :capture) :K) (= (% :capture) :k)) opponent-moves))) ; Here the color of the king does not matter, as only the right one will occur anyways.
+  (let [new-board (update-board (:board game) move)
+        kings-pos (find-piece new-board(colored-piece (:turn game) :K))]
+    (not (under-attack? new-board kings-pos (opponent (:turn game))))
+
+    )
+  )
 
 (defn valid-moves
   "Find all valid moves in the given game considering check situations."
   [game]
-  (filter #(king-covered? game %) (find-moves (:board game) (:turn game))))
+  (filter #(king-covered? game %) (taoensso.timbre.profiling/p :find-moves (find-moves (:board game) (:turn game)))))
 
 (defn has-moves? [game]
   (some #(king-covered? game %) (find-moves (:board game) (:turn game))))
@@ -51,11 +57,6 @@
         gives-check (gives-check? new-board (:turn game))]
     (into new-game {:call (call has-moves gives-check)})))
 
-;(let [start (System/currentTimeMillis)]
-;  (play (new-game) "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")
-;  (println (- (System/currentTimeMillis) start))
-;  )
-
 (defn select-move [game parsed-move]
   (let [valid-moves (valid-moves game)
         matching-moves (filter #(matches-parsed-move? parsed-move %) valid-moves)]
@@ -73,6 +74,10 @@
 (defn play
   "For the given game, play the moves contained in the given move-text and return an updated game."
   [game move-text]
-  (play-first-move game (parse-move-text move-text)))
+  (taoensso.timbre.profiling/p :play (play-first-move game (taoensso.timbre.profiling/p :parse (parse-move-text move-text)))))
 
-; (criterium.core/bench (valid-moves (new-game)))
+;(defn game-benchmark []
+;  (play (new-game) "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")
+;  )
+
+;(taoensso.timbre.profiling/profile :info :Arithmetic (dotimes [n 10] (game-benchmark)))

@@ -9,6 +9,19 @@
   (is (= :black (piece-color :p) (piece-color :b) (piece-color :n) (piece-color :r) (piece-color :q) (piece-color :k)))
   (is (nil? (piece-color nil))))
 
+(deftest test-piece-type
+  (is (= :K (piece-type :k)))
+  (is (= :K (piece-type :K)))
+  (is (= :P (piece-type :p)))
+  (is (nil? (piece-type nil))))
+
+(deftest test-colored-piece
+  (is (= :K (colored-piece :white :K)))
+  (is (= :n (colored-piece :black :N)))
+  (is (= :k (colored-piece :black :K)))
+  (is (= :p (colored-piece :black :P)))
+  (is (nil? (colored-piece :black nil))))
+
 (deftest test-opponent
   (is (= :black (opponent :white)))
   (is (= :white (opponent :black))))
@@ -59,6 +72,11 @@
   (is (= '(4 5 6) (indexes-between (to-idx :g1) (to-idx :e1))))
   (is (= '(5 6 7) (indexes-between (to-idx :h1) (to-idx :f1)))))
 
+(deftest test-find-piece
+  (is (= 4 (find-piece init-board :K)))
+  (is (= 59 (find-piece init-board :q)))
+  (is (= 56 (find-piece init-board :r))))
+
 (deftest test-init-board
   (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] init-board)))
 
@@ -78,7 +96,7 @@
     ))
 
 (defn direction-square-vector [square direction]
-  (map to-sqr (direction-vector (to-idx square) 7 direction)))
+  (map to-sqr (direction-vector-internal (to-idx square) 7 direction)))
 
 (deftest test-direction-vector
   (testing "north-direction"
@@ -222,3 +240,45 @@
   (testing "no-check"
     (is (nil? (gives-check? (place-pieces [:K :e1 :r :a2 :r :a3 :q :a4 :n :e5 :b :g7 :q :h8 :q :a8]) :black)))))
 
+
+(deftest test-under-attack?
+  (testing "unblocked-queen"
+    (is (under-attack? (place-pieces [:Q :e1]) (to-idx :e8) :white))
+    (is (under-attack? (place-pieces [:q :e1]) (to-idx :h4) :black))
+    (is (under-attack? (place-pieces [:Q :e1]) (to-idx :f2) :white))
+    (is (under-attack? (place-pieces [:Q :b4]) (to-idx :a5) :white))
+    (is (false? (under-attack? (place-pieces [:Q :d1]) (to-idx :e8) :white)))
+    (is (false? (under-attack? (place-pieces [:Q :d1]) (to-idx :a5) :white)))
+  )
+  (testing "blocked-queen"
+    (is (false? (under-attack? (place-pieces [:Q :e1 :B :e6]) (to-idx :e8) :white)))
+    (is (false? (under-attack? (place-pieces [:Q :e1 :N :g3]) (to-idx :h4) :white)))
+  )
+  (testing "unblocked-rook"
+    (is (under-attack? (place-pieces [:R :e1]) (to-idx :e8) :white))
+    (is (under-attack? (place-pieces [:R :b2]) (to-idx :f2) :white))
+    (is (false? (under-attack? (place-pieces [:R :f7]) (to-idx :e8) :white)))
+  )
+  (testing "blocked-rook"
+    (is (false? (under-attack? (place-pieces [:R :e1 :B :e6]) (to-idx :e8) :white)))
+  )
+  (testing "unblocked-bishop"
+    (is (under-attack? (place-pieces [:B :e1]) (to-idx :h4) :white))
+    (is (under-attack? (place-pieces [:b :e1]) (to-idx :f2) :black))
+    (is (false? (under-attack? (place-pieces [:B :d1]) (to-idx :a5) :white)))
+    )
+  (testing "blocked-bishop"
+    (is (false? (under-attack? (place-pieces [:B :e1 :b :b4]) (to-idx :a5) :white)))
+    (is (false? (under-attack? (place-pieces [:b :e1 :N :g3]) (to-idx :h4) :black)))
+    )
+  (testing "king"
+    (is (under-attack? (place-pieces [:K :b4]) (to-idx :a5) :white))
+    (is (false? (under-attack? (place-pieces [:K :a4]) (to-idx :h4) :white)))
+    )
+  (testing "knight"
+    (is (under-attack? (place-pieces [:N :e4]) (to-idx :f2) :white))
+    (is (under-attack? (place-pieces [:n :c7]) (to-idx :a8) :black))
+    (is (false? (under-attack? (place-pieces [:N :a4]) (to-idx :c6) :white)))
+    (is (false? (under-attack? (place-pieces [:N :a4]) (to-idx :h6) :white)))
+    )
+  )

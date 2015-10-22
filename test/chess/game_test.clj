@@ -28,8 +28,7 @@
     (is (= [{:piece :B, :from (to-idx :g7), :to (to-idx :a1), :capture :r}] (valid-moves (new-game (place-pieces [:K :a8 :B :g7 :r :a1 :r :b1])))))
     (is (= [{:piece :K, :from (to-idx :a8), :to (to-idx :b8), :capture :q}] (valid-moves (new-game (place-pieces [:K :a8 :q :b8]))))))
   (testing "no valid moves"
-    (is (= [] (valid-moves (new-game (place-pieces [:K :a8 :q :b6])))))
-   ))
+    (is (= [] (valid-moves (new-game (place-pieces [:K :a8 :q :b6])))))))
 
 (deftest test-play-move
   (testing "make-move updates piece positions"
