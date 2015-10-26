@@ -3,7 +3,18 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.6.0"] [instaparse "1.4.1"] [spyscope "0.1.5"] [criterium "0.4.3"] [com.taoensso/timbre "4.1.4"]]
-  :main ^:skip-aot chess.game
+  :dependencies [
+                 [org.clojure/clojure "1.6.0"]
+                 [instaparse "1.4.1"]
+                 [spyscope "0.1.5"]
+                 [criterium "0.4.3"]
+                 [com.taoensso/timbre "4.1.4"]
+                 [ring/ring-core "1.4.0"]
+                 [ring/ring-jetty-adapter "1.4.0"]
+                 [compojure "1.4.0"]
+                 [enlive "1.1.6"]
+                 ]
+  :plugins [[lein-ring "0.9.7"]]
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}}
+  :ring {:handler chess.web/app})
