@@ -13,6 +13,7 @@
                  [ring/ring-jetty-adapter "1.4.0"]
                  [compojure "1.4.0"]
                  [enlive "1.1.6"]
+                 [me.raynes/fs "1.4.6"]
                  ]
   :plugins [[lein-ring "0.9.7"]]
   :target-path "target/%s"
