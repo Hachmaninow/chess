@@ -5,10 +5,10 @@
             [chess.fen :refer :all]
             [chess.game :refer :all]))
 
-(deftest test-guess-castling-rights
-  (is (= {:white #{:0-0 :0-0-0} :black #{:0-0 :0-0-0}} (guess-castling-rights init-board)))
-  (is (= {:white #{:0-0-0} :black #{:0-0}} (guess-castling-rights (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
-  (is (= {:white #{} :black #{}} (guess-castling-rights (place-pieces empty-board [:K :e2 :R :a1])))))
+(deftest test-deduce-castling-availability
+  (is (= #{:K :Q :k :q} (deduce-castling-availability init-board)))
+  (is (= #{:Q :k} (deduce-castling-availability (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
+  (is (= #{} (deduce-castling-availability (place-pieces empty-board [:K :e2 :R :a1])))))
 
 (deftest test-new-game
   (is (= init-board ((new-game) :board)))
@@ -17,7 +17,7 @@
 (defn play-move-on-board [piece-positions move]
   "Setup a board with the given piece-positions, then make the given move and return a FEN-representation of the board."
   (let [game (new-game (place-pieces piece-positions))]
-    (to-fen-board ((play-move game move) :board))))
+    (board->fen (:board (play-move game move)))))
 
 (deftest test-valid-moves
   (testing "keeps the king out of check"

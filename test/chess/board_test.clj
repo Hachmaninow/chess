@@ -82,17 +82,17 @@
 
 (deftest test-place-pieces
   (testing "single-piece"
-    (is (= "8/8/8/8/8/8/8/4K3" (to-fen-board (place-pieces [:K :e1])))))
+    (is (= "8/8/8/8/8/8/8/4K3" (board->fen (place-pieces [:K :e1])))))
   (testing "simple-position"
-    (is (= "2k5/3r4/8/3n4/8/8/6Q1/6K1" (to-fen-board (place-pieces [:K :g1 :Q :g2 :k :c8 :r :d7 :n :d5])))))
+    (is (= "2k5/3r4/8/3n4/8/8/6Q1/6K1" (board->fen (place-pieces [:K :g1 :Q :g2 :k :c8 :r :d7 :n :d5])))))
   (testing "removing-pieces"
-    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (to-fen-board (place-pieces init-board [nil :e2 nil :f2])))))
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (board->fen (place-pieces init-board [nil :e2 nil :f2])))))
   (testing "removing-not-existing-pieces"
-    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (to-fen-board (place-pieces init-board [nil :e4])))))
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (board->fen (place-pieces init-board [nil :e4])))))
   (testing "works with indexes as well"
-    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (to-fen-board (place-pieces init-board [nil (to-idx :e2) nil (to-idx :f2)])))))
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (board->fen (place-pieces init-board [nil (to-idx :e2) nil (to-idx :f2)])))))
   (testing "make castling"
-    (is (= "8/8/8/8/8/8/8/2KR4" (to-fen-board (place-pieces (place-pieces [:K (to-idx :e1) :R (to-idx :a1)]) [nil 4 :K 2 nil 0 :R 3]))))
+    (is (= "8/8/8/8/8/8/8/2KR4" (board->fen (place-pieces (place-pieces [:K (to-idx :e1) :R (to-idx :a1)]) [nil 4 :K 2 nil 0 :R 3]))))
     ))
 
 (defn direction-square-vector [square direction]

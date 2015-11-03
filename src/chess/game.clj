@@ -7,31 +7,28 @@
             [taoensso.timbre.profiling]
             ))
 
-(defn guess-castling-rights [board]
-  {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :0-0)
-                             (when (and (= :K (lookup board :e1)) (= :R (lookup board :a1))) :0-0-0)]))
-   :black (set (remove nil? [(when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :0-0)
-                             (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :0-0-0)]))})
-
+(defn deduce-castling-availability [board]
+  (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :K)
+                     (when (and (= :K (lookup board :e1)) (= :R (lookup board :a1))) :Q)
+                     (when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :k)
+                     (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :q)])))
 (defn new-game
   ([] (new-game init-board))
   ([board] {
-            :board           board
-            :turn            :white
-            :move-no         1
-            :castling-rights (guess-castling-rights board)
-            }
-    ))
+            :board board
+            :turn :white
+            :move-no 1
+            :castling-availability (deduce-castling-availability board)
+            :en-passant-target-square nil
+            :fifty-rule-halfmove-clock 0
+           }))
 
 (defn king-covered?
   "Check if the given move applied to the given game covers the king from opponent's checks."
   [game move]
   (let [new-board (update-board (:board game) move)
         kings-pos (find-piece new-board(colored-piece (:turn game) :K))]
-    (not (under-attack? new-board kings-pos (opponent (:turn game))))
-
-    )
-  )
+    (not (under-attack? new-board kings-pos (opponent (:turn game))))))
 
 (defn valid-moves
   "Find all valid moves in the given game considering check situations."
