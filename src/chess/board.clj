@@ -173,13 +173,13 @@
            :O-O   {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
            :O-O-O {:piece :k :from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
 
-(defn- check-castling [board turn [castling-type rules]]
-  (let [kings-route (set (indexes-between (:from rules) (:to rules))) ; all the squares the king passes and which must not be under attack
-        passage (filter #(not= (:rook-from rules ) %) (indexes-between (:rook-from rules) (:rook-to rules)))] ; all squares between the king and the rook, which must be unoccupied
+(defn- check-castling [board turn [castling-type {:keys [from to rook-from rook-to] :as rules}]]
+  (let [kings-route (set (indexes-between from to)) ; all the squares the king passes and which must not be under attack
+        passage (filter #(not= rook-from %) (indexes-between rook-from rook-to))] ; all squares between the king and the rook, which must be unoccupied
     (when
       (and
-        (is-piece? board (:from rules) turn :K)
-        (is-piece? board (:rook-from rules) turn :R)
+        (is-piece? board from turn :K)
+        (is-piece? board rook-from turn :R)
         (every? (partial empty-square? board) passage)
         (not-any? #(under-attack? board % (opponent turn)) kings-route))
       (assoc rules :castling castling-type))))
@@ -203,7 +203,7 @@
 (defn gives-check?
   "Check if the given player gives check to the opponent's king on the current board."
   [board turn]
-  (some #(or (= (% :capture) :K) (= (% :capture) :k)) (find-moves board turn))) ; Here the color of the king does not matter, as only the right one will occur anyways.
+  (some #(or (= (:capture %) :K) (= (:capture %) :k)) (find-moves board turn))) ; Here the color of the king does not matter, as only the right one will occur anyways.
 
 
 ;

@@ -13,24 +13,23 @@
    :black (set (remove nil? [(when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :O-O)
                              (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :O-O-O)]))})
 
-(defn update-castling-availability [castling-availability new-board]
-  (let [new-castling-availability (deduce-castling-availability new-board)]
-    {
-      :white (intersection (:white castling-availability) (:white new-castling-availability))
-      :black (intersection (:black castling-availability) (:black new-castling-availability))
-    }))
+(defn intersect-castling-availability [castling-availability new-castling-availability]
+  {
+   :white (intersection (:white castling-availability) (:white new-castling-availability))
+   :black (intersection (:black castling-availability) (:black new-castling-availability))
+   })
 
 (defn new-game
   ([] (new-game init-board))
   ([board options] (merge (new-game board) options))
   ([board] {
-            :board board
-            :turn :white
-            :move-no 1
-            :castling-availability (deduce-castling-availability board)
-            :en-passant-target-square nil
+            :board                     board
+            :turn                      :white
+            :move-no                   1
+            :castling-availability     (deduce-castling-availability board)
+            :en-passant-target-square  nil
             :fifty-rule-halfmove-clock 0
-           }))
+            }))
 
 (defn king-covered?
   "Check if the given move applied to the given game covers the king from opponent's checks."
@@ -64,16 +63,17 @@
 
 (defn play-move
   "Update the given game by playing the given move."
-  [game move]
-  (let [new-board (update-board (:board game) move)
-        new-turn (opponent (:turn game))
-        new-game {:board new-board :turn new-turn }
+  [{:keys [board turn castling-availability]} move]
+  (let [new-board (update-board board move)
+        new-castling-availability (deduce-castling-availability new-board)
+        new-game {:board new-board :turn (opponent turn)}
         has-moves (has-moves? new-game)
-        gives-check (gives-check? new-board (:turn game))]
-    (into new-game {
-                    :call                  (call has-moves gives-check)
-                    :castling-availability (update-castling-availability (:castling-availability game) new-board)
-                    })))
+        gives-check (gives-check? new-board turn)]
+    (into new-game
+          {
+           :call                  (call has-moves gives-check)
+           :castling-availability (intersect-castling-availability castling-availability new-castling-availability)
+           })))
 
 (defn select-move [game parsed-move]
   (let [valid-moves (valid-moves game)
