@@ -1,19 +1,28 @@
 (ns chess.game
-  (:require [chess.board :refer :all]
+  (:require [clojure.set :refer [intersection]]
+            [chess.board :refer :all]
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
             [criterium.core :refer :all]
             [spyscope.core]
-            [taoensso.timbre.profiling]
-            ))
+            [taoensso.timbre.profiling]))
 
 (defn deduce-castling-availability [board]
-  (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :K)
-                     (when (and (= :K (lookup board :e1)) (= :R (lookup board :a1))) :Q)
-                     (when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :k)
-                     (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :q)])))
+  {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :O-O)
+                             (when (and (= :K (lookup board :e1)) (= :R (lookup board :a1))) :O-O-O)]))
+   :black (set (remove nil? [(when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :O-O)
+                             (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :O-O-O)]))})
+
+(defn update-castling-availability [castling-availability new-board]
+  (let [new-castling-availability (deduce-castling-availability new-board)]
+    {
+      :white (intersection (:white castling-availability) (:white new-castling-availability))
+      :black (intersection (:black castling-availability) (:black new-castling-availability))
+    }))
+
 (defn new-game
   ([] (new-game init-board))
+  ([board options] (merge (new-game board) options))
   ([board] {
             :board board
             :turn :white
@@ -25,20 +34,29 @@
 
 (defn king-covered?
   "Check if the given move applied to the given game covers the king from opponent's checks."
-  [game move]
-  (let [new-board (update-board (:board game) move)
-        kings-pos (find-piece new-board(colored-piece (:turn game) :K))]
-    (not (under-attack? new-board kings-pos (opponent (:turn game))))))
+  [{:keys [board turn]} move]
+  (let [new-board (update-board board move)
+        kings-pos (find-piece new-board (colored-piece turn :K))]
+    (not (under-attack? new-board kings-pos (opponent turn)))))
+
+(defn castling-available?
+  "Check if in the given game with specific castling-availability a given castling is valid."
+  [{:keys [castling-availability turn]} {:keys [castling]}]
+  (castling (turn castling-availability)))
 
 (defn valid-moves
   "Find all valid moves in the given game considering check situations."
-  [game]
-  (filter #(king-covered? game %) (taoensso.timbre.profiling/p :find-moves (find-moves (:board game) (:turn game)))))
+  [{:keys [board turn] :as game}]
+  (concat
+    (filter #(king-covered? game %) (find-moves board turn))
+    (filter #(castling-available? game %) (find-castlings board turn))))
 
-(defn has-moves? [game]
-  (some #(king-covered? game %) (find-moves (:board game) (:turn game))))
+(defn has-moves?
+  [{:keys [board turn] :as game}]
+  (some #(king-covered? game %) (find-moves board turn)))
 
-(defn call [has-moves is-checked]
+(defn call
+  [has-moves is-checked]
   (cond
     (and has-moves is-checked) :check
     (and (not has-moves) is-checked) :checkmate
@@ -49,10 +67,13 @@
   [game move]
   (let [new-board (update-board (:board game) move)
         new-turn (opponent (:turn game))
-        new-game {:board new-board :turn new-turn}
+        new-game {:board new-board :turn new-turn }
         has-moves (has-moves? new-game)
         gives-check (gives-check? new-board (:turn game))]
-    (into new-game {:call (call has-moves gives-check)})))
+    (into new-game {
+                    :call                  (call has-moves gives-check)
+                    :castling-availability (update-castling-availability (:castling-availability game) new-board)
+                    })))
 
 (defn select-move [game parsed-move]
   (let [valid-moves (valid-moves game)

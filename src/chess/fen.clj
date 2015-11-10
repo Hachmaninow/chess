@@ -29,8 +29,16 @@
 (defn- digits->space [rank]
   (flatten (map char->piece rank)))
 
+(def fen-castling-availability-map {:white {\K :O-O \Q :O-O-O} :black {\k :O-O \q :O-O-O}})
+
+(defn parse-castling-availability [castling-availability-str]
+  {
+   :white (set (remove nil? (map (:white fen-castling-availability-map) castling-availability-str)))
+   :black (set (remove nil? (map (:black fen-castling-availability-map) castling-availability-str)))
+   })
+
 (defn fen->board [fen]
-  (mapcat #(digits->space %) (reverse (clojure.string/split fen #"/"))))
+          (mapcat #(digits->space %) (reverse (clojure.string/split fen #"/"))))
 
 
 ; fen to game
@@ -40,8 +48,8 @@
     {
      :board                     (fen->board (get parts 0))
      :turn                      (if (= (get parts 1) "w") :white :black)
-     :castling-availability     (set (map #(keyword (str %)) (get parts 2)))
+     :castling-availability     (parse-castling-availability (get parts 2))
      :en-passant-target-square  (if (= (get parts 3) "-") nil (keyword (get parts 3)))
      :fifty-rule-halfmove-clock (read-string (get parts 4))
      :move-no                   (read-string (get parts 5))
-    }))
+     }))

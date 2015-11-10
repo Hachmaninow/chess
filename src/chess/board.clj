@@ -39,11 +39,8 @@
                       :N [:b1 :g1] :n [:b8 :g8] :B [:c1 :f1] :b [:c8 :f8]
                       :P [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2] :p [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]})
 
-(defn pawn? [board idx turn]
-  (= (board idx) (colored-piece turn :P)))
-
-(defn knight? [board idx turn]
-  (= (board idx) (colored-piece turn :N)))
+(defn is-piece? [board idx turn piece-type ]
+  (= (board idx) (colored-piece turn piece-type)))
 
 (defn find-piece [board piece]
   (.indexOf board piece))
@@ -70,7 +67,7 @@
 (defn direction-vector-internal [index max-reach direction]
   (let [step-size (direction-steps direction) limit (if (pos? step-size) 64 -1)]
     (take max-reach
-      (for [next (range (+ index step-size) limit step-size) :while (= 1 (distance next (- next step-size)))] next))))
+          (for [next (range (+ index step-size) limit step-size) :while (= 1 (distance next (- next step-size)))] next))))
 
 (def direction-vector (memoize direction-vector-internal))
 
@@ -109,12 +106,9 @@
       (when (= (distance idx s1) 1) s1)
       (when (= (distance idx s2) 1) s2))))
 
-(defn all-attacked-indexes [board turn]
-  "Return a set of all indexes that are being attacked by at at least one piece on the specified board by the specified player."
-  (mapcat #(attacked-indexes board turn %) (occupied-indexes board turn)))
-
-(defn find-attacking-moves [board turn idx]
+(defn find-attacking-moves
   "Return all attacking moves from a given index of player on a board with given occupied indexes."
+  [board turn idx]
   (let [piece (get board idx) target-indexes (attacked-indexes board turn idx)]
     (map #(when % {:piece piece :from idx :to % :capture (board %)}) target-indexes)))
 
@@ -137,47 +131,6 @@
 
 
 ;
-; castlings
-;
-
-(def castlings
-  {:white {:O-O   {:piece :K :from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
-           :O-O-O {:piece :K :from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1)}}
-   :black {:O-O   {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
-           :O-O-O {:piece :k :from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
-
-(defn check-castling [board turn castling-rights [castling-type rules]]
-  (let [attacked-indexes-by-opponent (all-attacked-indexes board (opponent turn))
-        kings-route (set (indexes-between (rules :from) (rules :to))) ; all the squares the king passes and which must not be under attack
-        passage (filter #(not= (rules :rook-from) %) (indexes-between (rules :rook-from) (rules :rook-to)))] ; all squares between the king and the rook, which must be unoccupied
-    (when
-      (and
-        (contains? castling-rights castling-type)
-        (every? (partial empty-square? board) passage)
-        (empty? (clojure.set/intersection (set attacked-indexes-by-opponent) kings-route)))
-      (assoc rules :castling castling-type))))
-
-(defn find-castlings [board turn castling-rights]
-  (remove nil? (map (partial check-castling board turn castling-rights) (castlings turn))))
-
-
-;
-; find all possible moves on the board
-;
-
-(defn find-moves [board turn]
-  "Find all possible moves on the given board and player without considering check situation."
-  (let [owned-indexes (occupied-indexes board turn)]
-    (remove #(= turn (piece-color (% :capture)))            ; remove all moves to squares already owned by the player
-            (remove nil?
-                    (mapcat #(if (pawn? board % turn) (find-pawn-moves board turn %) (find-attacking-moves board turn %)) owned-indexes)))))
-
-(defn gives-check? [board turn]
-  "Check if the given player gives check to the opponent's king on the current board."
-  (some #(or (= (% :capture) :K) (= (% :capture) :k)) (find-moves board turn))) ; Here the color of the king does not matter, as only the right one will occur anyways.
-
-
-;
 ; under-attack?
 ;
 
@@ -190,13 +143,13 @@
 (defn attacked-by-knight? [board idx turn]
   (first
     (filter
-      #(and (= (distance % idx) 2) (still-on-board? %) (knight? board % turn)) (map #(+ idx %) knight-steps))))
+      #(and (= (distance % idx) 2) (still-on-board? %) (is-piece? board % turn :N)) (map #(+ idx %) knight-steps))))
 
 (defn attacked-by-pawn? [board idx turn]
-  (let [op (if (= :white turn) + -) s1 (op idx 7) s2 (op idx 9)]
+  (let [op (if (= :white turn) - +) s1 (op idx 7) s2 (op idx 9)]
     (or
-      (and (= (distance idx s1) 1) (still-on-board? s1) (pawn? board s1 turn))
-      (and (= (distance idx s2) 1) (still-on-board? s2) (pawn? board s2 turn)))))
+      (and (= (distance idx s1) 1) (still-on-board? s1) (is-piece? board s1 turn :P))
+      (and (= (distance idx s2) 1) (still-on-board? s2) (is-piece? board s2 turn :P)))))
 
 (defn under-attack? [board idx turn]
   (or
@@ -206,6 +159,51 @@
     (attacked-by-knight? board idx turn)
     (attacked-by-pawn? board idx turn)
     ))
+
+
+;
+; castlings
+;
+
+(def castlings
+  {:white {
+           :O-O   {:piece :K :from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
+           :O-O-O {:piece :K :from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1)}}
+   :black {
+           :O-O   {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
+           :O-O-O {:piece :k :from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
+
+(defn- check-castling [board turn [castling-type rules]]
+  (let [kings-route (set (indexes-between (:from rules) (:to rules))) ; all the squares the king passes and which must not be under attack
+        passage (filter #(not= (:rook-from rules ) %) (indexes-between (:rook-from rules) (:rook-to rules)))] ; all squares between the king and the rook, which must be unoccupied
+    (when
+      (and
+        (is-piece? board (:from rules) turn :K)
+        (is-piece? board (:rook-from rules) turn :R)
+        (every? (partial empty-square? board) passage)
+        (not-any? #(under-attack? board % (opponent turn)) kings-route))
+      (assoc rules :castling castling-type))))
+
+(defn find-castlings [board turn]
+  (remove nil? (map (partial check-castling board turn) (castlings turn))))
+
+
+;
+; find all possible moves on the board
+;
+
+(defn find-moves
+  "Find all possible moves on the given board and player without considering check situation."
+  [board turn]
+  (let [owned-indexes (occupied-indexes board turn)]
+    (remove #(= turn (piece-color (% :capture)))            ; remove all moves to squares already owned by the player
+            (remove nil?
+                    (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn %) (find-attacking-moves board turn %)) owned-indexes)))))
+
+(defn gives-check?
+  "Check if the given player gives check to the opponent's king on the current board."
+  [board turn]
+  (some #(or (= (% :capture) :K) (= (% :capture) :k)) (find-moves board turn))) ; Here the color of the king does not matter, as only the right one will occur anyways.
 
 
 ;

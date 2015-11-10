@@ -6,13 +6,19 @@
             [chess.game :refer :all]))
 
 (deftest test-deduce-castling-availability
-  (is (= #{:K :Q :k :q} (deduce-castling-availability init-board)))
-  (is (= #{:Q :k} (deduce-castling-availability (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
-  (is (= #{} (deduce-castling-availability (place-pieces empty-board [:K :e2 :R :a1])))))
+  (is (= {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}} (deduce-castling-availability init-board)))
+  (is (= {:white #{:O-O-O}, :black #{:O-O}} (deduce-castling-availability (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
+  (is (= {:white #{}, :black #{}} (deduce-castling-availability (place-pieces empty-board [:K :e2 :R :a1])))))
 
 (deftest test-new-game
-  (is (= init-board ((new-game) :board)))
-  (is (= :white ((new-game) :turn))))
+  (testing "parameter-less version"
+    (is (= init-board (:board (new-game))))
+    (is (= :white (:turn (new-game)))))
+  (testing "explicit board"
+    (is (= "8/3k4/8/8/8/8/8/6K1" (board->fen (:board (new-game (place-pieces [:K :g1 :k :d7])))))))
+  (testing "options"
+    (is (= :black (:turn (new-game (place-pieces [:K :e1 :R :a1 :R :h1]) {:turn :black}))))
+    (is (= {:white #{:O-O}} (:castling-availability (new-game (place-pieces [:K :e1 :R :a1 :R :h1]) {:castling-availability {:white #{:O-O}}}))))))
 
 (defn play-move-on-board [piece-positions move]
   "Setup a board with the given piece-positions, then make the given move and return a FEN-representation of the board."
@@ -27,6 +33,13 @@
   (testing "captures a piece to prevent check"
     (is (= [{:piece :B, :from (to-idx :g7), :to (to-idx :a1), :capture :r}] (valid-moves (new-game (place-pieces [:K :a8 :B :g7 :r :a1 :r :b1])))))
     (is (= [{:piece :K, :from (to-idx :a8), :to (to-idx :b8), :capture :q}] (valid-moves (new-game (place-pieces [:K :a8 :q :b8]))))))
+  (testing "castlings with availability"
+    (is (= [{:castling :O-O-O, :piece :K, :from 4, :to 2, :rook-from 0, :rook-to 3}] (filter :castling (valid-moves (new-game (place-pieces [:K :e1 :R :a1]))))))
+    (is (= [{:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5}] (filter :castling (valid-moves (new-game (place-pieces [:K :e1 :R :h1])))))))
+  (testing "castling without availability"
+    (is (= [] (filter :castling (valid-moves (new-game (place-pieces [:K :e1 :R :a1 :R :h1]) {:castling-availability {:white #{}}})))))
+    (is (= [{:castling :O-O-O, :piece :k, :from 60, :to 58, :rook-from 56, :rook-to 59}] (filter :castling (valid-moves (new-game (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O}}})))))
+    (is (= 2 (count (filter :castling (valid-moves (new-game (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O :O-O}}})))))))
   (testing "no valid moves"
     (is (= [] (valid-moves (new-game (place-pieces [:K :a8 :q :b6])))))))
 
@@ -37,7 +50,15 @@
   (testing "make-castling"
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1 :R :a1] {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :castling :O-O-O})))
-  )
+  (testing "updates castling-availability after own kings- or rook-move"
+    (let [game (new-game (place-pieces [:K :e1 :R :a1 :R :h1]))]
+      (is (= #{} (get-in (play-move game {:from (to-idx :e1) :to (to-idx :d1)}) [:castling-availability :white])))
+      (is (= #{:O-O} (get-in (play-move game {:from (to-idx :a1) :to (to-idx :b1)}) [:castling-availability :white])))
+      (is (= #{:O-O-O} (get-in (play-move game {:from (to-idx :h1) :to (to-idx :h8)}) [:castling-availability :white])))))
+  (testing "updates castling-availability after opponent's capture"
+    (let [game (new-game (place-pieces [:K :e1 :R :a1 :R :h1 :b :b7 :q :a8]) {:turn :black})]
+      (is (= #{:O-O} (get-in (play-move game {:from (to-idx :a8) :to (to-idx :a1) :capture :R}) [:castling-availability :white])))
+      (is (= #{:O-O-O} (get-in (play-move game {:from (to-idx :b7) :to (to-idx :h1) :capture :R}) [:castling-availability :white]))))))
 
 (deftest test-select-move
   (testing "unambiguous valid move"

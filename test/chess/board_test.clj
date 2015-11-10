@@ -20,6 +20,7 @@
   (is (= :n (colored-piece :black :N)))
   (is (= :k (colored-piece :black :K)))
   (is (= :p (colored-piece :black :P)))
+  (is (= :r (colored-piece :black :R)))
   (is (nil? (colored-piece :black nil))))
 
 (deftest test-opponent
@@ -72,10 +73,11 @@
   (is (= '(4 5 6) (indexes-between (to-idx :g1) (to-idx :e1))))
   (is (= '(5 6 7) (indexes-between (to-idx :h1) (to-idx :f1)))))
 
-(deftest test-find-piece
-  (is (= 4 (find-piece init-board :K)))
-  (is (= 59 (find-piece init-board :q)))
-  (is (= 56 (find-piece init-board :r))))
+(deftest test-is-piece?
+  (is (true? (is-piece? init-board (to-idx :h8) :black :R)))
+  (is (true? (is-piece? init-board (to-idx :c8) :black :B)))
+  (is (true? (is-piece? init-board (to-idx :g1) :white :N)))
+  (is (false? (is-piece? init-board (to-idx :g1) :black :N))))
 
 (deftest test-init-board
   (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] init-board)))
@@ -165,7 +167,7 @@
   (testing "piece capture"
     (is (= {:piece :N :from 63 :to 46 :capture :p} (first (find-moves (place-pieces [:N :h8 :P :f7 :p :g6 :r :f8]) :white)))))
   (testing "castlings"
-    (is (= {:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5} (first (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O})))))
+    (is (= {:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5} (first (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white)))))
   )
 
 (deftest test-find-moves-on-empty-board
@@ -212,25 +214,64 @@
     (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))
     (is (= #{:d6 :f6 :e6 :e5} (accessible-squares :p :e7 [:N :d6 :Q :f6])))))
 
+(deftest test-under-attack?
+  (testing "unblocked-queen"
+    (is (under-attack? (place-pieces [:Q :e1]) (to-idx :e8) :white))
+    (is (under-attack? (place-pieces [:q :e1]) (to-idx :h4) :black))
+    (is (under-attack? (place-pieces [:Q :e1]) (to-idx :f2) :white))
+    (is (under-attack? (place-pieces [:Q :b4]) (to-idx :a5) :white))
+    (is (false? (under-attack? (place-pieces [:Q :d1]) (to-idx :e8) :white)))
+    (is (false? (under-attack? (place-pieces [:Q :d1]) (to-idx :a5) :white))))
+  (testing "blocked-queen"
+    (is (false? (under-attack? (place-pieces [:Q :e1 :B :e6]) (to-idx :e8) :white)))
+    (is (false? (under-attack? (place-pieces [:Q :e1 :N :g3]) (to-idx :h4) :white))))
+  (testing "unblocked-rook"
+    (is (under-attack? (place-pieces [:R :e1]) (to-idx :e8) :white))
+    (is (under-attack? (place-pieces [:R :b2]) (to-idx :f2) :white))
+    (is (false? (under-attack? (place-pieces [:R :f7]) (to-idx :e8) :white))))
+  (testing "blocked-rook"
+    (is (false? (under-attack? (place-pieces [:R :e1 :B :e6]) (to-idx :e8) :white))))
+  (testing "unblocked-bishop"
+    (is (under-attack? (place-pieces [:B :e1]) (to-idx :h4) :white))
+    (is (under-attack? (place-pieces [:b :e1]) (to-idx :f2) :black))
+    (is (false? (under-attack? (place-pieces [:B :d1]) (to-idx :a5) :white))))
+  (testing "blocked-bishop"
+    (is (false? (under-attack? (place-pieces [:B :e1 :b :b4]) (to-idx :a5) :white)))
+    (is (false? (under-attack? (place-pieces [:b :e1 :N :g3]) (to-idx :h4) :black))))
+  (testing "king"
+    (is (under-attack? (place-pieces [:K :b4]) (to-idx :a5) :white))
+    (is (false? (under-attack? (place-pieces [:K :a4]) (to-idx :h4) :white))))
+  (testing "knight"
+    (is (under-attack? (place-pieces [:N :e4]) (to-idx :f2) :white))
+    (is (under-attack? (place-pieces [:n :c7]) (to-idx :a8) :black))
+    (is (false? (under-attack? (place-pieces [:N :a4]) (to-idx :c6) :white)))
+    (is (false? (under-attack? (place-pieces [:N :a4]) (to-idx :h6) :white))))
+  (testing "pawn"
+    (is (under-attack? (place-pieces [:P :e7]) (to-idx :f8) :white))
+    (is (under-attack? (place-pieces [:p :a5]) (to-idx :b4) :black))
+    (is (false? (under-attack? (place-pieces [:p :a5]) (to-idx :h4) :black))))
+  )
+
 (deftest test-find-castlings
   (testing "passage is free"
-    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O :O-O-O}))))
-    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8]) :black #{:O-O :O-O-O}))))
-    (is (= '(:O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O}))))
-    (is (= '(:O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O-O})))))
+    (is (= '(:O-O :O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white))))
+    (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1]) :white))))
+    (is (= '(:O-O :O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8]) :black)))))
+
   (testing "passage is occupied with piece"
-    (is (= '() (find-castlings init-board :white #{:O-O :O-O-O})))
-    (is (= '(:O-O-O) (map #(% :castling) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8]) :black #{:O-O :O-O-O}))))
-    (is (= '() (map #(% :castling) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8 :N :b8]) :black #{:O-O :O-O-O})))))
+    (is (= '() (find-castlings init-board :white)))
+    (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8]) :black))))
+    (is (= '() (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8 :N :b8]) :black)))))
+
   (testing "the king may not pass an attacked square during castling"
-    (is (= '(:O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :c8]) :white #{:O-O :O-O-O}))))
-    (is (= '(:O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :d8]) :white #{:O-O :O-O-O}))))
-    (is (= '() (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :p :e2]) :white #{:O-O :O-O-O})))))
+    (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :c8]) :white))))
+    (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :d8]) :white))))
+    (is (= '() (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :p :e2]) :white)))))
   (testing "the king must not be in check"
-    (is (= '() (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :e8]) :white #{:O-O :O-O-O})))))
+    (is (= '() (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :e8]) :white)))))
   (testing "the rook may pass attacked squares"
-    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white #{:O-O :O-O-O}))))
-    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white #{:O-O :O-O-O}))))))
+    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white))))
+    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white))))))
 
 (deftest test-gives-check
   (testing "check"
@@ -240,45 +281,6 @@
   (testing "no-check"
     (is (nil? (gives-check? (place-pieces [:K :e1 :r :a2 :r :a3 :q :a4 :n :e5 :b :g7 :q :h8 :q :a8]) :black)))))
 
-
-(deftest test-under-attack?
-  (testing "unblocked-queen"
-    (is (under-attack? (place-pieces [:Q :e1]) (to-idx :e8) :white))
-    (is (under-attack? (place-pieces [:q :e1]) (to-idx :h4) :black))
-    (is (under-attack? (place-pieces [:Q :e1]) (to-idx :f2) :white))
-    (is (under-attack? (place-pieces [:Q :b4]) (to-idx :a5) :white))
-    (is (false? (under-attack? (place-pieces [:Q :d1]) (to-idx :e8) :white)))
-    (is (false? (under-attack? (place-pieces [:Q :d1]) (to-idx :a5) :white)))
-  )
-  (testing "blocked-queen"
-    (is (false? (under-attack? (place-pieces [:Q :e1 :B :e6]) (to-idx :e8) :white)))
-    (is (false? (under-attack? (place-pieces [:Q :e1 :N :g3]) (to-idx :h4) :white)))
-  )
-  (testing "unblocked-rook"
-    (is (under-attack? (place-pieces [:R :e1]) (to-idx :e8) :white))
-    (is (under-attack? (place-pieces [:R :b2]) (to-idx :f2) :white))
-    (is (false? (under-attack? (place-pieces [:R :f7]) (to-idx :e8) :white)))
-  )
-  (testing "blocked-rook"
-    (is (false? (under-attack? (place-pieces [:R :e1 :B :e6]) (to-idx :e8) :white)))
-  )
-  (testing "unblocked-bishop"
-    (is (under-attack? (place-pieces [:B :e1]) (to-idx :h4) :white))
-    (is (under-attack? (place-pieces [:b :e1]) (to-idx :f2) :black))
-    (is (false? (under-attack? (place-pieces [:B :d1]) (to-idx :a5) :white)))
-    )
-  (testing "blocked-bishop"
-    (is (false? (under-attack? (place-pieces [:B :e1 :b :b4]) (to-idx :a5) :white)))
-    (is (false? (under-attack? (place-pieces [:b :e1 :N :g3]) (to-idx :h4) :black)))
-    )
-  (testing "king"
-    (is (under-attack? (place-pieces [:K :b4]) (to-idx :a5) :white))
-    (is (false? (under-attack? (place-pieces [:K :a4]) (to-idx :h4) :white)))
-    )
-  (testing "knight"
-    (is (under-attack? (place-pieces [:N :e4]) (to-idx :f2) :white))
-    (is (under-attack? (place-pieces [:n :c7]) (to-idx :a8) :black))
-    (is (false? (under-attack? (place-pieces [:N :a4]) (to-idx :c6) :white)))
-    (is (false? (under-attack? (place-pieces [:N :a4]) (to-idx :h6) :white)))
-    )
-  )
+;(testing "passage is free, but no availability"
+;  (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O}))))
+;  (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O-O})))))
