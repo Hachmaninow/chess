@@ -39,7 +39,7 @@
                       :N [:b1 :g1] :n [:b8 :g8] :B [:c1 :f1] :b [:c8 :f8]
                       :P [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2] :p [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]})
 
-(defn is-piece? [board idx turn piece-type ]
+(defn is-piece? [board idx turn piece-type]
   (= (board idx) (colored-piece turn piece-type)))
 
 (defn find-piece [board piece]
@@ -118,16 +118,24 @@
 ;
 
 (defn find-forward-pawn-moves [board turn idx]
-  (let [piece (get board idx) op (if (= turn :white) + -) origin-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
+  (let [piece (get board idx) op (if (= turn :white) + -) second-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
     (vector
       (when (empty-square? board s1) {:piece piece :from idx :to s1}) ; single-step forward
-      (when (and (= (rank idx) origin-rank) (empty-square? board s1) (empty-square? board s2)) {:piece piece :from idx :to s2})))) ; double-step forward
+      (when (and (= (rank idx) second-rank) (empty-square? board s1) (empty-square? board s2)) {:piece piece :from idx :to s2 :ep-info [s1 s2]})))) ; double-step forward
 
 (defn find-capturing-pawn-moves [board turn idx]
-  (filter #(= (piece-color (% :capture)) (opponent turn)) (remove nil? (find-attacking-moves board turn idx))))
+  (filter #(when-let [move %] (= (piece-color (:capture move)) (opponent turn))) (find-attacking-moves board turn idx)))
 
-(defn find-pawn-moves [board turn idx]
-  (concat (find-forward-pawn-moves board turn idx) (find-capturing-pawn-moves board turn idx)))
+(defn find-en-passant-moves [board turn [ep-target ep-capture] idx]
+  (when ep-target
+    (map #(assoc % :ep-capture ep-capture)
+         (filter #(when-let [move %] (= ep-target (:to move))) (find-attacking-moves board turn idx)))))
+
+(defn find-pawn-moves [board turn en-passant-info idx]
+  (concat
+    (find-forward-pawn-moves board turn idx)
+    (find-capturing-pawn-moves board turn idx)
+    (find-en-passant-moves board turn en-passant-info idx)))
 
 
 ;
@@ -174,7 +182,7 @@
            :O-O-O {:piece :k :from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
 
 (defn- check-castling [board turn [castling-type {:keys [from to rook-from rook-to] :as rules}]]
-  (let [kings-route (set (indexes-between from to)) ; all the squares the king passes and which must not be under attack
+  (let [kings-route (set (indexes-between from to))         ; all the squares the king passes and which must not be under attack
         passage (filter #(not= rook-from %) (indexes-between rook-from rook-to))] ; all squares between the king and the rook, which must be unoccupied
     (when
       (and
@@ -194,11 +202,12 @@
 
 (defn find-moves
   "Find all possible moves on the given board and player without considering check situation."
-  [board turn]
-  (let [owned-indexes (occupied-indexes board turn)]
-    (remove #(= turn (piece-color (% :capture)))            ; remove all moves to squares already owned by the player
-            (remove nil?
-                    (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn %) (find-attacking-moves board turn %)) owned-indexes)))))
+  ([board turn] (find-moves board turn nil))
+  ([board turn en-passant-info]
+   (let [owned-indexes (occupied-indexes board turn)]
+     (remove #(= turn (piece-color (% :capture)))           ; remove all moves to squares already owned by the player
+             (remove nil?
+                     (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacking-moves board turn %)) owned-indexes))))))
 
 (defn gives-check?
   "Check if the given player gives check to the opponent's king on the current board."
@@ -210,11 +219,11 @@
 ; update board
 ;
 
-(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to]}]
-  (if (or (= castling :O-O) (= castling :O-O-O))
-    [nil from (board from) to nil rook-from (board rook-from) rook-to]
-    [nil from (board from) to]
-    ))
+(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to :ep-capture]}]
+  (cond
+    castling [nil from (board from) to nil rook-from (board rook-from) rook-to]
+    ep-capture [nil from nil ep-capture (board from) to]
+    :else [nil from (board from) to]))
 
 (defn update-board [board move]
   (place-pieces board (move-to-piece-movements board move)))

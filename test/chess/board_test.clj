@@ -163,7 +163,7 @@
 
 (deftest test-move-structure
   (testing "pawn move"
-    (is (= '({:from 12, :piece :P, :to 20} {:from 12, :piece :P, :to 28}) (find-moves (place-pieces [:P :e2]) :white))))
+    (is (= '({:piece :P :from 12 :to 20} {:piece :P :from 12 :to 28 :ep-info [20 28]}) (find-moves (place-pieces [:P :e2]) :white))))
   (testing "piece capture"
     (is (= {:piece :N :from 63 :to 46 :capture :p} (first (find-moves (place-pieces [:N :h8 :P :f7 :p :g6 :r :f8]) :white)))))
   (testing "castlings"

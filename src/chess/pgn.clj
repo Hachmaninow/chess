@@ -50,7 +50,7 @@
             (when (and to-file to-rank) (fn [move] (= (move :to) (to-idx (keyword (apply str to-file to-rank))))))
             (when piece (fn [move] (= (keyword piece) (piece-type (move :piece))))) ; if a piece is specified it could be either black or white
             (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
-            (when capture (fn [move] (not (nil? (move :capture)))))
+            (when capture (fn [move] (or (move :capture) (move :ep-capture))))
             (when from-file (fn [move] (= (- (int (first from-file)) (int \a)) (file (move :from)))))
             (when from-rank (fn [move] (= (- (int (first from-rank)) (int \1)) (rank (move :from)))))
             )))

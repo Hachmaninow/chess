@@ -23,6 +23,6 @@
     (is (= "r1bq1rk1/1p1nbpp1/2p2n1p/p2p4/3P3B/2NBPN2/PPQ2PPP/R3K2R" (board->fen (:board game))))
     (is (= :white (:turn game)))
     (is (= {:white #{:O-O :O-O-O} :black #{}}  (:castling-availability game)))
-    (is (= :a6 (:en-passant-target-square game)))
+    (is (= :a6 (:ep-info game)))
     (is (= 3 (:fifty-rule-halfmove-clock game)))
     (is (= 11 (:move-no game)))))

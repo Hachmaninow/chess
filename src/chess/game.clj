@@ -27,7 +27,7 @@
             :turn                      :white
             :move-no                   1
             :castling-availability     (deduce-castling-availability board)
-            :en-passant-target-square  nil
+            :ep-info           nil
             :fifty-rule-halfmove-clock 0
             }))
 
@@ -45,9 +45,9 @@
 
 (defn valid-moves
   "Find all valid moves in the given game considering check situations."
-  [{:keys [board turn] :as game}]
+  [{:keys [board turn ep-info] :as game}]
   (concat
-    (filter #(king-covered? game %) (find-moves board turn))
+    (filter #(king-covered? game %) (find-moves board turn ep-info))
     (filter #(castling-available? game %) (find-castlings board turn))))
 
 (defn has-moves?
@@ -73,6 +73,7 @@
           {
            :call                  (call has-moves gives-check)
            :castling-availability (intersect-castling-availability castling-availability new-castling-availability)
+           :ep-info               (:ep-info move)
            })))
 
 (defn select-move [game parsed-move]
