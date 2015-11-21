@@ -45,6 +45,9 @@
     (is (= [] (filter :castling (valid-moves (new-game (place-pieces [:K :e1 :R :a1 :R :h1]) {:castling-availability {:white #{}}})))))
     (is (= [{:castling :O-O-O, :piece :k, :from 60, :to 58, :rook-from 56, :rook-to 59}] (filter :castling (valid-moves (new-game (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O}}})))))
     (is (= 2 (count (filter :castling (valid-moves (new-game (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O :O-O}}})))))))
+  (testing "promotions"
+    (is (= {:piece :P :from 48 :to 56 :promote-to :Q} (first (filter :promote-to (valid-moves (new-game (place-pieces [:P :a7 :N :b8])))))))
+    (is (= {:piece :P :from 49 :to 56 :capture :n :promote-to :Q} (first (filter :promote-to (valid-moves (new-game (place-pieces [:P :b7 :n :a8 :N :b8]))))))))
   (testing "en-passant"
     (is (= [] (valid-moves (new-game (place-pieces [:P :e5 :p :d5 :p :e6])))))
     (is (= [{:piece :P :from 36 :to 43 :capture nil :ep-capture 35}] (valid-moves (new-game (place-pieces [:P :e5 :p :d5 :p :e6]) {:ep-info [(to-idx :d6) (to-idx :d5)]})))))
@@ -53,10 +56,10 @@
 
 
 (deftest test-play-move
-  (testing "make-move updates piece positions"
+  (testing "play-move updates piece positions"
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1 :n :d1] {:from (to-idx :e1) :to (to-idx :d1)})))
-  (testing "make-castling"
+  (testing "play castling"
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
     (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1 :R :a1] {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :castling :O-O-O})))
   (testing "updates castling-availability after own kings- or rook-move"
@@ -68,6 +71,8 @@
     (let [game (new-game (place-pieces [:K :e1 :R :a1 :R :h1 :b :b7 :q :a8]) {:turn :black})]
       (is (= #{:O-O} (get-in (play-move game {:from (to-idx :a8) :to (to-idx :a1) :capture :R}) [:castling-availability :white])))
       (is (= #{:O-O-O} (get-in (play-move game {:from (to-idx :b7) :to (to-idx :h1) :capture :R}) [:castling-availability :white])))))
+  (testing "pawn-promotions"
+    (is (= "B7/8/8/8/8/8/8/8" (play-move-on-board [:P :b7 :r :a8] {:piece :P :from 49 :to 56 :capture :r :promote-to :B}))))
   (testing "double-step pawn moves are potential en-passant targets"
     (is (= [16 24] (:ep-info (play-move (new-game (place-pieces [:P :a2])) {:from (to-idx :a2) :to (to-idx :a4) :ep-info [(to-idx :a3) (to-idx :a4)]})))))
   (testing "en-passant-capture clears the captured-pawn"

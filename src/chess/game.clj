@@ -23,11 +23,10 @@
   ([] (new-game init-board))
   ([board options] (merge (new-game board) options))
   ([board] {
-            :board                     board
-            :turn                      :white
-            :move-no                   1
-            :castling-availability     (deduce-castling-availability board)
-            :ep-info           nil
+            :board board
+            :turn :white
+            :move-no 1
+            :castling-availability (deduce-castling-availability board)
             :fifty-rule-halfmove-clock 0
             }))
 
@@ -98,5 +97,5 @@
 ;(defn game-benchmark []
 ;  (play (new-game) "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")
 ;  )
-
+;
 ;(taoensso.timbre.profiling/profile :info :Arithmetic (dotimes [n 10] (game-benchmark)))

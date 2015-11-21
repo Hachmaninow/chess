@@ -34,6 +34,16 @@
     (is (= 7 (rank 56)))
     (is (= 7 (rank 63)))))
 
+(deftest test-on-rank
+  (testing "white's perspective"
+    (is (true? (on-rank? 0 :white (to-idx :d1) )))
+    (is (true? (on-rank? 1 :white (to-idx :h2) )))
+    (is (true? (on-rank? 6 :white (to-idx :a7) ))))
+  (testing "black's perspective"
+    (is (true? (on-rank? 0 :black (to-idx :e8) )))
+    (is (true? (on-rank? 1 :black (to-idx :c7) )))
+    (is (true? (on-rank? 7 :black (to-idx :b1) )))))
+
 (deftest test-file
   (testing "index to file conversion"
     (is (= 0 (file 0)))
@@ -94,8 +104,7 @@
   (testing "works with indexes as well"
     (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (board->fen (place-pieces init-board [nil (to-idx :e2) nil (to-idx :f2)])))))
   (testing "make castling"
-    (is (= "8/8/8/8/8/8/8/2KR4" (board->fen (place-pieces (place-pieces [:K (to-idx :e1) :R (to-idx :a1)]) [nil 4 :K 2 nil 0 :R 3]))))
-    ))
+    (is (= "8/8/8/8/8/8/8/2KR4" (board->fen (place-pieces (place-pieces [:K (to-idx :e1) :R (to-idx :a1)]) [nil 4 :K 2 nil 0 :R 3]))))))
 
 (defn direction-square-vector [square direction]
   (map to-sqr (direction-vector-internal (to-idx square) 7 direction)))
@@ -161,15 +170,6 @@
          moves-from-idx (filter #(= (to-idx square) (% :from)) all-valid-moves)]
      (set (map #(to-sqr (% :to)) moves-from-idx)))))
 
-(deftest test-move-structure
-  (testing "pawn move"
-    (is (= '({:piece :P :from 12 :to 20} {:piece :P :from 12 :to 28 :ep-info [20 28]}) (find-moves (place-pieces [:P :e2]) :white))))
-  (testing "piece capture"
-    (is (= {:piece :N :from 63 :to 46 :capture :p} (first (find-moves (place-pieces [:N :h8 :P :f7 :p :g6 :r :f8]) :white)))))
-  (testing "castlings"
-    (is (= {:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5} (first (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white)))))
-  )
-
 (deftest test-find-moves-on-empty-board
   (testing "king on empty board"
     (is (= #{:d5 :e4 :d3 :c4 :e5 :e3 :c3 :c5} (accessible-squares :K :d4)))
@@ -190,6 +190,7 @@
     (is (= #{:f6 :g5 :g3 :f2 :d2 :c3 :c5 :d6} (accessible-squares :n :e4)))
     (is (= #{:g6 :f7} (accessible-squares :N :h8))))
   (testing "pawn on empty board"
+    (is (= #{:e4} (accessible-squares :P :e3)))
     (is (= #{:e3 :e4} (accessible-squares :P :e2)))
     (is (= #{:g6 :g5} (accessible-squares :p :g7)))
     (is (= #{:g8} (accessible-squares :P :g7)))))
@@ -213,6 +214,19 @@
     (is (= #{} (accessible-squares :p :h7 [:p :h6])))
     (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))
     (is (= #{:d6 :f6 :e6 :e5} (accessible-squares :p :e7 [:N :d6 :Q :f6])))))
+
+(deftest test-find-moves
+  (testing "pawn move"
+    (is (= [{:piece :P :from 12 :to 20} {:piece :P :from 12 :to 28 :ep-info [20 28]}] (find-moves (place-pieces [:P :e2]) :white))))
+  (testing "en-passant"
+    (is (= [{:ep-capture (to-idx :c4) :piece :p :from (to-idx :d4) :to (to-idx :c3) :capture nil}] (find-moves (place-pieces [:p :d4 :P :c4 :P :d3]) :black [(to-idx :c3) (to-idx :c4)]))))
+  (testing "promotion"
+    (is (= [:Q :R :B :N] (map :promote-to (find-moves (place-pieces [:P :e7]) :white))))
+    (is (= [:Q :R :B :N] (map :promote-to (find-moves (place-pieces [:P :e7 :n :e8 :n :f8]) :white)))))
+  (testing "piece capture"
+    (is (= [{:piece :N :from 63 :to 46 :capture :p}] (find-moves (place-pieces [:N :h8 :P :f7 :p :g6 :r :f8]) :white))))
+  (testing "castlings"
+    (is (= [{:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5} {:castling :O-O-O, :piece :K, :from 4, :to 2, :rook-from 0, :rook-to 3}] (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white)))))
 
 (deftest test-under-attack?
   (testing "unblocked-queen"
@@ -280,7 +294,3 @@
     (is (true? (gives-check? (place-pieces [:k :h4 :B :e1]) :white))))
   (testing "no-check"
     (is (nil? (gives-check? (place-pieces [:K :e1 :r :a2 :r :a3 :q :a4 :n :e5 :b :g7 :q :h8 :q :a8]) :black)))))
-
-;(testing "passage is free, but no availability"
-;  (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O}))))
-;  (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white #{:O-O-O})))))

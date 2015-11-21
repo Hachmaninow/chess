@@ -106,7 +106,7 @@
       (when (= (distance idx s1) 1) s1)
       (when (= (distance idx s2) 1) s2))))
 
-(defn find-attacking-moves
+(defn find-attacks
   "Return all attacking moves from a given index of player on a board with given occupied indexes."
   [board turn idx]
   (let [piece (get board idx) target-indexes (attacked-indexes board turn idx)]
@@ -117,23 +117,45 @@
 ; pawn moves
 ;
 
-(defn find-forward-pawn-moves [board turn idx]
-  (let [piece (get board idx) op (if (= turn :white) + -) second-rank (if (= turn :white) 1 6) s1 (op idx 8) s2 (op idx 16)]
-    (vector
-      (when (empty-square? board s1) {:piece piece :from idx :to s1}) ; single-step forward
-      (when (and (= (rank idx) second-rank) (empty-square? board s1) (empty-square? board s2)) {:piece piece :from idx :to s2 :ep-info [s1 s2]})))) ; double-step forward
+(def promotions {:white [:Q :R :B :N] :black [:q :r :b :n]})
+
+(defn on-rank? [target-rank turn idx]
+  (if (= turn :white)
+    (= (rank idx) target-rank)
+    (= (rank idx) (- 7 target-rank))))
+
+(defn handle-promotions [turn move]
+  (if (on-rank? 6 turn (:from move)) (map #(into move {:promote-to %}) (turn promotions)) move))
+
+(defn find-simple-pawn-moves  [board turn idx]
+  (let [piece (get board idx) op (if (= turn :white) + -) s1 (op idx 8)]
+    (when (empty-square? board s1)
+      (->> {:piece piece :from idx :to s1}
+           (handle-promotions turn)
+           vector
+           flatten))))
+
+(defn find-double-pawn-moves [board turn idx]
+  (let [piece (get board idx) op (if (= turn :white) + -) s1 (op idx 8) s2 (op idx 16)]
+    (when (and (on-rank? 1 turn idx) (empty-square? board s1) (empty-square? board s2))
+      (vector {:piece piece :from idx :to s2 :ep-info [s1 s2]}))))
 
 (defn find-capturing-pawn-moves [board turn idx]
-  (filter #(when-let [move %] (= (piece-color (:capture move)) (opponent turn))) (find-attacking-moves board turn idx)))
+  (->> (find-attacks board turn idx)
+       (filter #(= (piece-color (:capture %)) (opponent turn)))
+       (map (partial handle-promotions turn))
+       flatten))
 
 (defn find-en-passant-moves [board turn [ep-target ep-capture] idx]
   (when ep-target
-    (map #(assoc % :ep-capture ep-capture)
-         (filter #(when-let [move %] (= ep-target (:to move))) (find-attacking-moves board turn idx)))))
+    (->> (find-attacks board turn idx)
+         (filter #(= ep-target (:to %)))
+         (map #(assoc % :ep-capture ep-capture)))))
 
 (defn find-pawn-moves [board turn en-passant-info idx]
   (concat
-    (find-forward-pawn-moves board turn idx)
+    (find-simple-pawn-moves board turn idx)
+    (find-double-pawn-moves board turn idx)
     (find-capturing-pawn-moves board turn idx)
     (find-en-passant-moves board turn en-passant-info idx)))
 
@@ -175,10 +197,10 @@
 
 (def castlings
   {:white {
-           :O-O   {:piece :K :from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
+           :O-O {:piece :K :from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
            :O-O-O {:piece :K :from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1)}}
    :black {
-           :O-O   {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
+           :O-O {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
            :O-O-O {:piece :k :from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
 
 (defn- check-castling [board turn [castling-type {:keys [from to rook-from rook-to] :as rules}]]
@@ -207,7 +229,7 @@
    (let [owned-indexes (occupied-indexes board turn)]
      (remove #(= turn (piece-color (% :capture)))           ; remove all moves to squares already owned by the player
              (remove nil?
-                     (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacking-moves board turn %)) owned-indexes))))))
+                     (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacks board turn %)) owned-indexes))))))
 
 (defn gives-check?
   "Check if the given player gives check to the opponent's king on the current board."
@@ -219,10 +241,11 @@
 ; update board
 ;
 
-(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to :ep-capture]}]
+(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to :ep-capture :promote-to]}]
   (cond
     castling [nil from (board from) to nil rook-from (board rook-from) rook-to]
     ep-capture [nil from nil ep-capture (board from) to]
+    promote-to [nil from promote-to to]
     :else [nil from (board from) to]))
 
 (defn update-board [board move]
