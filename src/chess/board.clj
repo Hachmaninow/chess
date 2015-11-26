@@ -250,3 +250,21 @@
 
 (defn update-board [board move]
   (place-pieces board (move-to-piece-movements board move)))
+
+
+;
+; move to string
+;
+
+(defn move->str [{:keys [:piece :from :to :capture :castling :ep-capture :promote-to]}]
+  (cond
+    (nil? piece) "error"
+    castling (name castling)
+    :else (str
+            (if (not= (piece-type piece) :P) (name (piece-type piece)))
+            (name (to-sqr from))
+            (if (or capture ep-capture) "x" "-")
+            (name (to-sqr to)) (if ep-capture "ep")
+            (if promote-to (str "=" (name (piece-type promote-to)))))
+  )
+)

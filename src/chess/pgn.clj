@@ -4,9 +4,9 @@
 
 (def pgn
   (insta/parser
-    "<game> = move-text
+    "<game> = tags move-text
      <move-text> = (token space | token Epsilon)+
-     <token> = move-number | black-move-number | move
+     <token> = move-number | black-move-number | move | comment | variation | annotation | game-result
      <space> = <#'\\s+'>
      move-number = #'\\d+' <#'\\.'>
      black-move-number = #'\\d+' <#'\\.\\.\\.'>
@@ -27,16 +27,23 @@
      from-rank = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8'    
      call = '+' | '#'
      promote-to = <'='> promotion-piece
+
+     <tag-key> = #'[a-zA-Z]+'
+     <tag-value> = <'\"'> #'[^\"]+' <'\"'>
+     tag = <'['> tag-key space tag-value <']'>
+     <tags> = (tag space)*
+
+     comment = <'{'> #'[^}]+' <'}'>
+
+     variation = <'('> space? move-text <')'>
+
+     annotation = <'$'> #'[0-9]+'
+
+     game-result = '1-0' | '1/2-1/2' | '0-1'
     "))
 
-(defn parsed-move-to-hash [parsed-move]
-  (into {} (filter vector? parsed-move)))
-
-(defn parse-move-text [move-text]
-  (map parsed-move-to-hash (filter #(= (first %) :move) (pgn move-text))))
-
 (defn parse-move [move-text]
-  (first (parse-move-text move-text)))
+  (first (pgn move-text)))
 
 (defn move-matcher [{:keys [:castling :piece :to-file :to-rank :capture :from-file :from-rank :promote-to]}]
   (remove nil?
@@ -52,5 +59,5 @@
             )))
 
 (defn matches-parsed-move? [parsed-move move]
-  (every? #(% move) (move-matcher parsed-move)))
+  (every? #(% move) (move-matcher (into {} (rest parsed-move)))))
 
