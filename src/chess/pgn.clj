@@ -1,6 +1,5 @@
 (ns chess.pgn
-  (:require [instaparse.core :as insta]
-            [chess.board :refer :all]))
+  (:require [instaparse.core :as insta]))
 
 (def pgn
   (insta/parser
@@ -42,22 +41,6 @@
      game-result = '1-0' | '1/2-1/2' | '0-1'
     "))
 
-(defn parse-move [move-text]
-  (first (pgn move-text)))
-
-(defn move-matcher [{:keys [:castling :piece :to-file :to-rank :capture :from-file :from-rank :promote-to]}]
-  (remove nil?
-          (vector
-            (when castling (fn [move] (= (move :castling) (keyword castling))))
-            (when (and to-file to-rank) (fn [move]  (=  (move :to) (to-idx (keyword (apply str to-file to-rank))))))
-            (when piece (fn [move] (= (keyword piece) (piece-type (move :piece))))) ; if a piece is specified it could be either black or white
-            (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
-            (when capture (fn [move] (or (move :capture) (move :ep-capture))))
-            (when from-file (fn [move] (= (- (int (first from-file)) (int \a)) (file (move :from)))))
-            (when from-rank (fn [move] (= (- (int (first from-rank)) (int \1)) (rank (move :from)))))
-            (when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
-            )))
-
-(defn matches-parsed-move? [parsed-move move]
-  (every? #(% move) (move-matcher (into {} (rest parsed-move)))))
+(defn parse-move [move-str]
+  (into {} (rest (first (pgn move-str)))))
 

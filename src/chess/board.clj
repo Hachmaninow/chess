@@ -1,7 +1,14 @@
 (ns chess.board
-  (:require [clojure.set]
+  (:require [chess.pgn :refer :all]
+            [clojure.set :refer [intersection]]
             [spyscope.core]
             [taoensso.timbre.profiling]))
+
+;
+; basics
+;
+
+(defn opponent [color] (if (= color :white) :black :white))
 
 (defn piece-color [piece] (if (nil? piece) nil (if (contains? #{:P :N :B :R :Q :K} piece) :white :black)))
 
@@ -12,7 +19,10 @@
 (defn colored-piece [turn piece-type]
   (get-in colored-piece-map [turn piece-type]))
 
-(defn opponent [color] (if (= color :white) :black :white))
+
+;
+; board arithmetics
+;
 
 (defn rank [index] (int (/ index 8)))
 
@@ -24,8 +34,6 @@
 
 (defn to-sqr [index] (keyword (str (char (+ (file index) (int \a))) (inc (rank index)))))
 
-(defn lookup [board square] (board (to-idx square)))
-
 (defn distance [i1 i2]
   (max (Math/abs (- (rank i1) (rank i2))) (Math/abs (- (file i1) (file i2)))))
 
@@ -35,15 +43,34 @@
 (defn still-on-board? [idx]
   (and (< idx 64) (>= idx 0)))
 
-(def initial-squares {:K [:e1] :k [:e8] :Q [:d1] :q [:d8] :R [:a1 :h1] :r [:a8 :h8]
-                      :N [:b1 :g1] :n [:b8 :g8] :B [:c1 :f1] :b [:c8 :f8]
-                      :P [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2] :p [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]})
+
+;
+; lookups
+;
+
+(defn lookup [board square]
+  (board (to-idx square)))
+
+(defn find-piece [board piece]
+  (.indexOf board piece))
 
 (defn is-piece? [board idx turn piece-type]
   (= (board idx) (colored-piece turn piece-type)))
 
-(defn find-piece [board piece]
-  (.indexOf board piece))
+(defn occupied-indexes [board color]
+  (set (filter #(= color (piece-color (board %))) (range 0 64))))
+
+(defn empty-square? [board index]
+  (nil? (get board index)))
+
+
+;
+; board setup
+;
+
+(def initial-squares {:K [:e1] :k [:e8] :Q [:d1] :q [:d8] :R [:a1 :h1] :r [:a8 :h8]
+                      :N [:b1 :g1] :n [:b8 :g8] :B [:c1 :f1] :b [:c8 :f8]
+                      :P [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2] :p [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]})
 
 (def empty-board (vec (repeat 64 nil)))
 
@@ -51,12 +78,33 @@
   (assoc board (if (keyword? square-or-index) (to-idx square-or-index) square-or-index) piece))
 
 (defn place-pieces
-  "Place the given array of piece-positions on an empty/given board. Piece positions are adjacent elements of piece/square-or-index pairs."
-  ([piece-positions] (place-pieces empty-board piece-positions))
-  ([board piece-positions] (reduce place-piece board (for [[piece square-or-index] (partition 2 piece-positions)] [piece square-or-index]))))
+  "Place the given array of piece-locations on an empty/given board. Piece positions are adjacent elements of piece/square-or-index pairs."
+  ([piece-locations] (place-pieces empty-board piece-locations))
+  ([board piece-locations] (reduce place-piece board (for [[piece square-or-index] (partition 2 piece-locations)] [piece square-or-index]))))
 
 (def init-board
   (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))
+
+;
+; update board
+;
+
+(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to :ep-capture :promote-to]}]
+  (cond
+    castling [nil from (board from) to nil rook-from (board rook-from) rook-to]
+    ep-capture [nil from nil ep-capture (board from) to]
+    promote-to [nil from promote-to to]
+    :else [nil from (board from) to]))
+
+(defn update-board [board move]
+  (place-pieces board (move-to-piece-movements board move)))
+
+
+
+
+;
+; basic piece movement
+;
 
 (def direction-steps {:N 8 :S -8 :W -1 :E 1 :NE 9 :SE -7 :SW -9 :NW 7})
 (def straight [:N :E :S :W])
@@ -64,16 +112,13 @@
 (def straight-and-diagonal (concat straight diagonal))
 (def knight-steps [+17 +10 -6 -15 -17 -10 +6 +15])
 
+
 (defn direction-vector-internal [index max-reach direction]
   (let [step-size (direction-steps direction) limit (if (pos? step-size) 64 -1)]
     (take max-reach
           (for [next (range (+ index step-size) limit step-size) :while (= 1 (distance next (- next step-size)))] next))))
 
 (def direction-vector (memoize direction-vector-internal))
-
-(defn occupied-indexes [board color] (set (filter #(= color (piece-color (board %))) (range 0 64))))
-
-(defn empty-square? [board index] (nil? (get board index)))
 
 (defn reachable-indexes [from-index board max-reach directions]
   (flatten
@@ -87,7 +132,7 @@
 ; attacks
 ;
 
-(defmulti attacked-indexes (fn [board turn idx] (piece-type (get board idx))))
+(defmulti attacked-indexes (fn [board _ idx] (piece-type (get board idx))))
 
 (defmethod attacked-indexes :K [board _ idx] (reachable-indexes idx board 1 straight-and-diagonal))
 
@@ -127,7 +172,7 @@
 (defn handle-promotions [turn move]
   (if (on-rank? 6 turn (:from move)) (map #(into move {:promote-to %}) (turn promotions)) move))
 
-(defn find-simple-pawn-moves  [board turn idx]
+(defn find-simple-pawn-moves [board turn idx]
   (let [piece (get board idx) op (if (= turn :white) + -) s1 (op idx 8)]
     (when (empty-square? board s1)
       (->> {:piece piece :from idx :to s1}
@@ -217,9 +262,25 @@
 (defn find-castlings [board turn]
   (remove nil? (map (partial check-castling board turn) (castlings turn))))
 
+(defn deduce-castling-availability [board]
+  {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :O-O)
+                             (when (and (= :K (lookup board :e1)) (= :R (lookup board :a1))) :O-O-O)]))
+   :black (set (remove nil? [(when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :O-O)
+                             (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :O-O-O)]))})
+
+(defn intersect-castling-availability [castling-availability new-castling-availability]
+  {
+   :white (intersection (:white castling-availability) (:white new-castling-availability))
+   :black (intersection (:black castling-availability) (:black new-castling-availability))
+   })
+
+(defn castling-available?
+  "Check if in the given game with specific castling-availability a given castling is valid."
+  [{:keys [castling-availability turn]} {:keys [castling]}]
+  (castling (turn castling-availability)))
 
 ;
-; find all possible moves on the board
+; find valid moves
 ;
 
 (defn find-moves
@@ -231,26 +292,106 @@
              (remove nil?
                      (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacks board turn %)) owned-indexes))))))
 
+(defn king-covered?
+  "Check if the given move applied to the given board covers the king from opponent's checks."
+  [board turn move]
+  (let [new-board (update-board board move)
+        kings-pos (find-piece new-board (colored-piece turn :K))]
+    (not (under-attack? new-board kings-pos (opponent turn)))))
+
+(defn valid-moves
+  "Find all valid moves in the given game considering check situations."
+  [{:keys [board turn ep-info] :as position}]
+  (concat
+    (filter #(king-covered? board turn %) (find-moves board turn ep-info))
+    (filter #(castling-available? position %) (find-castlings board turn))))
+
+
+;
+; position
+;
+
+
 (defn gives-check?
   "Check if the given player gives check to the opponent's king on the current board."
   [board turn]
-  (some #(or (= (:capture %) :K) (= (:capture %) :k)) (find-moves board turn))) ; Here the color of the king does not matter, as only the right one will occur anyways.
+  (some #{:K :k} (map :capture (find-moves board turn))))   ; Here the color of the king does not matter, as only the right one will occur anyways.
+
+(defn has-moves?
+  [board turn]
+  (some #(king-covered? board turn %) (find-moves board turn)))
+
+(defn call
+  [board turn]
+  (let [gives-check (gives-check? board turn) has-moves (has-moves? board (opponent turn))]
+    (cond
+      (and gives-check has-moves) :check
+      (and gives-check (not has-moves)) :checkmate
+      (and (not gives-check) (not has-moves)) :stalemate)))
+
+(defn init-position
+  ([]
+   (init-position init-board))
+  ([board options]
+   (merge (init-position board) options))
+  ([board]
+   {
+    :board board
+    :turn :white
+    :call (call board :white)
+    :castling-availability (deduce-castling-availability board)
+    }))
+
+
+(defn update-position
+  "Update the given position by playing the given move."
+  [{:keys [board turn castling-availability]} move]
+  (let [new-board (update-board board move)]
+    {
+      :board new-board
+      :turn (opponent turn)
+      :call (call new-board turn)
+      :castling-availability (intersect-castling-availability castling-availability (deduce-castling-availability new-board))
+      :ep-info (:ep-info move)
+    }))
 
 
 ;
-; update board
+; move selection
 ;
 
-(defn move-to-piece-movements [board {:keys [:castling :from :to :rook-from :rook-to :ep-capture :promote-to]}]
-  (cond
-    castling [nil from (board from) to nil rook-from (board rook-from) rook-to]
-    ep-capture [nil from nil ep-capture (board from) to]
-    promote-to [nil from promote-to to]
-    :else [nil from (board from) to]))
+(defn move-matcher [{:keys [:castling :piece :to :to-file :to-rank :capture :from-file :from-rank :promote-to]}]
+  (remove nil?
+          (vector
+            (when castling (fn [move] (= (move :castling) (keyword castling))))
+            (when (and to-file to-rank) (fn [move]  (=  (move :to) (to-idx (keyword (apply str to-file to-rank))))))
+            (when to (fn [move]  (=  (move :to) (to-idx (keyword to)))))
+            (when piece (fn [move] (= (keyword piece) (piece-type (move :piece))))) ; if a piece is specified it could be either black or white
+            (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
+            (when capture (fn [move] (or (move :capture) (move :ep-capture))))
+            (when from-file (fn [move] (= (- (int (first from-file)) (int \a)) (file (move :from)))))
+            (when from-rank (fn [move] (= (- (int (first from-rank)) (int \1)) (rank (move :from)))))
+            (when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
+            )))
 
-(defn update-board [board move]
-  (place-pieces board (move-to-piece-movements board move)))
+(defn matches-move-coords? [move-coords valid-move]
+  (every? #(% valid-move) (move-matcher move-coords)))
 
+(defn select-move [position move-coords]
+  (let [valid-moves (valid-moves position)
+        matching-moves (filter #(matches-move-coords? move-coords %) valid-moves)]
+    (condp = (count matching-moves)
+      1 (first matching-moves)
+      0 (throw (new IllegalArgumentException (str "No matching moves for: " move-coords " within valid moves: " (seq valid-moves))))
+      (throw (new IllegalArgumentException (str "Multiple matching moves: " (seq matching-moves) "\nfor: " move-coords "\nwithin valid moves: " (seq valid-moves)))))
+    ))
+
+(defn play-move [position move-coords]
+  (let [move (parse-move  (name move-coords))]
+    (update-position position (select-move position move))))
+
+(defn play-line [position & move-coords]
+  (reduce play-move position move-coords))
 
 ;
 ; move to string
@@ -266,5 +407,6 @@
             (if (or capture ep-capture) "x" "-")
             (name (to-sqr to)) (if ep-capture "ep")
             (if promote-to (str "=" (name (piece-type promote-to)))))
+    )
   )
-)
+

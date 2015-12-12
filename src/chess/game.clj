@@ -1,108 +1,84 @@
 (ns chess.game
-  (:require [clojure.set :refer [intersection]]
-            [chess.board :refer :all]
+  (:require [chess.board :refer :all]
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
-            [criterium.core :refer :all]
+            [clojure.zip :as zip]
             [spyscope.core]
             [taoensso.timbre.profiling]))
 
-(defn deduce-castling-availability [board]
-  {:white (set (remove nil? [(when (and (= :K (lookup board :e1)) (= :R (lookup board :h1))) :O-O)
-                             (when (and (= :K (lookup board :e1)) (= :R (lookup board :a1))) :O-O-O)]))
-   :black (set (remove nil? [(when (and (= :k (lookup board :e8)) (= :r (lookup board :h8))) :O-O)
-                             (when (and (= :k (lookup board :e8)) (= :r (lookup board :a8))) :O-O-O)]))})
-
-(defn intersect-castling-availability [castling-availability new-castling-availability]
+(def init-game
   {
-   :white (intersection (:white castling-availability) (:white new-castling-availability))
-   :black (intersection (:black castling-availability) (:black new-castling-availability))
-   })
+   :position (init-position)
+   :lines (zip/vector-zip [])
+   }
+  )
 
-(defn init-game
-  ([] (init-game init-board))
-  ([board options] (merge (init-game board) options))
-  ([board] {
-            :board board
-            :turn :white
-            :move-no 1
-            :castling-availability (deduce-castling-availability board)
-            :fifty-rule-halfmove-clock 0
-            }))
+;
+; editing lines
+;
 
-(defn king-covered?
-  "Check if the given move applied to the given game covers the king from opponent's checks."
-  [{:keys [board turn]} move]
-  (let [new-board (update-board board move)
-        kings-pos (find-piece new-board (colored-piece turn :K))]
-    (not (under-attack? new-board kings-pos (opponent turn)))))
+(def tree (zip/vector-zip []))
 
-(defn castling-available?
-  "Check if in the given game with specific castling-availability a given castling is valid."
-  [{:keys [castling-availability turn]} {:keys [castling]}]
-  (castling (turn castling-availability)))
-
-(defn valid-moves
-  "Find all valid moves in the given game considering check situations."
-  [{:keys [board turn ep-info] :as game}]
-  (concat
-    (filter #(king-covered? game %) (find-moves board turn ep-info))
-    (filter #(castling-available? game %) (find-castlings board turn))))
-
-(defn has-moves?
-  [{:keys [board turn] :as game}]
-  (some #(king-covered? game %) (find-moves board turn)))
-
-(defn call
-  [has-moves is-checked]
+(defn append-to-line [z move]
   (cond
-    (and has-moves is-checked) :check
-    (and (not has-moves) is-checked) :checkmate
-    (and (not has-moves) (not is-checked)) :stalemate))
-
-(defn add-move
-  "Update the given game by playing the given move."
-  [{:keys [board turn castling-availability lines] :as game} move]
-  (let [old-game (into game {:lines (if lines (conj lines move) (vector move))})
-        new-board (update-board board move)
-        new-castling-availability (deduce-castling-availability new-board)
-        new-game {:board new-board :turn (opponent turn)}
-        has-moves (has-moves? new-game)
-        gives-check (gives-check? new-board turn)
-       ]
-    (into new-game
-          {
-           :call                  (call has-moves gives-check)
-           :castling-availability (intersect-castling-availability castling-availability new-castling-availability)
-           :ep-info               (:ep-info move)
-           :up           old-game
-           })))
-
-(defn select-move [game parsed-move]
-  (let [valid-moves (valid-moves game)
-        matching-moves (filter #(matches-parsed-move? parsed-move %) valid-moves)]
-    (condp = (count matching-moves)
-      1 (first matching-moves)
-      0 (throw (new IllegalArgumentException (str "No matching moves for: " parsed-move " within valid moves: " (seq valid-moves))))
-      (throw (new IllegalArgumentException (str "Multiple matching moves: " (seq matching-moves) "\nfor: " parsed-move "\nwithin valid moves: " (seq valid-moves)))))
+    (zip/branch? z) (-> z (zip/append-child move) (zip/down))
+    (nil? (zip/rights z)) (-> z (zip/insert-right move) (zip/right))
     ))
 
-(defn play [game item]
+(defn- start-variation [z]
+  (append-to-line z [])  )
+
+(defn- end-variation [z]
+  (zip/up (zip/up z))  )
+
+
+;
+; navigating lines
+;
+
+(defn jump [game target]
+  (case target
+    :up (:up game)
+    :start (loop [prev (:up game)] (if prev (recur game) game))
+    ))
+
+;
+;
+;
+
+(defn add-move
+  "Add the given move to the current location in the given game."
+  [{:keys [position lines]} move]
+  {
+    :position (update-position position move)
+    :lines (append-to-line lines move)
+    })
+
+
+
+(defn add-item [game item]
   (condp = (first item)
-    :move (add-move game (select-move game item))
+    :move (add-move game (select-move (:position game) (into {} (rest item)))) ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
     game
     )
   )
 
 (defn load-pgn [pgn-str]
-  (let [game (init-game)]
-    (reduce play game (pgn pgn-str))
+  (let [game init-game]
+    (reduce add-item game (pgn pgn-str))
     )
   )
 
+
+
+;(defn lines [game]
+;  (let [game (start game)]
+;    (loop [lines (:lines game) result []])
+;
+;    )
+;  )
+
 ;(board->fen (:board (load-game (pgn (slurp "test/test-pgns/complete.pgn")))))
-
-
 
 ;(parse-move-text (slurp "test/test-pgns/complete.pgn"))
 

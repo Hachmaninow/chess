@@ -6,12 +6,12 @@
             [net.cgrand.enlive-html :as html]
             [chess.game :refer :all]))
 
-(html/deftemplate index "templates/index.html"
-                  []
-                  [:head :title] (html/content "Chess"))
+(html/deftemplate show-game "templates/index.html" []
+  [:head :title] (html/content "Chess")
+)
 
 (defroutes app
-           (GET "/" [] (index))
+           (GET "/" [] (show-game))
            (route/resources "/")
            (route/not-found "Page not found")
            )

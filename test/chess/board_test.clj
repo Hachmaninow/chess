@@ -36,13 +36,13 @@
 
 (deftest test-on-rank
   (testing "white's perspective"
-    (is (true? (on-rank? 0 :white (to-idx :d1) )))
-    (is (true? (on-rank? 1 :white (to-idx :h2) )))
-    (is (true? (on-rank? 6 :white (to-idx :a7) ))))
+    (is (true? (on-rank? 0 :white (to-idx :d1))))
+    (is (true? (on-rank? 1 :white (to-idx :h2))))
+    (is (true? (on-rank? 6 :white (to-idx :a7)))))
   (testing "black's perspective"
-    (is (true? (on-rank? 0 :black (to-idx :e8) )))
-    (is (true? (on-rank? 1 :black (to-idx :c7) )))
-    (is (true? (on-rank? 7 :black (to-idx :b1) )))))
+    (is (true? (on-rank? 0 :black (to-idx :e8))))
+    (is (true? (on-rank? 1 :black (to-idx :c7))))
+    (is (true? (on-rank? 7 :black (to-idx :b1))))))
 
 (deftest test-file
   (testing "index to file conversion"
@@ -159,6 +159,11 @@
   (testing "non-empty square"
     (is (false? (empty-square? init-board 58)))))
 
+
+;
+; attacks
+;
+
 (defn accessible-squares
   "Find all valid target squares for the specified piece being located on the specified square on
   a board together with the specified additional pieces."
@@ -215,6 +220,42 @@
     (is (= #{:d6 :f6} (accessible-squares :p :e7 [:N :e6 :Q :f6 :R :d6])))
     (is (= #{:d6 :f6 :e6 :e5} (accessible-squares :p :e7 [:N :d6 :Q :f6])))))
 
+
+;
+; castlings
+;
+
+(deftest test-find-castlings
+  (testing "passage is free"
+    (is (= '(:O-O :O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white))))
+    (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1]) :white))))
+    (is (= '(:O-O :O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8]) :black)))))
+
+  (testing "passage is occupied with piece"
+    (is (= '() (find-castlings init-board :white)))
+    (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8]) :black))))
+    (is (= '() (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8 :N :b8]) :black)))))
+
+  (testing "the king may not pass an attacked square during castling"
+    (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :c8]) :white))))
+    (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :d8]) :white))))
+    (is (= '() (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :p :e2]) :white)))))
+  (testing "the king must not be in check"
+    (is (= '() (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :e8]) :white)))))
+  (testing "the rook may pass attacked squares"
+    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white))))
+    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white))))))
+
+(deftest test-deduce-castling-availability
+  (is (= {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}} (deduce-castling-availability init-board)))
+  (is (= {:white #{:O-O-O}, :black #{:O-O}} (deduce-castling-availability (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
+  (is (= {:white #{}, :black #{}} (deduce-castling-availability (place-pieces empty-board [:K :e2 :R :a1])))))
+
+
+;
+; find valid moves
+;
+
 (deftest test-find-moves
   (testing "pawn move"
     (is (= [{:piece :P :from 12 :to 20} {:piece :P :from 12 :to 28 :ep-info [20 28]}] (find-moves (place-pieces [:P :e2]) :white))))
@@ -266,34 +307,114 @@
     (is (false? (under-attack? (place-pieces [:p :a5]) (to-idx :h4) :black))))
   )
 
-(deftest test-find-castlings
-  (testing "passage is free"
-    (is (= '(:O-O :O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1]) :white))))
-    (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1]) :white))))
-    (is (= '(:O-O :O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8]) :black)))))
-
-  (testing "passage is occupied with piece"
-    (is (= '() (find-castlings init-board :white)))
-    (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8]) :black))))
-    (is (= '() (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8 :N :b8]) :black)))))
-
-  (testing "the king may not pass an attacked square during castling"
-    (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :c8]) :white))))
-    (is (= '(:O-O) (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :d8]) :white))))
-    (is (= '() (map #(:castling %) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :p :e2]) :white)))))
-  (testing "the king must not be in check"
-    (is (= '() (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :e8]) :white)))))
-  (testing "the rook may pass attacked squares"
-    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :b8]) :white))))
-    (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white))))))
-
-(deftest test-gives-check
+(deftest test-gives-check?
   (testing "check"
-    (is (true? (gives-check? (place-pieces [:K :e1 :r :a1]) :black)))
-    (is (true? (gives-check? (place-pieces [:K :c3 :n :e4]) :black)))
-    (is (true? (gives-check? (place-pieces [:k :h4 :B :e1]) :white))))
+    (is (gives-check? (place-pieces [:K :e1 :r :a1]) :black))
+    (is (gives-check? (place-pieces [:K :c3 :n :e4]) :black))
+    (is (gives-check? (place-pieces [:k :h4 :B :e1]) :white)))
   (testing "no-check"
     (is (nil? (gives-check? (place-pieces [:K :e1 :r :a2 :r :a3 :q :a4 :n :e5 :b :g7 :q :h8 :q :a8]) :black)))))
+
+(deftest test-valid-moves
+  (testing "keeps the king out of check"
+    (is (= [{:piece :K, :from (to-idx :e6), :to (to-idx :e7), :capture nil}] (valid-moves (init-position (place-pieces [:K :e6 :k :e4 :r :d1 :r :f1]))))))
+  (testing "puts a piece in place to prevent check"
+    (is (= [{:piece :B, :from (to-idx :g1), :to (to-idx :a7), :capture nil}] (valid-moves (init-position (place-pieces [:K :a8 :B :g1 :r :a1 :r :b1]))))))
+  (testing "captures a piece to prevent check"
+    (is (= [{:piece :B, :from (to-idx :g7), :to (to-idx :a1), :capture :r}] (valid-moves (init-position (place-pieces [:K :a8 :B :g7 :r :a1 :r :b1])))))
+    (is (= [{:piece :K, :from (to-idx :a8), :to (to-idx :b8), :capture :q}] (valid-moves (init-position (place-pieces [:K :a8 :q :b8]))))))
+  (testing "castlings with availability"
+    (is (= [{:castling :O-O-O, :piece :K, :from 4, :to 2, :rook-from 0, :rook-to 3}] (filter :castling (valid-moves (init-position (place-pieces [:K :e1 :R :a1]))))))
+    (is (= [{:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5}] (filter :castling (valid-moves (init-position (place-pieces [:K :e1 :R :h1])))))))
+  (testing "castling without availability"
+    (is (= [] (filter :castling (valid-moves (init-position (place-pieces [:K :e1 :R :a1 :R :h1]) {:castling-availability {:white #{}}})))))
+    (is (= [{:castling :O-O-O, :piece :k, :from 60, :to 58, :rook-from 56, :rook-to 59}] (filter :castling (valid-moves (init-position (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O}}})))))
+    (is (= 2 (count (filter :castling (valid-moves (init-position (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O :O-O}}})))))))
+  (testing "promotions"
+    (is (= {:piece :P :from 48 :to 56 :promote-to :Q} (first (filter :promote-to (valid-moves (init-position (place-pieces [:P :a7 :N :b8])))))))
+    (is (= {:piece :P :from 49 :to 56 :capture :n :promote-to :Q} (first (filter :promote-to (valid-moves (init-position (place-pieces [:P :b7 :n :a8 :N :b8]))))))))
+  (testing "en-passant"
+    (is (= [] (valid-moves (init-position (place-pieces [:P :e5 :p :d5 :p :e6])))))
+    (is (= [{:piece :P :from 36 :to 43 :capture nil :ep-capture 35}] (valid-moves (init-position (place-pieces [:P :e5 :p :d5 :p :e6]) {:ep-info [(to-idx :d6) (to-idx :d5)]})))))
+  (testing "no valid moves"
+    (is (= [] (valid-moves (init-position (place-pieces [:K :a8 :q :b6])))))))
+
+;
+; position
+;
+
+(deftest test-init-position
+  (testing "parameter-less version"
+    (is (= init-board (:board (init-position))))
+    (is (= :white (:turn (init-position)))))
+  (testing "explicit board"
+    (is (= "8/3k4/8/8/8/8/8/6K1" (board->fen (:board (init-position (place-pieces [:K :g1 :k :d7])))))))
+  (testing "options"
+    (is (= :black (:turn (init-position (place-pieces [:K :e1 :R :a1 :R :h1]) {:turn :black}))))
+    (is (= {:white #{:O-O}} (:castling-availability (init-position (place-pieces [:K :e1 :R :a1 :R :h1]) {:castling-availability {:white #{:O-O}}}))))))
+
+
+(deftest test-calls
+  (testing "no call"
+    (are [position call] (= call (:call position))
+      (init-position) nil
+      (play-line (init-position) :d4 :c5 :dxc5 :Qa5) :check
+      (play-line (init-position) :f3 :e5 :g4 :Qh4) :checkmate
+      (play-line (init-position) :c4 :d5 :Qb3 :Bh3 :gxh3 :f5 :Qxb7 :Kf7 :Qxa7 :Kg6 :f3 :c5 :Qxe7 :Rxa2 :Kf2 :Rxb2 :Qxg7+ :Kh5 :Qxg8 :Rxb1 :Rxb1 :Kh4 :Qxh8 :h5 :Qh6 :Bxh6 :Rxb8 :Be3+ :dxe3 :Qxb8 :Kg2 :Qf4 :exf4 :d4 :Be3 :dxe3) :stalemate)))
+
+(defn play-move-on-board
+  "Setup a board with the given piece-positions, then make the given move and return a FEN-representation of the board."
+  ([piece-positions move]
+   (let [game (init-position (place-pieces piece-positions))]
+     (board->fen (:board (update-position game move)))))
+  ([piece-positions game-options move]
+   (let [game (init-position (place-pieces piece-positions) game-options)]
+     (board->fen (:board (update-position game move)))))
+  )
+
+(deftest test-update-position-board
+  (testing "updates piece positions"
+    (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
+    (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1 :n :d1] {:from (to-idx :e1) :to (to-idx :d1)})))
+  (testing "updates piece positions after castling"
+    (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1] {:from (to-idx :e1) :to (to-idx :d1)}))
+    (is (= "4k3/8/8/8/8/8/5P2/3K4") (play-move-on-board [:K :e1 :R :a1] {:from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1) :castling :O-O-O})))
+  (testing "handles pawn-promotions"
+    (is (= "B7/8/8/8/8/8/8/8" (play-move-on-board [:P :b7 :r :a8] {:piece :P :from 49 :to 56 :capture :r :promote-to :B}))))
+  (testing "en-passant-capture clears the captured-pawn"
+    (is (= "8/8/5P2/8/8/8/8/8" (play-move-on-board [:P :e5 :p :f5] {:ep-info [(to-idx :f6) (to-idx :f5)]} {:from (to-idx :e5) :to (to-idx :f6) :ep-capture (to-idx :f5)})))))
+
+(deftest test-update-position-castling-availability
+  (testing "updates castling-availability after own kings- or rook-move"
+    (let [game (init-position (place-pieces [:K :e1 :R :a1 :R :h1]))]
+      (is (= #{} (get-in (update-position game {:from (to-idx :e1) :to (to-idx :d1)}) [:castling-availability :white])))
+      (is (= #{:O-O} (get-in (update-position game {:from (to-idx :a1) :to (to-idx :b1)}) [:castling-availability :white])))
+      (is (= #{:O-O-O} (get-in (update-position game {:from (to-idx :h1) :to (to-idx :h8)}) [:castling-availability :white]))))))
+
+(deftest test-update-position-ep-info
+  (testing "double-step pawn moves are potential en-passant targets"
+    (is (= [16 24] (:ep-info (update-position (init-position (place-pieces [:P :a2])) {:from (to-idx :a2) :to (to-idx :a4) :ep-info [(to-idx :a3) (to-idx :a4)]}))))))
+
+
+;
+; move selection
+;
+
+(deftest test-select-move
+  (testing "unambiguous valid move"
+    (is (= {:piece :P, :from 12, :to 20} (select-move (init-position) {:to :e3})))
+    (is (= {:piece :P, :from 12, :to 28, :ep-info [20 28]} (select-move (init-position) {:to :e4})))
+    (is (= {:piece :N :from 6 :to 21 :capture nil} (select-move (init-position) {:piece :N :to :f3}))))
+  (testing "invalid move"
+    (is (thrown-with-msg? IllegalArgumentException #"No matching moves" (select-move (init-position) {:piece :N :to :f4}))))
+  (testing "invalid move"
+    (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (init-position (place-pieces [:N :e2 :N :g2])) {:piece :N :to :f4})))))
+
+
+
+;
+; move to string
+;
 
 (deftest test-move->str
   (is (= "O-O" (move->str {:piece :K :castling :O-O})))
@@ -302,3 +423,4 @@
   (is (= "e2-e1=N" (move->str {:piece :p :from (to-idx :e2) :to (to-idx :e1) :promote-to :n})))
   (is (= "d6xe6ep" (move->str {:piece :P :from (to-idx :d6) :to (to-idx :e6) :ep-capture (to-idx :e5)})))
   (is (= "Nf7xh8" (move->str {:piece :N :from (to-idx :f7) :to (to-idx :h8) :capture :r}))))
+
