@@ -68,10 +68,6 @@
 ; board setup
 ;
 
-(def initial-squares {:K [:e1] :k [:e8] :Q [:d1] :q [:d8] :R [:a1 :h1] :r [:a8 :h8]
-                      :N [:b1 :g1] :n [:b8 :g8] :B [:c1 :f1] :b [:c8 :f8]
-                      :P [:a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2] :p [:a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7]})
-
 (def empty-board (vec (repeat 64 nil)))
 
 (defn place-piece [board [piece square-or-index]]
@@ -82,8 +78,6 @@
   ([piece-locations] (place-pieces empty-board piece-locations))
   ([board piece-locations] (reduce place-piece board (for [[piece square-or-index] (partition 2 piece-locations)] [piece square-or-index]))))
 
-(def start-board
-  (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))
 
 ;
 ; update board
@@ -331,16 +325,20 @@
 
 (defn setup-position
   ([]
-   (setup-position start-board))
-  ([board options]
-   (merge (setup-position board) options))
-  ([board]
-   {
-    :board board
-    :turn :white
-    :call (call board :white)
-    :castling-availability (deduce-castling-availability board)
-    }))
+   (setup-position [:K :e1 :k :e8 :Q :d1 :q :d8 :R :a1 :R :h1 :r :a8 :r :h8
+                    :N :b1 :N :g1 :n :b8 :n :g8 :B :c1 :B :f1 :b :c8 :b :f8
+                    :P :a2 :P :b2 :P :c2 :P :d2 :P :e2 :P :f2 :P :g2 :P :h2
+                    :p :a7 :p :b7 :p :c7 :p :d7 :p :e7 :p :f7 :p :g7 :p :h7]))
+  ([piece-locations options]
+   (merge (setup-position piece-locations) options))
+  ([piece-locations]
+   (let [board (place-pieces piece-locations)]
+     {
+      :board board
+      :turn :white
+      :call (call board :white)
+      :castling-availability (deduce-castling-availability board)
+      })))
 
 (def start-position (setup-position))
 

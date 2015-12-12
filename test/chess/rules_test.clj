@@ -84,13 +84,13 @@
   (is (= '(5 6 7) (indexes-between (to-idx :h1) (to-idx :f1)))))
 
 (deftest test-is-piece?
-  (is (true? (is-piece? start-board (to-idx :h8) :black :R)))
-  (is (true? (is-piece? start-board (to-idx :c8) :black :B)))
-  (is (true? (is-piece? start-board (to-idx :g1) :white :N)))
-  (is (false? (is-piece? start-board (to-idx :g1) :black :N))))
+  (is (true? (is-piece? (:board start-position) (to-idx :h8) :black :R)))
+  (is (true? (is-piece? (:board start-position) (to-idx :c8) :black :B)))
+  (is (true? (is-piece? (:board start-position) (to-idx :g1) :white :N)))
+  (is (false? (is-piece? (:board start-position) (to-idx :g1) :black :N))))
 
-(deftest test-start-board
-  (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] start-board)))
+(deftest test-(:board start-position)
+  (is (= [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] (:board start-position))))
 
 (deftest test-place-pieces
   (testing "single-piece"
@@ -98,11 +98,11 @@
   (testing "simple-position"
     (is (= "2k5/3r4/8/3n4/8/8/6Q1/6K1" (board->fen (place-pieces [:K :g1 :Q :g2 :k :c8 :r :d7 :n :d5])))))
   (testing "removing-pieces"
-    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (board->fen (place-pieces start-board [nil :e2 nil :f2])))))
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (board->fen (place-pieces (:board start-position) [nil :e2 nil :f2])))))
   (testing "removing-not-existing-pieces"
-    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (board->fen (place-pieces start-board [nil :e4])))))
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (board->fen (place-pieces (:board start-position) [nil :e4])))))
   (testing "works with indexes as well"
-    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (board->fen (place-pieces start-board [nil (to-idx :e2) nil (to-idx :f2)])))))
+    (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPP2PP/RNBQKBNR" (board->fen (place-pieces (:board start-position) [nil (to-idx :e2) nil (to-idx :f2)])))))
   (testing "make castling"
     (is (= "8/8/8/8/8/8/8/2KR4" (board->fen (place-pieces (place-pieces [:K (to-idx :e1) :R (to-idx :a1)]) [nil 4 :K 2 nil 0 :R 3]))))))
 
@@ -143,21 +143,21 @@
 
 (deftest test-lookup
   (testing "white rooks"
-    (is (= :R (lookup start-board :a1) (lookup start-board :h1))))
+    (is (= :R (lookup (:board start-position) :a1) (lookup (:board start-position) :h1))))
   (testing "black knights"
-    (is (= :n (lookup start-board :b8) (lookup start-board :g8)))))
+    (is (= :n (lookup (:board start-position) :b8) (lookup (:board start-position) :g8)))))
 
 (deftest test-occupied-indexes
   (testing "occupied by white"
-    (is (= (set (range 0 16)) (occupied-indexes start-board :white))))
+    (is (= (set (range 0 16)) (occupied-indexes (:board start-position) :white))))
   (testing "occupied by black"
-    (is (= (set (range 48 64)) (occupied-indexes start-board :black)))))
+    (is (= (set (range 48 64)) (occupied-indexes (:board start-position) :black)))))
 
 (deftest test-empty-square
   (testing "empty square"
-    (is (true? (empty-square? start-board 30))))
+    (is (true? (empty-square? (:board start-position) 30))))
   (testing "non-empty square"
-    (is (false? (empty-square? start-board 58)))))
+    (is (false? (empty-square? (:board start-position) 58)))))
 
 
 ;
@@ -232,7 +232,7 @@
     (is (= '(:O-O :O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8]) :black)))))
 
   (testing "passage is occupied with piece"
-    (is (= '() (find-castlings start-board :white)))
+    (is (= '() (find-castlings (:board start-position) :white)))
     (is (= '(:O-O-O) (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8]) :black))))
     (is (= '() (map #(:castling %) (find-castlings (place-pieces [:k :e8 :r :a8 :r :h8 :B :g8 :N :b8]) :black)))))
 
@@ -247,7 +247,7 @@
     (is (= '(:O-O :O-O-O) (map #(% :castling) (find-castlings (place-pieces [:K :e1 :R :a1 :R :h1 :r :a8]) :white))))))
 
 (deftest test-deduce-castling-availability
-  (is (= {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}} (deduce-castling-availability start-board)))
+  (is (= {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}} (deduce-castling-availability (:board start-position))))
   (is (= {:white #{:O-O-O}, :black #{:O-O}} (deduce-castling-availability (place-pieces empty-board [:K :e1 :R :a1 :k :e8 :r :h8]))))
   (is (= {:white #{}, :black #{}} (deduce-castling-availability (place-pieces empty-board [:K :e2 :R :a1])))))
 
@@ -317,27 +317,27 @@
 
 (deftest test-valid-moves
   (testing "keeps the king out of check"
-    (is (= [{:piece :K, :from (to-idx :e6), :to (to-idx :e7), :capture nil}] (valid-moves (setup-position (place-pieces [:K :e6 :k :e4 :r :d1 :r :f1]))))))
+    (is (= [{:piece :K, :from (to-idx :e6), :to (to-idx :e7), :capture nil}] (valid-moves (setup-position [:K :e6 :k :e4 :r :d1 :r :f1])))))
   (testing "puts a piece in place to prevent check"
-    (is (= [{:piece :B, :from (to-idx :g1), :to (to-idx :a7), :capture nil}] (valid-moves (setup-position (place-pieces [:K :a8 :B :g1 :r :a1 :r :b1]))))))
+    (is (= [{:piece :B, :from (to-idx :g1), :to (to-idx :a7), :capture nil}] (valid-moves (setup-position [:K :a8 :B :g1 :r :a1 :r :b1])))))
   (testing "captures a piece to prevent check"
-    (is (= [{:piece :B, :from (to-idx :g7), :to (to-idx :a1), :capture :r}] (valid-moves (setup-position (place-pieces [:K :a8 :B :g7 :r :a1 :r :b1])))))
-    (is (= [{:piece :K, :from (to-idx :a8), :to (to-idx :b8), :capture :q}] (valid-moves (setup-position (place-pieces [:K :a8 :q :b8]))))))
+    (is (= [{:piece :B, :from (to-idx :g7), :to (to-idx :a1), :capture :r}] (valid-moves (setup-position [:K :a8 :B :g7 :r :a1 :r :b1]))))
+    (is (= [{:piece :K, :from (to-idx :a8), :to (to-idx :b8), :capture :q}] (valid-moves (setup-position [:K :a8 :q :b8])))))
   (testing "castlings with availability"
-    (is (= [{:castling :O-O-O, :piece :K, :from 4, :to 2, :rook-from 0, :rook-to 3}] (filter :castling (valid-moves (setup-position (place-pieces [:K :e1 :R :a1]))))))
-    (is (= [{:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5}] (filter :castling (valid-moves (setup-position (place-pieces [:K :e1 :R :h1])))))))
+    (is (= [{:castling :O-O-O, :piece :K, :from 4, :to 2, :rook-from 0, :rook-to 3}] (filter :castling (valid-moves (setup-position [:K :e1 :R :a1])))))
+    (is (= [{:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5}] (filter :castling (valid-moves (setup-position  [:K :e1 :R :h1]))))))
   (testing "castling without availability"
-    (is (= [] (filter :castling (valid-moves (setup-position (place-pieces [:K :e1 :R :a1 :R :h1]) {:castling-availability {:white #{}}})))))
-    (is (= [{:castling :O-O-O, :piece :k, :from 60, :to 58, :rook-from 56, :rook-to 59}] (filter :castling (valid-moves (setup-position (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O}}})))))
-    (is (= 2 (count (filter :castling (valid-moves (setup-position (place-pieces [:k :e8 :r :a8 :r :h8]) {:turn :black :castling-availability {:black #{:O-O-O :O-O}}})))))))
+    (is (= [] (filter :castling (valid-moves (setup-position[:K :e1 :R :a1 :R :h1] {:castling-availability {:white #{}}})))))
+    (is (= [{:castling :O-O-O, :piece :k, :from 60, :to 58, :rook-from 56, :rook-to 59}] (filter :castling (valid-moves (setup-position [:k :e8 :r :a8 :r :h8] {:turn :black :castling-availability {:black #{:O-O-O}}})))))
+    (is (= 2 (count (filter :castling (valid-moves (setup-position [:k :e8 :r :a8 :r :h8] {:turn :black :castling-availability {:black #{:O-O-O :O-O}}})))))))
   (testing "promotions"
-    (is (= {:piece :P :from 48 :to 56 :promote-to :Q} (first (filter :promote-to (valid-moves (setup-position (place-pieces [:P :a7 :N :b8])))))))
-    (is (= {:piece :P :from 49 :to 56 :capture :n :promote-to :Q} (first (filter :promote-to (valid-moves (setup-position (place-pieces [:P :b7 :n :a8 :N :b8]))))))))
+    (is (= {:piece :P :from 48 :to 56 :promote-to :Q} (first (filter :promote-to (valid-moves (setup-position [:P :a7 :N :b8]))))))
+    (is (= {:piece :P :from 49 :to 56 :capture :n :promote-to :Q} (first (filter :promote-to (valid-moves (setup-position [:P :b7 :n :a8 :N :b8])))))))
   (testing "en-passant"
-    (is (= [] (valid-moves (setup-position (place-pieces [:P :e5 :p :d5 :p :e6])))))
-    (is (= [{:piece :P :from 36 :to 43 :capture nil :ep-capture 35}] (valid-moves (setup-position (place-pieces [:P :e5 :p :d5 :p :e6]) {:ep-info [(to-idx :d6) (to-idx :d5)]})))))
-  (testing "no valid moves"
-    (is (= [] (valid-moves (setup-position (place-pieces [:K :a8 :q :b6])))))))
+    (is (= [] (valid-moves (setup-position [:P :e5 :p :d5 :p :e6]))))
+    (is (= [{:piece :P :from 36 :to 43 :capture nil :ep-capture 35}] (valid-moves (setup-position [:P :e5 :p :d5 :p :e6] {:ep-info [(to-idx :d6) (to-idx :d5)]}))))    (is (= [{:piece :P :from 36 :to 43 :capture nil :ep-capture 35}] (valid-moves (setup-position [:P :e5 :p :d5 :p :e6] {:ep-info [(to-idx :d6) (to-idx :d5)]})))))
+    (testing "no valid moves"
+    (is (= [] (valid-moves (setup-position [:K :a8 :q :b6]))))))
 
 ;
 ; position
@@ -345,30 +345,30 @@
 
 (deftest test-setup-position
   (testing "parameter-less version"
-    (is (= start-board (:board (setup-position))))
-    (is (= :white (:turn (setup-position)))))
+    (is (= (:board start-position) (:board start-position)))
+    (is (= :white (:turn start-position))))
   (testing "explicit board"
-    (is (= "8/3k4/8/8/8/8/8/6K1" (board->fen (:board (setup-position (place-pieces [:K :g1 :k :d7])))))))
+    (is (= "8/3k4/8/8/8/8/8/6K1" (board->fen (:board (setup-position [:K :g1 :k :d7]))))))
   (testing "options"
-    (is (= :black (:turn (setup-position (place-pieces [:K :e1 :R :a1 :R :h1]) {:turn :black}))))
-    (is (= {:white #{:O-O}} (:castling-availability (setup-position (place-pieces [:K :e1 :R :a1 :R :h1]) {:castling-availability {:white #{:O-O}}}))))))
+    (is (= :black (:turn (setup-position  [:K :e1 :R :a1 :R :h1] {:turn :black}))))
+    (is (= {:white #{:O-O}} (:castling-availability (setup-position [:K :e1 :R :a1 :R :h1] {:castling-availability {:white #{:O-O}}}))))))
 
 
 (deftest test-calls
   (testing "no call"
     (are [position call] (= call (:call position))
-      (setup-position) nil
-      (play-line (setup-position) :d4 :c5 :dxc5 :Qa5) :check
-      (play-line (setup-position) :f3 :e5 :g4 :Qh4) :checkmate
-      (play-line (setup-position) :c4 :d5 :Qb3 :Bh3 :gxh3 :f5 :Qxb7 :Kf7 :Qxa7 :Kg6 :f3 :c5 :Qxe7 :Rxa2 :Kf2 :Rxb2 :Qxg7+ :Kh5 :Qxg8 :Rxb1 :Rxb1 :Kh4 :Qxh8 :h5 :Qh6 :Bxh6 :Rxb8 :Be3+ :dxe3 :Qxb8 :Kg2 :Qf4 :exf4 :d4 :Be3 :dxe3) :stalemate)))
+      start-position nil
+      (play-line start-position :d4 :c5 :dxc5 :Qa5) :check
+      (play-line start-position :f3 :e5 :g4 :Qh4) :checkmate
+      (play-line start-position :c4 :d5 :Qb3 :Bh3 :gxh3 :f5 :Qxb7 :Kf7 :Qxa7 :Kg6 :f3 :c5 :Qxe7 :Rxa2 :Kf2 :Rxb2 :Qxg7+ :Kh5 :Qxg8 :Rxb1 :Rxb1 :Kh4 :Qxh8 :h5 :Qh6 :Bxh6 :Rxb8 :Be3+ :dxe3 :Qxb8 :Kg2 :Qf4 :exf4 :d4 :Be3 :dxe3) :stalemate)))
 
 (defn play-move-on-board
-  "Setup a board with the given piece-positions, then make the given move and return a FEN-representation of the board."
-  ([piece-positions move]
-   (let [game (setup-position (place-pieces piece-positions))]
+  "Setup a board with the given piece-locations, then make the given move and return a FEN-representation of the board."
+  ([piece-locations move]
+   (let [game (setup-position piece-locations)]
      (board->fen (:board (update-position game move)))))
   ([piece-positions game-options move]
-   (let [game (setup-position (place-pieces piece-positions) game-options)]
+   (let [game (setup-position piece-positions game-options)]
      (board->fen (:board (update-position game move)))))
   )
 
@@ -386,14 +386,14 @@
 
 (deftest test-update-position-castling-availability
   (testing "updates castling-availability after own kings- or rook-move"
-    (let [game (setup-position (place-pieces [:K :e1 :R :a1 :R :h1]))]
+    (let [game (setup-position [:K :e1 :R :a1 :R :h1])]
       (is (= #{} (get-in (update-position game {:from (to-idx :e1) :to (to-idx :d1)}) [:castling-availability :white])))
       (is (= #{:O-O} (get-in (update-position game {:from (to-idx :a1) :to (to-idx :b1)}) [:castling-availability :white])))
       (is (= #{:O-O-O} (get-in (update-position game {:from (to-idx :h1) :to (to-idx :h8)}) [:castling-availability :white]))))))
 
 (deftest test-update-position-ep-info
   (testing "double-step pawn moves are potential en-passant targets"
-    (is (= [16 24] (:ep-info (update-position (setup-position (place-pieces [:P :a2])) {:from (to-idx :a2) :to (to-idx :a4) :ep-info [(to-idx :a3) (to-idx :a4)]}))))))
+    (is (= [16 24] (:ep-info (update-position (setup-position [:P :a2]) {:from (to-idx :a2) :to (to-idx :a4) :ep-info [(to-idx :a3) (to-idx :a4)]}))))))
 
 
 ;
@@ -402,13 +402,13 @@
 
 (deftest test-select-move
   (testing "unambiguous valid move"
-    (is (= {:piece :P, :from 12, :to 20} (select-move (setup-position) {:to :e3})))
-    (is (= {:piece :P, :from 12, :to 28, :ep-info [20 28]} (select-move (setup-position) {:to :e4})))
-    (is (= {:piece :N :from 6 :to 21 :capture nil} (select-move (setup-position) {:piece :N :to :f3}))))
+    (is (= {:piece :P, :from 12, :to 20} (select-move start-position {:to :e3})))
+    (is (= {:piece :P, :from 12, :to 28, :ep-info [20 28]} (select-move start-position {:to :e4})))
+    (is (= {:piece :N :from 6 :to 21 :capture nil} (select-move start-position {:piece :N :to :f3}))))
   (testing "invalid move"
-    (is (thrown-with-msg? IllegalArgumentException #"No matching moves" (select-move (setup-position) {:piece :N :to :f4}))))
+    (is (thrown-with-msg? IllegalArgumentException #"No matching moves" (select-move start-position {:piece :N :to :f4}))))
   (testing "invalid move"
-    (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (setup-position (place-pieces [:N :e2 :N :g2])) {:piece :N :to :f4})))))
+    (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (setup-position [:N :e2 :N :g2]) {:piece :N :to :f4})))))
 
 
 

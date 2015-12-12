@@ -4,7 +4,7 @@
             [chess.fen :refer :all]))
 
 (deftest test-to-fen-start-position
-  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (board->fen start-board))))
+  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (board->fen (:board start-position)))))
 
 (deftest test-to-fen-single-piece
   (is (= "8/8/8/8/8/8/6r1/8" (board->fen (place-piece empty-board [:r :g2])))))
