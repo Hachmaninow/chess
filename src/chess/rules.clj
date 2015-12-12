@@ -82,7 +82,7 @@
   ([piece-locations] (place-pieces empty-board piece-locations))
   ([board piece-locations] (reduce place-piece board (for [[piece square-or-index] (partition 2 piece-locations)] [piece square-or-index]))))
 
-(def init-board
+(def start-board
   (reduce place-piece empty-board (for [[piece squares] initial-squares square squares] [piece square])))
 
 ;
@@ -329,11 +329,11 @@
       (and gives-check (not has-moves)) :checkmate
       (and (not gives-check) (not has-moves)) :stalemate)))
 
-(defn init-position
+(defn setup-position
   ([]
-   (init-position init-board))
+   (setup-position start-board))
   ([board options]
-   (merge (init-position board) options))
+   (merge (setup-position board) options))
   ([board]
    {
     :board board
@@ -341,6 +341,8 @@
     :call (call board :white)
     :castling-availability (deduce-castling-availability board)
     }))
+
+(def start-position (setup-position))
 
 
 (defn update-position

@@ -6,9 +6,9 @@
             [spyscope.core]
             [taoensso.timbre.profiling]))
 
-(def init-game
+(def new-game
   {
-   :position (init-position)
+   :position (setup-position)
    :lines (zip/vector-zip [])
    }
   )
@@ -64,7 +64,7 @@
   )
 
 (defn load-pgn [pgn-str]
-  (let [game init-game]
+  (let [game new-game]
     (reduce add-item game (pgn pgn-str))
     )
   )
