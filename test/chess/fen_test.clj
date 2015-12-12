@@ -1,6 +1,6 @@
 (ns chess.fen-test
   (:require [clojure.test :refer :all]
-            [chess.board :refer :all]
+            [chess.rules :refer :all]
             [chess.fen :refer :all]))
 
 (deftest test-to-fen-start-position

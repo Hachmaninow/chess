@@ -1,6 +1,6 @@
 (ns chess.game-test
   (:require [clojure.test :refer :all]
-            [chess.board :refer :all]
+            [chess.rules :refer :all]
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
             [chess.game :refer :all]

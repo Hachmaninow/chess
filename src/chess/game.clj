@@ -1,5 +1,5 @@
 (ns chess.game
-  (:require [chess.board :refer :all]
+  (:require [chess.rules :refer :all]
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
             [clojure.zip :as zip]

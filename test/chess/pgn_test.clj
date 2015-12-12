@@ -1,6 +1,6 @@
 (ns chess.pgn-test
   (:require [clojure.test :refer :all]
-            [chess.board :refer :all]
+            [chess.rules :refer :all]
             [chess.pgn :refer :all]))
 
 (deftest test-parse-move

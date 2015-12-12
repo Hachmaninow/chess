@@ -1,4 +1,4 @@
-(ns chess.board
+(ns chess.rules
   (:require [chess.pgn :refer :all]
             [clojure.set :refer [intersection]]
             [spyscope.core]
