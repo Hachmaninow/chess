@@ -435,16 +435,3 @@
   (testing "invalid move"
     (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (setup-position [:N :e2 :N :g2]) {:piece :N :to :f4})))))
 
-
-;
-; move to string
-;
-
-(deftest test-move->str
-  (is (= "O-O" (move->str {:piece :K :castling :O-O})))
-  (is (= "O-O-O" (move->str {:piece :k :castling :O-O-O})))
-  (is (= "a2-a3" (move->str {:piece :P :from (to-idx :a2) :to (to-idx :a3)})))
-  (is (= "e2-e1=N" (move->str {:piece :p :from (to-idx :e2) :to (to-idx :e1) :promote-to :n})))
-  (is (= "d6xe6ep" (move->str {:piece :P :from (to-idx :d6) :to (to-idx :e6) :ep-capture (to-idx :e5)})))
-  (is (= "Nf7xh8" (move->str {:piece :N :from (to-idx :f7) :to (to-idx :h8) :capture :r}))))
-

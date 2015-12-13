@@ -13,11 +13,27 @@
    }
   )
 
+
+;
+; move to string
+;
+
+(defn move->long-str [{:keys [:piece :from :to :capture :castling :ep-capture :promote-to]}]
+  (cond
+    (nil? piece) "error"
+    castling (name castling)
+    :else (str
+            (if (not= (piece-type piece) :P) (name (piece-type piece)))
+            (name (to-sqr from))
+            (if (or capture ep-capture) "x" "-")
+            (name (to-sqr to)) (if ep-capture "ep")
+            (if promote-to (str "=" (name (piece-type promote-to)))))
+    )
+  )
+
 ;
 ; editing lines
 ;
-
-(def tree (zip/vector-zip []))
 
 (defn append-to-line [z move]
   (cond
@@ -65,7 +81,7 @@
 
 (defn load-pgn [pgn-str]
   (let [game new-game]
-    (reduce add-item game (pgn pgn-str))
+    (reduce add-item game #spy/d (pgn pgn-str))
     )
   )
 

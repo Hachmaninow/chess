@@ -6,13 +6,29 @@
             [chess.game :refer :all]
             [clojure.zip :as zip]))
 
-(deftest test-load-pgn
-  (let [game (load-pgn "d4 d5")]
-    (is (:position game))
-    (is (:lines game))))
+;
+; move to string
+;
+
+(deftest test-move->long-str
+  (is (= "O-O" (move->long-str {:piece :K :castling :O-O})))
+  (is (= "O-O-O" (move->long-str {:piece :k :castling :O-O-O})))
+  (is (= "a2-a3" (move->long-str {:piece :P :from (to-idx :a2) :to (to-idx :a3)})))
+  (is (= "e2-e1=N" (move->long-str {:piece :p :from (to-idx :e2) :to (to-idx :e1) :promote-to :n})))
+  (is (= "d6xe6ep" (move->long-str {:piece :P :from (to-idx :d6) :to (to-idx :e6) :ep-capture (to-idx :e5)})))
+  (is (= "Nf7xh8" (move->long-str {:piece :N :from (to-idx :f7) :to (to-idx :h8) :capture :r}))))
 
 (deftest test-append-to-line
-  (is (= [:e4 :c5 :Nf3] (-> tree (append-to-line :e4) (append-to-line :c5) (append-to-line :Nf3) (zip/root))))
+  (is (= [:e4 :c5 :Nf3] (-> (zip/vector-zip []) (append-to-line :e4) (append-to-line :c5) (append-to-line :Nf3) (zip/root))))
+  )
+
+(deftest test-load-pgn
+  (are [pgn fen-exp lines-exp ]
+    (let [game (load-pgn pgn) fen (position->fen (:position game))]
+      (do
+        (is (= fen-exp fen))
+        (is (= lines-exp (map move->long-str (zip/root (:lines game)))))))
+    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" ["e2-e4" "e7-e5" "Ng1-f3" "Nb8-c6" "Bf1-b5" "a7-a6" "Bb5xc6"])
   )
 
 

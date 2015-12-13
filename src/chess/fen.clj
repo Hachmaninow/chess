@@ -18,6 +18,9 @@
 (defn board->fen [board]
   (clojure.string/join "/" (map rank->fen (map run-length-encode (reverse (partition 8 board))))))
 
+(defn position->fen [{board :board} ]
+  (clojure.string/join "/" (map rank->fen (map run-length-encode (reverse (partition 8 board))))))
+
 ;
 ; fen to board
 ;
