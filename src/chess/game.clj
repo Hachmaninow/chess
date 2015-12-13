@@ -81,7 +81,7 @@
 
 (defn load-pgn [pgn-str]
   (let [game new-game]
-    (reduce add-item game #spy/d (pgn pgn-str))
+    (reduce add-item game (pgn pgn-str))
     )
   )
 
