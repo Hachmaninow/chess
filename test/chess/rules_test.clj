@@ -1,6 +1,7 @@
 (ns chess.rules-test
   (:require [clojure.test :refer :all]
             [chess.rules :refer :all]
+            [chess.pgn :refer :all]
             [chess.fen :refer :all]
             [spyscope.core :refer :all]))
 
@@ -399,6 +400,30 @@
 ;
 ; move selection
 ;
+(deftest test-matches-move-coords
+  (testing "pawn moves"
+    (is (true? (matches-move-coords? (parse-move "a6") {:piece :P :to (to-idx :a6)})))
+    (is (false? (matches-move-coords? (parse-move "a5") {:piece :p, :to (to-idx :a6)})))
+    (is (true? (matches-move-coords? (parse-move "axb5") {:piece :p, :to (to-idx :b5), :from (to-idx :a6), :capture :P})))
+    (is (false? (matches-move-coords? (parse-move "axb5") {:piece :p, :to (to-idx :b5), :from (to-idx :a6)})), "capture missing")
+    (is (false? (matches-move-coords? (parse-move "axb5") {:piece :p, :to (to-idx :b5), :from (to-idx :c6), :capture :P})), "wrong file"))
+  (testing "piece moves"
+    (is (true? (matches-move-coords? (parse-move "Ne7") {:piece :N, :to (to-idx :e7)})))
+    (is (true? (matches-move-coords? (parse-move "Ne7") {:piece :n, :to (to-idx :e7)})))
+    (is (false? (matches-move-coords? (parse-move "Ne7") {:piece :B, :to (to-idx :e7)})))
+    (is (true? (matches-move-coords? (parse-move "Nxe7") {:piece :n, :to (to-idx :e7), :capture :b})))
+    (is (false? (matches-move-coords? (parse-move "Nxe7") {:piece :n, :to (to-idx :e7)})), "missing capture")
+    (is (true? (matches-move-coords? (parse-move "Ngxe7") {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B})))
+    (is (true? (matches-move-coords? (parse-move "N3xe5") {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B})))
+    (is (false? (matches-move-coords? (parse-move "Ncxe7") {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B})), "wrong file")
+    (is (false? (matches-move-coords? (parse-move "N7xe5") {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B})), "wrong rank"))
+  (testing "castlings"
+    (is (true? (matches-move-coords? (parse-move "O-O") {:to (to-idx :g1), :from (to-idx :e1), :castling :O-O})))
+    (is (false? (matches-move-coords? (parse-move "O-O-O") {:to (to-idx :g1), :from (to-idx :e1), :castling :O-O}))))
+  (testing "promote-to"
+    (is (true? (matches-move-coords? (parse-move "a8=B") {:piece :P :from (to-idx :a7) :to (to-idx :a8) :promote-to :B})))
+    (is (true? (matches-move-coords? (parse-move "e1=Q") {:piece :p :from (to-idx :e2) :to (to-idx :e1) :promote-to :q})))
+    (is (false? (matches-move-coords? (parse-move "a8=B") {:piece :P :from (to-idx :a7) :to (to-idx :a8) :promote-to :N})))))
 
 (deftest test-select-move
   (testing "unambiguous valid move"
@@ -409,7 +434,6 @@
     (is (thrown-with-msg? IllegalArgumentException #"No matching moves" (select-move start-position {:piece :N :to :f4}))))
   (testing "invalid move"
     (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (setup-position [:N :e2 :N :g2]) {:piece :N :to :f4})))))
-
 
 
 ;
