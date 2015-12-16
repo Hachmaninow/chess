@@ -19,7 +19,7 @@
   (is (= "Nf7xh8" (move->long-str {:piece :N :from (to-idx :f7) :to (to-idx :h8) :capture :r}))))
 
 (deftest test-append-to-line
-  (is (= [:e4 :c5 :Nf3] (-> (zip/vector-zip []) (append-to-line :e4) (append-to-line :c5) (append-to-line :Nf3) (zip/root))))
+  (is (= [:e4 :c5 :Nf3] (-> (zip/vector-zip []) (append-to-current-location :e4) (append-to-current-location :c5) (append-to-current-location :Nf3) (zip/root))))
   )
 
 (deftest test-load-pgn
@@ -28,8 +28,12 @@
       (do
         (is (= fen-exp fen))
         (is (= lines-exp (map move->long-str (zip/root (:lines game)))))))
-    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" ["e2-e4" "e7-e5" "Ng1-f3" "Nb8-c6" "Bf1-b5" "a7-a6" "Bb5xc6"])
+    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" ["e2-e4" "e7-e5" "Ng1-f3" "Nb8-c6" "Bf1-b5" "a7-a6" "Bb5xc6"]
+    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" ["e2-e4" "e7-e5" "Ng1-f3" "Nb8-c6" "Bf1-b5" "a7-a6" "Bb5xc6"]
+    )
   )
+
+(load-pgn "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6")
 
 
 ;(deftest test-jump

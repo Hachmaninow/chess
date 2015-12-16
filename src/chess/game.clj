@@ -32,31 +32,29 @@
   )
 
 ;
-; editing lines
+; variations
 ;
 
-(defn append-to-line [z move]
+(defn navigate [game target]
+  (case target
+    :up (:up game)
+    :start (loop [prev (:up game)] (if prev (recur game) game))
+    ))
+
+
+(defn append-to-current-location [z move]
   (cond
     (zip/branch? z) (-> z (zip/append-child move) (zip/down))
     (nil? (zip/rights z)) (-> z (zip/insert-right move) (zip/right))
     ))
 
-(defn- start-variation [z]
-  (append-to-line z [])  )
 
-(defn- end-variation [z]
-  (zip/up (zip/up z))  )
+(defn- start-variation [game]
+  (assoc game :lines (append-to-current-location (:lines game) [])))
 
+(defn- end-variation [game]
+  (assoc game :lines (zip/up (zip/up (:lines game)))))
 
-;
-; navigating lines
-;
-
-(defn jump [game target]
-  (case target
-    :up (:up game)
-    :start (loop [prev (:up game)] (if prev (recur game) game))
-    ))
 
 ;
 ;
@@ -67,25 +65,27 @@
   [{:keys [position lines]} move]
   {
     :position (update-position position move)
-    :lines (append-to-line lines move)
+    :lines (append-to-current-location lines move)
     })
 
 
+(defn add-line [game line])
 
-(defn add-item [game item]
-  (condp = (first item)
-    :move (add-move game (select-move (:position game) (into {} (rest item)))) ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+(defn add-token [game token]
+  (condp = (first token)
+    :move (add-move game (select-move (:position game) (into {} (rest token)))) ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+    :variation (end-variation (add-line (start-variation game) (rest token)))
     game
     )
   )
 
-(defn load-pgn [pgn-str]
-  (let [game new-game]
-    (reduce add-item game (pgn pgn-str))
-    )
+(defn add-line [game line]
+  (reduce add-token game line)
   )
 
-
+(defn load-pgn [pgn-str]
+  (add-line new-game (pgn pgn-str))
+  )
 
 ;(defn lines [game]
 ;  (let [game (start game)]
