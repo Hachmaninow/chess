@@ -7,11 +7,7 @@
             [taoensso.timbre.profiling]))
 
 (def new-game
-  {
-   :position (setup-position)
-   :lines (zip/vector-zip [])
-   }
-  )
+  (zip/down (zip/vector-zip [{:position (setup-position)}])))
 
 
 ;
@@ -42,18 +38,18 @@
     ))
 
 
-(defn append-to-current-location [z move]
+(defn append-to-current-location [game node]
   (cond
-    (zip/branch? z) (-> z (zip/append-child move) (zip/down))
-    (nil? (zip/rights z)) (-> z (zip/insert-right move) (zip/right))
+    (zip/branch? game) (-> game (zip/append-child node) (zip/down))
+    (nil? (zip/rights game)) (-> game (zip/insert-right node) (zip/right))
     ))
 
 
 (defn- start-variation [game]
-  (assoc game :lines (append-to-current-location (:lines game) [])))
+  (append-to-current-location game []))
 
 (defn- end-variation [game]
-  (assoc game :lines (zip/up (zip/up (:lines game)))))
+  (zip/up game))
 
 
 ;
@@ -64,20 +60,26 @@
   "Add the given move to the current location in the given game."
   [{:keys [position lines]} move]
   {
-    :position (update-position position move)
-    :lines (append-to-current-location lines move)
-    })
+   :position (update-position position move)
+   :lines    (append-to-current-location lines move)
+   })
 
+
+(defn create-node
+  "Create a new zipper node."
+  [game move-coords]
+  (let [position (:position (zip/node game)) move (select-move position move-coords)]
+    {:position (update-position position move) :move move}))
 
 (defn add-line [game line])
 
 (defn add-token [game token]
   (condp = (first token)
-    :move (add-move game (select-move (:position game) (into {} (rest token)))) ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
-    :variation (end-variation (add-line (start-variation game) (rest token)))
+    :move (append-to-current-location game (create-node game (into {} (rest token)))) ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+    :variation (end-variation (add-line #spy/d (start-variation game) #spy/d (rest token)))
     game
-    )
-  )
+    ))
+
 
 (defn add-line [game line]
   (reduce add-token game line)
@@ -86,6 +88,9 @@
 (defn load-pgn [pgn-str]
   (add-line new-game (pgn pgn-str))
   )
+
+(load-pgn "d4 d5 Nf3 (Nc3)")
+
 
 ;(defn lines [game]
 ;  (let [game (start game)]
