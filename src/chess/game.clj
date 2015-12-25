@@ -2,7 +2,7 @@
   (:require [chess.rules :refer :all]
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
-            [clojure.zip :as zip]
+            [clojure.zip :as zip :refer [up down left lefts right rights insert-right branch?]]
             [spyscope.core]
             [taoensso.timbre.profiling]))
 
@@ -14,11 +14,12 @@
 ; move to string
 ;
 
-(defn move->long-str [{:keys [:piece :from :to :capture :castling :ep-capture :promote-to]}]
+(defn move->long-str [{:keys [:piece :from :to :capture :castling :ep-capture :promote-to :highlight]}]
   (cond
-    (nil? piece) "error"
+    (nil? piece) ""
     castling (name castling)
     :else (str
+            (when highlight ">")
             (if (not= (piece-type piece) :P) (name (piece-type piece)))
             (name (to-sqr from))
             (if (or capture ep-capture) "x" "-")
@@ -31,55 +32,89 @@
 ; variations
 ;
 
+(defn end-of-variation? [game]
+  (every? vector? (rights game)))
+
 (defn navigate [game target]
   (case target
-    :up (:up game)
-    :start (loop [prev (:up game)] (if prev (recur game) game))
+    :back (left game)
+    :forward (if (end-of-variation? game) game (first (remove branch? (iterate right (right game)))))
+    :out (second (drop-while branch? (iterate left (up game))))
+    false
     ))
 
+(defn find-end-of-variation
+  "For a given zipper find the loc at which a new sibling has to be appended."
+  [zipper]
+  (let [same-line-sibling (right zipper) first-variation (right same-line-sibling)]
+    (cond
+      (nil? same-line-sibling) zipper   ; absolute end of variation
+      (and first-variation (branch? first-variation)) (last (take-while #(and % (branch? %)) (iterate right first-variation))) ; a variation following -> find last of all
+      :default same-line-sibling     ; usually: insert variation as sibling of following move
+    )))
 
-(defn append-to-current-location [game node]
+
+(defn insert-node [zipper node]
   (cond
-    (zip/branch? game) (-> game (zip/append-child node) (zip/down))
-    (nil? (zip/rights game)) (-> game (zip/insert-right node) (zip/right))
-    ))
-
+    ;(branch? zipper) (-> zipper (zip/append-child node) down)
+    (end-of-variation? zipper) (-> (find-end-of-variation zipper) (insert-right node) right) ; end of a variation -> continue
+    (right zipper) (-> (find-end-of-variation zipper) (insert-right [node]) right down) ; there are already items following -> add as last variation
+))
 
 (defn- start-variation [game]
-  (append-to-current-location game []))
+  (insert-node game []))
 
 (defn- end-variation [game]
   (zip/up game))
 
+(defn highlight-move [highlight-move move]
+  (if (identical? highlight-move move) (assoc move :highlight true) move))
 
-;
-;
-;
+(defn game->str [root highlighter-fn]
+  (clojure.string/trim
+    (let [h (first root)]
+      (cond
+        (nil? h) ""
+        (vector? h) "()"
+        (:move h) (str (move->long-str (highlighter-fn (:move h))) " " (game->str (rest root) highlighter-fn))
+        :default (game->str (rest root) highlighter-fn)     ; skip
+        )
+      )))
 
-(defn add-move
-  "Add the given move to the current location in the given game."
-  [{:keys [position lines]} move]
-  {
-   :position (update-position position move)
-   :lines    (append-to-current-location lines move)
-   })
+(defn variation->str [variation-vec highlighter-fn]
+  (clojure.string/join " "
+                       (map #(cond
+                              (vector? %) (str "(" (variation->str % highlighter-fn) ")")
+                              (:move %) (move->long-str (highlighter-fn (:move %)))
+                              ) variation-vec
+                            ))
+  )
 
 
-(defn create-node
+(defn game->str [game highlighter-fn]
+  (variation->str (rest (zip/root game)) highlighter-fn)    ; skip the first element as its the anchor containing the start position
+  )
+
+(defn create-move-node
   "Create a new zipper node."
   [game move-coords]
   (let [position (:position (zip/node game)) move (select-move position move-coords)]
     {:position (update-position position move) :move move}))
 
-(defn add-line [game line])
+(defn insert-move
+  [game move-coords]
+  (insert-node game (create-move-node game move-coords))
+  )
+
+
+(defn- add-line [game line])   ; forward reference
 
 (defn add-token [game token]
   (condp = (first token)
-    :move (append-to-current-location game (create-node game (into {} (rest token)))) ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
-    :variation (end-variation (add-line #spy/d (start-variation game) #spy/d (rest token)))
+    :move (insert-move game (into {} (rest token)))         ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+    :variation (end-variation (add-line (start-variation game) (rest token)))
     game
     ))
-
 
 (defn add-line [game line]
   (reduce add-token game line)
@@ -89,7 +124,15 @@
   (add-line new-game (pgn pgn-str))
   )
 
-(load-pgn "d4 d5 Nf3 (Nc3)")
+
+(defn soak [items]
+  (reduce #(if-let [game (navigate %1 %2)] game (insert-move %1 (parse-move (name %2)))) new-game items)
+  )
+
+
+
+;(load-pgn "d4 d5 Nf3")
+;(load-pgn "d4 d5 Nf3 (Nc3)")
 
 
 ;(defn lines [game]
