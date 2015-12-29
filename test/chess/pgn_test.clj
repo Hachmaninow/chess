@@ -1,7 +1,9 @@
 (ns chess.pgn-test
   (:require [clojure.test :refer :all]
             [chess.rules :refer :all]
-            [chess.pgn :refer :all]))
+            [chess.pgn :refer :all]
+            [instaparse.core :as insta])
+  (:import java.lang.IllegalArgumentException))
 
 (deftest test-parse-move
   (testing "simple pawn move"
@@ -37,7 +39,33 @@
 (deftest test-parse-annotations
   (is (= [[:annotation "132"] [:annotation "6"]] (filter #(= :annotation (first %)) (pgn (slurp "test/test-pgns/annotations.pgn"))))))
 
-(deftest test-complete
+(deftest test-complete-game
   (is (= 9160 (count (flatten (pgn (slurp "test/test-pgns/complete.pgn")))))))
 
+(deftest test-parse-error
+  (is (true? (insta/failure? (pgn (slurp "test/test-pgns/invalid.pgn"))))))
+
+
+;
+; pgn to event seq
+;
+
+(deftest test-pgn->events
+  (is (= [{:to-file "d" :to-rank "4"} {:to-file "d" :to-rank "5"}] (pgn->events "d4 d5")))
+  (is (= [{:to-file "d" :to-rank "4"} {:to-file "d" :to-rank "5"} :back {:piece "N" :to-file "f" :to-rank "6"} :out :forward {:piece "N" :to-file "f" :to-rank "3"}]
+         (pgn->events "d4 d5 (Nf6) Nf3")))
+  (is (= [{:to-file "d" :to-rank "4"} {:to-file "d" :to-rank "5"} :back
+          {:piece "N" :to-file "f" :to-rank "6"} {:to-file "c" :to-rank "4"} :back
+          {:to-file "g" :to-rank "3"} :out :forward :out :forward
+          {:piece "N" :to-file "f" :to-rank "3"}]
+         (pgn->events "d4 d5 (Nf6 c4 (g3)) Nf3")))
+  (is (= [{:to-file "e" :to-rank "4"} {:to-file "e" :to-rank "5"} {:piece "N" :to-file "f" :to-rank "3"}
+          :back {:piece "N" :to-file "c" :to-rank "3"} :out :forward
+          {:piece "N" :to-file "c" :to-rank "6"} {:piece "B" :to-file "b" :to-rank "5"} {:to-file "a" :to-rank "6"}
+          {:capture "x" :piece "B" :to-file "c" :to-rank "6"}]
+         (pgn->events "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6")))
+  )
+
+(deftest test-error
+  (is (thrown? IllegalArgumentException (pgn->events  (slurp "test/test-pgns/invalid.pgn")))))
 

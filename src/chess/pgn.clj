@@ -1,5 +1,7 @@
 (ns chess.pgn
-  (:require [instaparse.core :as insta]))
+  (:require [instaparse.core :as insta]
+            [instaparse.failure])
+  (:import java.lang.IllegalArgumentException))
 
 (def pgn
   (insta/parser
@@ -44,3 +46,25 @@
 (defn parse-move [move-str]
   (into {} (rest (first (pgn move-str)))))
 
+
+;
+; pgn to event seq
+;
+
+(defn tokens->events [tokens])
+
+(defn token->event [token]
+  (condp = (first token)
+    :move (into {} (rest token))      ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+    :variation [:back (tokens->events (rest token)) :out :forward]
+    nil
+    ))
+
+(defn tokens->events [tokens]
+  (remove nil? (flatten (map token->event tokens))))
+
+(defn pgn->events [game-str]
+  (let [parse-tree (pgn game-str)]
+    (if (insta/failure? parse-tree)
+      (throw (IllegalArgumentException. (str "Invalid pgn input:" (insta/get-failure parse-tree))))
+      (tokens->events parse-tree))))
