@@ -76,9 +76,7 @@
                        (map #(cond
                               (vector? %) (str "(" (variation->str % highlighter-fn) ")")
                               (:move %) (move->long-str (highlighter-fn (:move %)))
-                              ) variation-vec
-                            ))
-  )
+                              ) variation-vec)))
 
 
 (defn game->str [game]
