@@ -2,7 +2,7 @@
   (:require [chess.rules :refer :all]
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
-            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch?]]
+            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
             [spyscope.core]
             [taoensso.timbre.profiling]))
 
@@ -78,16 +78,18 @@
                               (:move %) (move->long-str (highlighter-fn (:move %)))
                               ) variation-vec)))
 
+(defn game->board-fen [game]
+  (board->fen (:board (:position (node game)))))
 
 (defn game->str [game]
-  (let [highlighter-fn (partial highlight-move (:move (zip/node game)))]
+  (let [highlighter-fn (partial highlight-move (:move (node game)))]
     (variation->str (rest (zip/root game)) highlighter-fn))) ; skip the first element as its the anchor containing the start position
 
 
 (defn create-move-node
   "Create a new zipper node representing a hash with move and position."
   [game move-coords]
-  (let [position (:position (zip/node game)) move (select-move position move-coords)]
+  (let [position (:position (node game)) move (select-move position move-coords)]
     {:move move :position (update-position position move)}))
 
 (defn insert-move
@@ -108,14 +110,17 @@
 (defn load-pgn [pgn]
   (soak (pgn->events pgn)))
 
-
-(defn game-benchmark []
-  (load-pgn "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")
+(defn game-position [game]
+  (:position (node game))
   )
-; 1.3s
 
-(defn game-benchmark2 []
-  (load-pgn (slurp "test/test-pgns/complete.pgn")))
-; 50.2s
-
-(taoensso.timbre.profiling/profile :info :Arithmetic (dotimes [n 10] (game-benchmark)))
+;(defn game-benchmark []
+;  (load-pgn "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")
+;  )
+;; 1.3s
+;
+;(defn game-benchmark2 []
+;  (load-pgn (slurp "test/test-pgns/complete.pgn")))
+;; 50.2s
+;
+;(taoensso.timbre.profiling/profile :info :Arithmetic (dotimes [n 10] (game-benchmark)))

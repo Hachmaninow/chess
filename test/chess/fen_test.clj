@@ -1,16 +1,36 @@
 (ns chess.fen-test
   (:require [clojure.test :refer :all]
             [chess.rules :refer :all]
+            [chess.game :refer :all]
             [chess.fen :refer :all]))
 
-(deftest test-to-fen-start-position
-  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (board->fen (:board start-position)))))
+;
+; board to fen
+;
 
-(deftest test-to-fen-single-piece
-  (is (= "8/8/8/8/8/8/6r1/8" (board->fen (place-piece empty-board [:r :g2])))))
-
-(deftest test-to-fen-sample-position
+(deftest test-board->fen
+  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (board->fen (:board start-position))))
+  (is (= "8/8/8/8/8/8/6r1/8" (board->fen (place-piece empty-board [:r :g2]))))
   (is (= "8/6K1/8/8/4B3/1r6/8/8" (board->fen (place-pieces empty-board [:r :b3 :B :e4 :K :g7])))))
+
+(deftest test-position->fen
+  (is (= "rnbqkb1r/ppp1pp1p/5n2/3p2p1/3P4/2P5/PP1KPPPP/RNBQ1BNR w kq g6 0 0" (position->fen (game-position (load-pgn "d4 d5 c3 Nf6 Kd2 g5")))))
+  (is (= "rnbq1bnr/pppkpppp/8/3p4/3P4/2P5/PP1KPPPP/RNBQ1BNR b - - 0 0" (position->fen (game-position (load-pgn "d4 d5 Kd2 Kd7 c3")))))
+  )
+
+;
+; position to fen
+;
+
+(deftest test-castling-availability->fen
+  (is (= "KQkq" (castling-availability->fen (:castling-availability start-position))))
+  (is (= "K" (castling-availability->fen (:castling-availability (setup-position [:K :e1 :R :h1])))))
+  (is (= "-" (castling-availability->fen (:castling-availability (setup-position [])))))
+)
+
+;
+; fen to board
+;
 
 (deftest test-parse-castling-avaiability
   (is (= {:white #{:O-O :O-O-O} :black #{}} (parse-castling-availability "KQ")))

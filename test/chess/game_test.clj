@@ -162,7 +162,7 @@
 (deftest test-soak-with-position
   (are [moves fen last-move-str]
     (let [game (soak moves)]
-      (is (= fen (position->fen (:position (zip/node game)))))
+      (is (= fen (game->board-fen game)))
       (is (= last-move-str (move->long-str (:move (zip/node game)))))
       )
     [] "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" ""
@@ -191,7 +191,7 @@
 (deftest test-load-pgn
   (are [pgn fen game-str]
     (let [game (load-pgn pgn)]
-      (is (= fen (position->fen (:position (zip/node game)))))
+      (is (= fen (game->board-fen game)))
       (is (= game-str (game->str game))))
     "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e2-e4 e7-e5 Ng1-f3 Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
     "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
@@ -200,8 +200,7 @@
   )
 
 (deftest load-complex-pgn
-  (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (position->fen (:position (zip/node (load-pgn (slurp "test/test-pgns/complete.pgn")))))))
-  )
+  (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "test/test-pgns/complete.pgn"))))))
 
 
 

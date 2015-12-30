@@ -1,4 +1,5 @@
-(ns chess.fen)
+(ns chess.fen
+  (:require [chess.rules :refer :all]))
 
 ;
 ; board to fen
@@ -18,8 +19,24 @@
 (defn board->fen [board]
   (clojure.string/join "/" (map rank->fen (map run-length-encode (reverse (partition 8 board))))))
 
-(defn position->fen [{board :board} ]
-  (clojure.string/join "/" (map rank->fen (map run-length-encode (reverse (partition 8 board))))))
+;
+; position to fen
+;
+
+(defn castling-availability->fen [{white :white black :black}]
+  (if (and (empty? white) (empty? black))
+    "-"
+    (str (when (:O-O white) "K") (when (:O-O-O white) "Q") (when (:O-O black) "k") (when (:O-O-O black) "q"))))
+
+(defn position->fen [{board :board turn :turn castling-availability :castling-availability ep-info :ep-info}]
+  (str
+    (board->fen board) " "
+    (first (name turn)) " "
+    (castling-availability->fen castling-availability) " "
+    (if ep-info (name (to-sqr (first ep-info))) "-") " "
+    "0" " "
+    "0"                                                     ; no move number support yet
+    ))
 
 ;
 ; fen to board
@@ -41,7 +58,7 @@
    })
 
 (defn fen->board [fen]
-          (mapcat #(digits->space %) (reverse (clojure.string/split fen #"/"))))
+  (mapcat #(digits->space %) (reverse (clojure.string/split fen #"/"))))
 
 
 ; fen to game
@@ -49,10 +66,10 @@
 (defn fen->game [fen]
   (let [parts (clojure.string/split fen #"\s+")]
     {
-     :board                     (fen->board (get parts 0))
-     :turn                      (if (= (get parts 1) "w") :white :black)
-     :castling-availability     (parse-castling-availability (get parts 2))
-     :ep-info                   (if (= (get parts 3) "-") nil (keyword (get parts 3)))
+     :board (fen->board (get parts 0))
+     :turn (if (= (get parts 1) "w") :white :black)
+     :castling-availability (parse-castling-availability (get parts 2))
+     :ep-info (if (= (get parts 3) "-") nil (keyword (get parts 3)))
      :fifty-rule-halfmove-clock (read-string (get parts 4))
-     :move-no                   (read-string (get parts 5))
+     :move-no (read-string (get parts 5))
      }))
