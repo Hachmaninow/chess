@@ -37,7 +37,7 @@
       <div class="eight columns" style="margin-top: 5%">
         <div id="board"></div>
       </div>
-      <div class="four columns" style="margin-top: 25%">
+      <div class="four columns" style="margin-top: 5%">
         <div id="notation">
           1. e3 f6
         </div>
@@ -148,9 +148,19 @@
       board = ChessBoard('board', cfg);
 
       updateStatus();
+
+      $("body #notation move").click(function(){
+        var fen = $(this).attr("fen");
+        board.position(fen, false);
+        var r = game.load(fen);
+        console.log("load: " + r);
+
+        console.log("validate: " + game.validate_fen(fen).error)
+      });
     };
 
     $(document).ready(init);
+
   </script>
 </body>
 </html>

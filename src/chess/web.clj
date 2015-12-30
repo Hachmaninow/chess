@@ -1,18 +1,31 @@
 (ns chess.web
   (:use compojure.core)
-  (:require [compojure.core :refer :all]
+  (:require [clojure.zip :as zip]
+            [compojure.core :refer :all]
             [compojure.route :as route]
             [compojure.handler :as handler]
             [net.cgrand.enlive-html :as html]
             [chess.game :refer :all]
-            [chess.data :as data]))
+            [chess.data :as data]
+            [chess.fen :as fen]))
 
-(def notat "")
+
+(defn variation->html [variation-vec]
+  (clojure.string/join " "
+                       (map #(cond
+                              (vector? %) (str "(" (variation->html %) ")")
+                              (:move %) (let [san (move->long-str (:move %)) fen (fen/position->fen (:position %))]
+                                          (str "<move fen=\"" fen "\">" san "</move>"))
+                              ) variation-vec)))
+
+(defn game->html [game]
+  (variation->html (rest (zip/root game))))                 ; skip the first element as it's the anchor containing the start position
+
+
 
 (html/deftemplate show-game "templates/index.html" []
-  [:head :title] (html/content "Chess")
-  ;[:body :#notation] (html/content (game->str (load-pgn (data/load-pgn "queens-gambit-declined"))))
-  [:body :#notation] (html/content (game->str (load-pgn (data/load-pgn "queens-gambit-declined"))))
+                  [:head :title] (html/content "Chess")
+                  [:body :#notation] (html/html-content (game->html (load-pgn (data/load-pgn "queens-gambit-declined"))))
                   )
 
 (defroutes app

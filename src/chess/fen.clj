@@ -34,8 +34,8 @@
     (first (name turn)) " "
     (castling-availability->fen castling-availability) " "
     (if ep-info (name (to-sqr (first ep-info))) "-") " "
-    "0" " "
-    "0"                                                     ; no move number support yet
+    "1" " "
+    "1"                                                     ; no move number support yet
     ))
 
 ;

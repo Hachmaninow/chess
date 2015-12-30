@@ -78,12 +78,12 @@
                               (:move %) (move->long-str (highlighter-fn (:move %)))
                               ) variation-vec)))
 
-(defn game->board-fen [game]
-  (board->fen (:board (:position (node game)))))
-
 (defn game->str [game]
   (let [highlighter-fn (partial highlight-move (:move (node game)))]
-    (variation->str (rest (zip/root game)) highlighter-fn))) ; skip the first element as its the anchor containing the start position
+    (variation->str (rest (zip/root game)) highlighter-fn))) ; skip the first element as it's the anchor containing the start position
+
+(defn game->board-fen [game]
+  (board->fen (:board (:position (node game)))))
 
 
 (defn create-move-node
