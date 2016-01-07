@@ -6,16 +6,19 @@
             [compojure.handler :as handler]
             [net.cgrand.enlive-html :as html]
             [chess.game :refer :all]
+            [chess.rules :refer :all]
             [chess.data :as data]
             [chess.fen :as fen]))
+
+
 
 
 (defn variation->html [variation-vec]
   (clojure.string/join " "
                        (map #(cond
                               (vector? %) (str "(" (variation->html %) ")")
-                              (:move %) (let [san (move->long-str (:move %)) fen (fen/position->fen (:position %))]
-                                          (str "<move fen=\"" fen "\">" san "</move>"))
+                              (:move %) (let [move-no (when (= :white (piece-color (:piece (:move %)))) (ply->move-number (:ply (:position %))))  san (move->long-str (:move %)) fen (fen/position->fen (:position %))]
+                                          (str "<move fen=\"" fen "\">" move-no san "</move>"))
                               ) variation-vec)))
 
 (defn game->html [game]

@@ -28,6 +28,9 @@
     )
   )
 
+(defn ply->move-number [ply]
+  (if (odd? ply) (str (quot ply 2) "...") (str (quot ply 2) ".")))
+
 ;
 ; variations
 ;

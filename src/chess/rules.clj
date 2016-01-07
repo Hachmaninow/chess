@@ -338,6 +338,7 @@
       :turn :white
       :call (call board :white)
       :castling-availability (deduce-castling-availability board)
+      :ply 1                                                ; half-move clock awaited move
       })))
 
 (def start-position (setup-position))
@@ -345,7 +346,7 @@
 
 (defn update-position
   "Update the given position by playing the given move."
-  [{:keys [board turn castling-availability]} move]
+  [{:keys [board turn castling-availability ply]} move]
   (let [new-board (update-board board move)]
     {
       :board new-board
@@ -353,6 +354,7 @@
       :call (call new-board turn)
       :castling-availability (intersect-castling-availability castling-availability (deduce-castling-availability new-board))
       :ep-info (:ep-info move)
+      :ply (inc ply)
     }))
 
 

@@ -396,6 +396,10 @@
   (testing "double-step pawn moves are potential en-passant targets"
     (is (= [16 24] (:ep-info (update-position (setup-position [:P :a2]) {:from (to-idx :a2) :to (to-idx :a4) :ep-info [(to-idx :a3) (to-idx :a4)]}))))))
 
+(deftest test-update-position-ply-count
+  (is (= 1 (:ply start-position)))
+  (is (= 2 (:ply (update-position start-position {:from (to-idx :d2) :to (to-idx :d4)}))))
+  (is (= 3 (:ply (update-position (update-position start-position {:from (to-idx :g1) :to (to-idx :f3)}) {:from (to-idx :b8) :to (to-idx :c6)})))))
 
 ;
 ; move selection
@@ -434,4 +438,3 @@
     (is (thrown-with-msg? IllegalArgumentException #"No matching moves" (select-move start-position {:piece :N :to :f4}))))
   (testing "invalid move"
     (is (thrown-with-msg? IllegalArgumentException #"Multiple matching moves" (select-move (setup-position [:N :e2 :N :g2]) {:piece :N :to :f4})))))
-

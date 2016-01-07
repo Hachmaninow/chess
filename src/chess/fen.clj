@@ -28,14 +28,14 @@
     "-"
     (str (when (:O-O white) "K") (when (:O-O-O white) "Q") (when (:O-O black) "k") (when (:O-O-O black) "q"))))
 
-(defn position->fen [{board :board turn :turn castling-availability :castling-availability ep-info :ep-info}]
+(defn position->fen [{board :board turn :turn castling-availability :castling-availability ep-info :ep-info ply :ply}]
   (str
     (board->fen board) " "
     (first (name turn)) " "
     (castling-availability->fen castling-availability) " "
     (if ep-info (name (to-sqr (first ep-info))) "-") " "
-    "1" " "
-    "1"                                                     ; no move number support yet
+    "1" " "                                                 ; no support for half-move clock yet
+    (inc (quot (dec ply) 2))
     ))
 
 ;

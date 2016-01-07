@@ -14,8 +14,9 @@
   (is (= "8/6K1/8/8/4B3/1r6/8/8" (board->fen (place-pieces empty-board [:r :b3 :B :e4 :K :g7])))))
 
 (deftest test-position->fen
-  (is (= "rnbqkb1r/ppp1pp1p/5n2/3p2p1/3P4/2P5/PP1KPPPP/RNBQ1BNR w kq g6 0 0" (position->fen (game-position (load-pgn "d4 d5 c3 Nf6 Kd2 g5")))))
-  (is (= "rnbq1bnr/pppkpppp/8/3p4/3P4/2P5/PP1KPPPP/RNBQ1BNR b - - 0 0" (position->fen (game-position (load-pgn "d4 d5 Kd2 Kd7 c3")))))
+  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 1" (position->fen start-position)))
+  (is (= "rnbqkb1r/ppp1pp1p/5n2/3p2p1/3P4/2P5/PP1KPPPP/RNBQ1BNR w kq g6 1 4" (position->fen (game-position (load-pgn "d4 d5 c3 Nf6 Kd2 g5")))))
+  (is (= "rnbq1bnr/pppkpppp/8/3p4/3P4/2P5/PP1KPPPP/RNBQ1BNR b - - 1 3" (position->fen (game-position (load-pgn "d4 d5 Kd2 Kd7 c3")))))
   )
 
 ;

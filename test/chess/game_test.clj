@@ -4,7 +4,7 @@
             [chess.pgn :refer :all]
             [chess.fen :refer :all]
             [chess.game :refer :all]
-            [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node root]]))
+            [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node path root]]))
 
 ;
 ; verify zipper basics
@@ -24,16 +24,16 @@
   (testing "zip/node"
     (is (= {
             :move {:ep-info [20 28] :from 12 :piece :P :to 28}
-            :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :call nil :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black}
+            :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :call nil :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black :ply 2}
             }
            (node (insert-move new-game :e4)))))
   (testing "zip/root"
     (is (= [
             {
-             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :white, :call nil, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}}
+             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :white, :call nil, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}} :ply 1}
              }
             {
-             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :black, :call nil, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}, :ep-info [20 28]},
+             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :black, :call nil, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}, :ep-info [20 28] :ply 2},
              :move {:piece :P, :from 12, :to 28, :ep-info [20 28]}
              }
             ] (root (insert-move new-game :e4))))))
@@ -49,6 +49,10 @@
   (is (= "e2-e1=N" (move->long-str {:piece :p :from (to-idx :e2) :to (to-idx :e1) :promote-to :n})))
   (is (= "d6xe6ep" (move->long-str {:piece :P :from (to-idx :d6) :to (to-idx :e6) :ep-capture (to-idx :e5)})))
   (is (= "Nf7xh8" (move->long-str {:piece :N :from (to-idx :f7) :to (to-idx :h8) :capture :r}))))
+
+(deftest test-ply->move-number
+  (is (= "2..." (ply->move-number 5)))
+  (is (= "3." (ply->move-number 6))))
 
 (deftest test-navigate
   (testing "simple zipper"
@@ -91,7 +95,7 @@
     (is (= [:a :b] (-> zipper down right goto-insert-loc node)))
     (is (= 3 (-> zipper down right right node)))
     (is (= [:c :d] (-> zipper down right right goto-insert-loc node))))
-  (let [zipper (vector-zip [1 2 3 [:a :b] [:c :d]  4 [:e :f [:g :h [:i [:j]]]]  5])]
+  (let [zipper (vector-zip [1 2 3 [:a :b] [:c :d] 4 [:e :f [:g :h [:i [:j]]]] 5])]
     (is (= 2 (-> zipper down right node)))
     (is (= [:c :d] (-> zipper down right goto-insert-loc node)))
     (is (= 3 (-> zipper down right right node)))
