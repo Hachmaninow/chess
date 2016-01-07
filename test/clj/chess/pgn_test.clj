@@ -28,22 +28,22 @@
   (is (= {:castling "O-O-O" :call "+"} (parse-move "O-O-O+"))))
 
 (deftest test-parse-tags
-  (is (= [[:tag "White" "Kasparov, Garry"]] (filter #(and (= :tag (first %)) (= "White" (second %))) (pgn (slurp "test/test-pgns/tags.pgn"))))))
+  (is (= [[:tag "White" "Kasparov, Garry"]] (filter #(and (= :tag (first %)) (= "White" (second %))) (pgn (slurp "test/clj/test-pgns/tags.pgn"))))))
 
 (deftest test-parse-comments
-  (is (= [:comment "Topalov is a\nSicilian player, but against Kasparov he prefers to spring a slight surprise\non his well prepared opponent as soon as possible."] (last (filter #(= :comment (first %)) (pgn (slurp "test/test-pgns/comments.pgn")))))))
+  (is (= [:comment "Topalov is a\nSicilian player, but against Kasparov he prefers to spring a slight surprise\non his well prepared opponent as soon as possible."] (last (filter #(= :comment (first %)) (pgn (slurp "test/clj/test-pgns/comments.pgn")))))))
 
 (deftest test-parse-variations
-  (is (= [:move-number :move :move :move-number :move :move :move-number :move :variation :black-move-number :move] (map first (pgn (slurp "test/test-pgns/variations.pgn"))))))
+  (is (= [:move-number :move :move :move-number :move :move :move-number :move :variation :black-move-number :move] (map first (pgn (slurp "test/clj/test-pgns/variations.pgn"))))))
 
 (deftest test-parse-annotations
-  (is (= [[:annotation "132"] [:annotation "6"]] (filter #(= :annotation (first %)) (pgn (slurp "test/test-pgns/annotations.pgn"))))))
+  (is (= [[:annotation "132"] [:annotation "6"]] (filter #(= :annotation (first %)) (pgn (slurp "test/clj/test-pgns/annotations.pgn"))))))
 
 (deftest test-complete-game
-  (is (= 9160 (count (flatten (pgn (slurp "test/test-pgns/complete.pgn")))))))
+  (is (= 9160 (count (flatten (pgn (slurp "test/clj/test-pgns/complete.pgn")))))))
 
 (deftest test-parse-error
-  (is (true? (insta/failure? (pgn (slurp "test/test-pgns/invalid.pgn"))))))
+  (is (true? (insta/failure? (pgn (slurp "test/clj/test-pgns/invalid.pgn"))))))
 
 
 ;
@@ -67,5 +67,5 @@
   )
 
 (deftest test-error
-  (is (thrown? IllegalArgumentException (pgn->events  (slurp "test/test-pgns/invalid.pgn")))))
+  (is (thrown? IllegalArgumentException (pgn->events  (slurp "test/clj/test-pgns/invalid.pgn")))))
 

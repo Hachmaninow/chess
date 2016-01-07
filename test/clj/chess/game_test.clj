@@ -204,4 +204,4 @@
   )
 
 (deftest load-complex-pgn
-  (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "test/test-pgns/complete.pgn"))))))
+  (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "test/clj/test-pgns/complete.pgn"))))))

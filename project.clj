@@ -18,4 +18,7 @@
   :plugins [[lein-ring "0.9.7"]]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  :ring {:handler chess.web/app})
+  :ring {:handler chess.web/app}
+  :source-paths ["src/clj"]
+  :test-paths ["test/clj"]
+  )
