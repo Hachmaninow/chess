@@ -271,7 +271,7 @@
   (testing "piece capture"
     (is (= [{:piece :N :from 63 :to 46 :capture :p}] (cr/find-moves (cr/place-pieces [:N :h8 :P :f7 :p :g6 :r :f8]) :white)))))
 
-(deftest test-find-castlings
+(deftest test-find-castling-moves
   (is (= [{:castling :O-O, :piece :K, :from 4, :to 6, :rook-from 7, :rook-to 5} {:castling :O-O-O, :piece :K, :from 4, :to 2, :rook-from 0, :rook-to 3}] (cr/find-castlings (cr/place-pieces [:K :e1 :R :a1 :R :h1]) :white))))
 
 (deftest test-under-attack?

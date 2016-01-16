@@ -54,11 +54,14 @@
                                         :optimizations :none
                                         :pretty-print true}}
                        :browser-test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]
-                                      :compiler {:output-to "target/browser_tests.js"
+                                      :compiler {:output-dir "target/doo"
+                                                 :output-to "target/browser_tests.js"
                                                  :main 'chessdojo.browser-test
                                                  :optimizations :none}}}}
 
-  :doo {:paths {:karma "/Users/hman/Tools/node_modules/karma/bin/karma"}}
+  :doo {
+        :paths {:karma "/Users/hman/Tools/node_modules/karma/bin/karma"}
+        }
 
 
   :profiles {:dev {:repl-options {:init-ns chessdojo.repl}
