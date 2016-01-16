@@ -1,8 +1,5 @@
-(ns chess.rules
-  (:require [chess.pgn :refer :all]
-            [clojure.set :refer [intersection]]
-            [spyscope.core]
-            [taoensso.timbre.profiling]))
+(ns chessdojo.rules
+  (:require [clojure.set :refer [intersection]]))
 
 ;
 ; basics
@@ -24,15 +21,27 @@
 ; board arithmetics
 ;
 
-(defn rank [index] (int (/ index 8)))
+(defn rank [idx] (int (/ idx 8)))
 
 (defn file [index] (int (rem index 8)))
 
-(defn to-idx [square]
-  (let [square-name (name square) file (first square-name) rank (second square-name)]
-    (+ (- (int file) (int \a)) (* 8 (- (int rank) (int \1))))))
+(def square-names [:a1 :b1 :c1 :d1 :e1 :f1 :g1 :h1
+                   :a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2
+                   :a3 :b3 :c3 :d3 :e3 :f3 :g3 :h3
+                   :a4 :b4 :c4 :d4 :e4 :f4 :g4 :h4
+                   :a5 :b5 :c5 :d5 :e5 :f5 :g5 :h5
+                   :a6 :b6 :c6 :d6 :e6 :f6 :g6 :h6
+                   :a7 :b7 :c7 :d7 :e7 :f7 :g7 :h7
+                   :a8 :b8 :c8 :d8 :e8 :f8 :g8 :h8
+                   ])
 
-(defn to-sqr [index] (keyword (str (char (+ (file index) (int \a))) (inc (rank index)))))
+(def square-name-lookup
+  (into {} (map #(vector (get square-names %) %) (range 0 64))))
+
+(defn to-idx [square] (square square-name-lookup))
+
+(defn to-sqr [index] (get square-names index))
+
 
 (defn distance [i1 i2]
   (max (Math/abs (- (rank i1) (rank i2))) (Math/abs (- (file i1) (file i2)))))
@@ -52,7 +61,8 @@
   (board (to-idx square)))
 
 (defn find-piece [board piece]
-  (.indexOf board piece))
+  (let [pos (first (filter #(= piece (board %)) (range 0 64)))]
+    (if (nil? pos) -1 pos)))                                ; TODO: Clean this up!  was previously . indexOf
 
 (defn is-piece? [board idx turn piece-type]
   (= (board idx) (colored-piece turn piece-type)))
@@ -349,30 +359,50 @@
   [{:keys [board turn castling-availability ply]} move]
   (let [new-board (update-board board move)]
     {
-      :board new-board
-      :turn (opponent turn)
-      :call (call new-board turn)
-      :castling-availability (intersect-castling-availability castling-availability (deduce-castling-availability new-board))
-      :ep-info (:ep-info move)
-      :ply (inc ply)
-    }))
+     :board new-board
+     :turn (opponent turn)
+     :call (call new-board turn)
+     :castling-availability (intersect-castling-availability castling-availability (deduce-castling-availability new-board))
+     :ep-info (:ep-info move)
+     :ply (inc ply)
+     }))
 
 
 ;
 ; move selection
 ;
 
+(defn parse-simple-move [move-coords]
+  "Very limited support for move parsing for testing purposes (as Instaparse is unavailable in cljs tests)."
+  (let [move-str (name move-coords)]
+    (cond
+      (re-matches #"back|forward|out" move-str) move-coords
+      (re-matches #"O-O" move-str) {:castling :O-O}
+      (re-matches #"O-O-O" move-str) {:castling :O-O-O}
+      (re-matches #".." move-str) {:to move-str}
+      (re-matches #"..." move-str) {:piece (subs move-str 0 1) :to (subs move-str 1)}
+      (re-matches #"[a-h]x.." move-str) {:piece "P" :from-file (subs move-str 0 1) :capture "x" :to (subs move-str 2)}
+      (re-matches #".x.." move-str) {:piece (subs move-str 0 1) :capture "x" :to (subs move-str 2)}
+      (re-matches #".[a-h].." move-str) {:piece (subs move-str 0 1) :from-file (subs move-str 1 2) :to (subs move-str 2)}
+      (re-matches #".[1-8].." move-str) {:piece (subs move-str 0 1) :from-rank (subs move-str 1 2) :to (subs move-str 2)}
+      (re-matches #".[a-h]x.." move-str) {:piece (subs move-str 0 1) :from-file (subs move-str 1 2) :capture "x" :to (subs move-str 3)}
+      (re-matches #".[1-8]x.." move-str) {:piece (subs move-str 0 1) :from-rank (subs move-str 1 2) :capture "x" :to (subs move-str 3)}
+      )))
+
+(def rank-names {"1" 0 "2" 1 "3" 2 "4" 3 "5" 4 "6" 5 "7" 6 "8" 7})   ; TODO: investigate (int \a) not supported in cljs (???)
+(def file-names {"a" 0 "b" 1 "c" 2 "d" 3 "e" 4 "f" 5 "g" 6 "h" 7})   ; TODO: investigate (int \1) not supported in cljs (???)
+
 (defn move-matcher [{:keys [:castling :piece :to :to-file :to-rank :capture :from-file :from-rank :promote-to]}]
   (remove nil?
           (vector
             (when castling (fn [move] (= (move :castling) (keyword castling))))
-            (when (and to-file to-rank) (fn [move]  (=  (move :to) (to-idx (keyword (apply str to-file to-rank))))))
-            (when to (fn [move]  (=  (move :to) (to-idx (keyword to)))))
+            (when (and to-file to-rank) (fn [move] (= (move :to) (to-idx (keyword (apply str to-file to-rank))))))
+            (when to (fn [move] (= (move :to) (to-idx (keyword to)))))
             (when piece (fn [move] (= (keyword piece) (piece-type (move :piece))))) ; if a piece is specified it could be either black or white
             (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
             (when capture (fn [move] (or (move :capture) (move :ep-capture))))
-            (when from-file (fn [move] (= (- (int (first from-file)) (int \a)) (file (move :from)))))
-            (when from-rank (fn [move] (= (- (int (first from-rank)) (int \1)) (rank (move :from)))))
+            (when from-file (fn [move] (= (get file-names from-file ) (file (move :from)))))
+            (when from-rank (fn [move] (= (get rank-names from-rank) (rank (move :from)))))
             (when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
             )))
 
@@ -384,13 +414,6 @@
         matching-moves (filter #(matches-move-coords? move-coords %) valid-moves)]
     (condp = (count matching-moves)
       1 (first matching-moves)
-      0 (throw (new IllegalArgumentException (str "No matching moves for: " move-coords " within valid moves: " (seq valid-moves))))
-      (throw (new IllegalArgumentException (str "Multiple matching moves: " (seq matching-moves) "\nfor: " move-coords "\nwithin valid moves: " (seq valid-moves)))))
+      0 (throw (ex-info "No matching moves" {:for move-coords :valid-moves (seq valid-moves)}))
+      (throw (ex-info "Multiple matching moves" {:for move-coords :valid-moves (seq valid-moves)})))
     ))
-
-(defn play-move [position move-coords]
-  (let [move (parse-move  (name move-coords))]
-    (update-position position (select-move position move))))
-
-(defn play-line [position & move-coords]
-  (reduce play-move position move-coords))

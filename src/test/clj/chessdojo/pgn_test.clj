@@ -1,9 +1,9 @@
-(ns chess.pgn-test
+(ns chessdojo.pgn-test
   (:require [clojure.test :refer :all]
-            [chess.rules :refer :all]
-            [chess.pgn :refer :all]
-            [instaparse.core :as insta])
-  (:import java.lang.IllegalArgumentException))
+            [chessdojo.pgn :refer :all]
+            [chessdojo.rules :refer :all]
+            [chessdojo.game :refer [game->board-fen game->str]]
+            [instaparse.core :as insta]))
 
 (deftest test-parse-move
   (testing "simple pawn move"
@@ -28,22 +28,22 @@
   (is (= {:castling "O-O-O" :call "+"} (parse-move "O-O-O+"))))
 
 (deftest test-parse-tags
-  (is (= [[:tag "White" "Kasparov, Garry"]] (filter #(and (= :tag (first %)) (= "White" (second %))) (pgn (slurp "test/clj/test-pgns/tags.pgn"))))))
+  (is (= [[:tag "White" "Kasparov, Garry"]] (filter #(and (= :tag (first %)) (= "White" (second %))) (pgn (slurp "src/test/cljc/test-pgns/tags.pgn"))))))
 
 (deftest test-parse-comments
-  (is (= [:comment "Topalov is a\nSicilian player, but against Kasparov he prefers to spring a slight surprise\non his well prepared opponent as soon as possible."] (last (filter #(= :comment (first %)) (pgn (slurp "test/clj/test-pgns/comments.pgn")))))))
+  (is (= [:comment "Topalov is a\nSicilian player, but against Kasparov he prefers to spring a slight surprise\non his well prepared opponent as soon as possible."] (last (filter #(= :comment (first %)) (pgn (slurp "src/test/cljc/test-pgns/comments.pgn")))))))
 
 (deftest test-parse-variations
-  (is (= [:move-number :move :move :move-number :move :move :move-number :move :variation :black-move-number :move] (map first (pgn (slurp "test/clj/test-pgns/variations.pgn"))))))
+  (is (= [:move-number :move :move :move-number :move :move :move-number :move :variation :black-move-number :move] (map first (pgn (slurp "src/test/cljc/test-pgns/variations.pgn"))))))
 
 (deftest test-parse-annotations
-  (is (= [[:annotation "132"] [:annotation "6"]] (filter #(= :annotation (first %)) (pgn (slurp "test/clj/test-pgns/annotations.pgn"))))))
+  (is (= [[:annotation "132"] [:annotation "6"]] (filter #(= :annotation (first %)) (pgn (slurp "src/test/cljc/test-pgns/annotations.pgn"))))))
 
 (deftest test-complete-game
-  (is (= 9160 (count (flatten (pgn (slurp "test/clj/test-pgns/complete.pgn")))))))
+  (is (= 9160 (count (flatten (pgn (slurp "src/test/cljc/test-pgns/complete.pgn")))))))
 
 (deftest test-parse-error
-  (is (true? (insta/failure? (pgn (slurp "test/clj/test-pgns/invalid.pgn"))))))
+  (is (true? (insta/failure? (pgn (slurp "src/test/cljc/test-pgns/invalid.pgn"))))))
 
 
 ;
@@ -67,5 +67,16 @@
   )
 
 (deftest test-error
-  (is (thrown? IllegalArgumentException (pgn->events  (slurp "test/clj/test-pgns/invalid.pgn")))))
+  (is (thrown? Exception (pgn->events (slurp "src/test/cljc/test-pgns/invalid.pgn")))))
 
+(deftest test-load-pgn
+  (are [pgn fen game-str]
+    (let [game (load-pgn pgn)]
+      (is (= fen (game->board-fen game)))
+      (is (= game-str (game->str game))))
+    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e2-e4 e7-e5 Ng1-f3 Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
+    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
+    "d4 d5 (Nf6 c4 (g3)) Nf3" "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R" "d2-d4 d7-d5 (Ng8-f6 c2-c4 (g2-g3)) >Ng1-f3"))
+
+(deftest load-complex-pgn
+  (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))

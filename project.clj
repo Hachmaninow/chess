@@ -29,13 +29,13 @@
             [lein-doo "0.1.6"]
             ]
 
-  :ring {:handler chess-dojo.handler/app :uberwar-name "chess-dojo.war"}
+  :ring {:handler chessdojo.handler/app :uberwar-name "chess-dojo.war"}
 
   :min-lein-version "2.5.0"
 
   :uberjar-name "chess-dojo.jar"
 
-  :main chess-dojo.server
+  :main chessdojo.server
 
   :clean-targets ^{:protect false} [:target-path
                                     [:cljsbuild :builds :app :compiler :output-dir]
@@ -55,13 +55,13 @@
                                         :pretty-print true}}
                        :browser-test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]
                                       :compiler {:output-to "target/browser_tests.js"
-                                                 :main 'chess-dojo.browser-test
+                                                 :main 'chessdojo.browser-test
                                                  :optimizations :none}}}}
 
-  :doo {:paths {:karma "~/node_modules/karma/bin/karma"}}
+  :doo {:paths {:karma "/Users/hman/Tools/node_modules/karma/bin/karma"}}
 
 
-  :profiles {:dev {:repl-options {:init-ns chess-dojo.repl}
+  :profiles {:dev {:repl-options {:init-ns chessdojo.repl}
                    :dependencies [[ring/ring-mock "0.3.0"]
                                   [ring/ring-devel "1.4.0"]
                                   [prone "0.8.3"]
@@ -101,12 +101,12 @@
                               :nrepl-port 7002
                               :nrepl-middleware ["cemerick.piggieback/wrap-cljs-repl"]
                               :css-dirs ["resources/public/css"]
-                              :ring-handler chess-dojo.handler/app}
+                              :ring-handler chessdojo.handler/app}
 
                    :env {:dev true}
 
                    :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]
-                                              :compiler {:main "chess-dojo.dev"
+                                              :compiler {:main "chessdojo.dev"
                                                          :source-map true}}}}}
 
              :uberjar {:hooks [minify-assets.plugin/hooks]

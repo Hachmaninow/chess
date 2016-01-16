@@ -1,8 +1,9 @@
-(ns chess.fen-test
+(ns chessdojo.fen-test
   (:require [clojure.test :refer :all]
-            [chess.rules :refer :all]
-            [chess.game :refer :all]
-            [chess.fen :refer :all]))
+            [chessdojo.pgn :refer [load-pgn]]
+            [chessdojo.rules :refer :all]
+            [chessdojo.game :refer :all]
+            [chessdojo.fen :refer :all]))
 
 ;
 ; board to fen
@@ -27,7 +28,7 @@
   (is (= "KQkq" (castling-availability->fen (:castling-availability start-position))))
   (is (= "K" (castling-availability->fen (:castling-availability (setup-position [:K :e1 :R :h1])))))
   (is (= "-" (castling-availability->fen (:castling-availability (setup-position [])))))
-)
+  )
 
 ;
 ; fen to board
@@ -43,7 +44,7 @@
   (let [game (fen->game "r1bq1rk1/1p1nbpp1/2p2n1p/p2p4/3P3B/2NBPN2/PPQ2PPP/R3K2R w KQ a6 3 11")]
     (is (= "r1bq1rk1/1p1nbpp1/2p2n1p/p2p4/3P3B/2NBPN2/PPQ2PPP/R3K2R" (board->fen (:board game))))
     (is (= :white (:turn game)))
-    (is (= {:white #{:O-O :O-O-O} :black #{}}  (:castling-availability game)))
+    (is (= {:white #{:O-O :O-O-O} :black #{}} (:castling-availability game)))
     (is (= :a6 (:ep-info game)))
     (is (= 3 (:fifty-rule-halfmove-clock game)))
     (is (= 11 (:move-no game)))))

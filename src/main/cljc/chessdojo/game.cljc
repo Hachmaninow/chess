@@ -1,10 +1,9 @@
-(ns chess.game
-  (:require [chess.rules :refer :all]
-            [chess.pgn :refer :all]
-            [chess.fen :refer :all]
+(ns chessdojo.game
+  (:require [chessdojo.rules :refer [piece-type to-sqr setup-position select-move update-position]]
+            [chessdojo.fen :refer [board->fen]]
             [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
-            [spyscope.core]
-            [taoensso.timbre.profiling]))
+            ;[spyscope.core]
+            ))
 
 (def new-game
   (zip/down (zip/vector-zip [{:position (setup-position)}])))
@@ -66,7 +65,6 @@
 
 (defn insert-node [zipper node]
   (cond
-    ;(branch? zipper) (-> zipper (zip/append-child node) down)
     (end-of-variation? zipper) (-> (goto-insert-loc zipper) (insert-right node) right) ; end of a variation -> continue
     (right zipper) (-> (goto-insert-loc zipper) (insert-right [node]) right down) ; there are already items following -> add as last variation
     ))
@@ -96,22 +94,18 @@
     {:move move :position (update-position position move)}))
 
 (defn insert-move
-  [game move]
-  (let [move-coords (if (map? move) move (parse-move (name move)))] ; move param can be move-coords already or string/keyword repr. of move
-    (insert-node game (create-move-node game move-coords))))
+  [game move-coords]
+  (insert-node game (create-move-node game move-coords)))
 
 (defn soak [events]
   (reduce
-    #(try
-      (or
+    ;#(try
+      #(or
         (navigate %1 %2)
         (insert-move %1 %2))
-      (catch Exception e (throw (IllegalArgumentException. (str e "Trying to play: " %2 " in game:" (game->str %1)) e))))
+      ;(catch Exception e (throw (Exception. (str e "Trying to play: " %2 " in game:" (game->str %1)) e))))
     new-game
     events))
-
-(defn load-pgn [pgn]
-  (soak (pgn->events pgn)))
 
 (defn game-position [game]
   (:position (node game))

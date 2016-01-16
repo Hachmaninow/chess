@@ -1,5 +1,5 @@
-(ns chess.fen
-  (:require [chess.rules :refer :all]))
+(ns chessdojo.fen
+  (:require [chessdojo.rules :refer [to-sqr]]))
 
 ;
 ; board to fen

@@ -1,7 +1,7 @@
-(ns chess.pgn
-  (:require [instaparse.core :as insta]
-            [instaparse.failure])
-  (:import java.lang.IllegalArgumentException))
+(ns chessdojo.pgn
+  (:require [chessdojo.game :refer [soak]]
+            [instaparse.core :as insta]
+            [instaparse.failure]))
 
 (def pgn
   (insta/parser
@@ -20,12 +20,12 @@
      <short-castling> = 'O-O'
      <long-castling> = 'O-O-O'
      capture = 'x'
-     piece = 'K' | 'Q' | 'R' | 'B' | 'N' 
+     piece = 'K' | 'Q' | 'R' | 'B' | 'N'
      <promotion-piece> = 'Q' | 'R' | 'B' | 'N'
      to-file = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'
      from-file = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'
-     to-rank = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8'    
-     from-rank = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8'    
+     to-rank = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8'
+     from-rank = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8'
      call = '+' | '#'
      promote-to = <'='> promotion-piece
 
@@ -43,9 +43,10 @@
      game-result = '1-0' | '1/2-1/2' | '0-1'
     "))
 
-(defn parse-move [move-str]
-  (into {} (rest (first (pgn move-str)))))
-
+(defn parse-move [move]
+  (if (or (= move :back) (= move :forward) (= move :out))   ; TODO: clean up redundancy; cf. game/navigate
+    move
+    (into {} (rest (first (pgn (name move)))))))
 
 ;
 ; pgn to event seq
@@ -55,7 +56,7 @@
 
 (defn token->event [token]
   (condp = (first token)
-    :move (into {} (rest token))      ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+    :move (into {} (rest token))                            ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
     :variation [:back (tokens->events (rest token)) :out :forward]
     nil
     ))
@@ -66,5 +67,8 @@
 (defn pgn->events [game-str]
   (let [parse-tree (pgn game-str)]
     (if (insta/failure? parse-tree)
-      (throw (IllegalArgumentException. (str "Invalid pgn input:" (insta/get-failure parse-tree))))
+      (throw (ex-info "Invalid pgn input" {:parse-tree (insta/get-failure parse-tree)}))
       (tokens->events parse-tree))))
+
+(defn load-pgn [pgn]
+  (soak (pgn->events pgn)))
