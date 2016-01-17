@@ -5,75 +5,79 @@
     [reagent.session :as session]
     [secretary.core :as secretary :include-macros true]
     [accountant.core :as accountant]
-    [chessdojo.game :as cg]))
+    [chessdojo.game :as cg]
+    [chessdojo.fen :as cf]))
 
 ;; -------------------------
 ;; Views
 
-(defn simple-component []
-  [:div
-   [:p "I am a component!"]
-   [:p.someclass
-    "I have " [:strong "bold"]
-    [:span {:style {:color "red"}} " and red "] "text."]])
+; samples
 
-(defn hello-component [name]
-  [:p "Hello, " name "!"])
-
-(defn lister [items]
-  [:ul
-   (for [item items]
-     ^{:key item} [:li "Item " item])])
-
-(def click-count (reagent/atom 0))
-
-(defn counting-component []
-  [:div
-   "The atom " [:code "click-count"] " has value: "
-   @click-count ". "
-   [:input {:type "button" :value "Click me!"
-            :on-click #(swap! click-count inc)}]])
+;(defn simple-component []
+;  [:div
+;   [:p "I am a component!"]
+;   [:p.someclass
+;    "I have " [:strong "bold"]
+;    [:span {:style {:color "red"}} " and red "] "text."]])
+;
+;(defn lister [items]
+;  [:ul
+;   (for [item items]
+;     ^{:key item} [:li "Item " item])])
+;
+;(def click-count (reagent/atom 0))
+;
+;(defn counting-component []
+;  [:div
+;   "The atom " [:code "click-count"] " has value: "
+;   @click-count ". "
+;   [:input {:type "button" :value "Click me!"
+;            :on-click #(swap! click-count inc)}]])
 
 
 (def state
   (reagent/atom
     (cg/soak [
-                     {:to-file "e" :to-rank "4"}
-                     {:to-file "e" :to-rank "5"}
-                     {:piece "N" :to-file "f" :to-rank "3"}
-                     :back
-                     {:piece "N" :to-file "c" :to-rank "3"}
-                     :out
-                     :forward
-                     {:piece "N" :to-file "c" :to-rank "6"}
-                     {:piece "B" :to-file "b" :to-rank "5"}
-                     {:to-file "a" :to-rank "6"}
-                     {:piece "B" :capture "x" :to-file "c" :to-rank "6"}
-                     ])))
+              {:to-file "e" :to-rank "4"}
+              {:to-file "e" :to-rank "5"}
+              {:piece "N" :to-file "f" :to-rank "3"}
+              :back
+              {:piece "N" :to-file "c" :to-rank "3"}
+              :out
+              :forward
+              {:piece "N" :to-file "c" :to-rank "6"}
+              {:piece "B" :to-file "b" :to-rank "5"}
+              {:to-file "a" :to-rank "6"}
+              {:piece "B" :capture "x" :to-file "c" :to-rank "6"}
+              ])))
 
-(defn move-view [item focus]
-  (println item)
-  (if (vector? item)
-    [:ul (for [s item] ^{:key s} [move-view s focus])]
-    (let [m (:move item)]
-      (println m)
-      (if (identical? m focus)
-        [:li {:style {:color "red"}} (cg/move->long-str m)]
-        [:li (cg/move->long-str m)]
-        ))
+
+(defn update-board [position]
+  (let [fen (cf/position->fen position)]
+    (.position js/board fen false)
     )
-)
+  )
+
+(defn move-view [move position]
+  [:span {:style {:margin-right "5px"} :on-click #(update-board position)} (cg/move->long-str move)])
+
+(defn variation-view [nodes depth]
+  [:div
+   (for [node nodes]
+     (if (vector? node)
+       ^{:key (str depth )} [variation-view node (inc depth)]
+       (let [move (:move node) position (:position node) idx (dec (:ply position))]
+         ^{:key (str depth "." idx)} [move-view move position]
+         )
+       )
+     )
+   ]
+  )
 
 (defn game-view []
-  (let [items (rest (zip/root @state)) focus (zip/node @state)]
-    [:div
-     [:ul
-      (for [item items]
-        ^{:key item} [move-view item focus]
-        )
-      ]
-     ]
-    )
+  [:div
+   [variation-view (rest (zip/root @state)) 0]
+   ]
   )
 
 (defn buttons []
@@ -83,12 +87,8 @@
   )
 
 (defn home-page []
-  [:div [:h2 "Welcome to chesslib"]
+  [:div [:h2 "Welcome to chess-dojo"]
    [:div [:a {:href "/about"} "go to about page"]]
-   ;[simple-component]
-   ;[hello-component "chesslib"]
-   ;[lister (range 10)]
-   ;[counting-component]
    [game-view]
    [buttons]
    ])

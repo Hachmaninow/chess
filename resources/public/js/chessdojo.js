@@ -1,8 +1,7 @@
 var init = function() {
 
   //--- start example JS ---
-  var board,
-      game = new Chess(),
+  var game = new Chess(),
       statusEl = $('#status'),
       fenEl = $('#fen'),
       pgnEl = $('#pgn');
@@ -37,6 +36,15 @@ var init = function() {
     board.position(game.fen());
   };
 
+  var cfg = {
+    draggable: true,
+    position: 'start',
+    onDragStart: onDragStart,
+    onDrop: onDrop,
+    onSnapEnd: onSnapEnd
+  };
+  board = ChessBoard('board', cfg);
+
   var updateStatus = function() {
     var status = '';
 
@@ -70,14 +78,7 @@ var init = function() {
     pgnEl.html(game.pgn());
   };
 
-  var cfg = {
-    draggable: true,
-    position: 'start',
-    onDragStart: onDragStart,
-    onDrop: onDrop,
-    onSnapEnd: onSnapEnd
-  };
-  board = ChessBoard('board', cfg);
+
 
   updateStatus();
 
