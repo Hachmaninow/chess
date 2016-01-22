@@ -80,36 +80,36 @@
   )
 
 ; can be tested using simple vector-zippers
-(deftest test-goto-insert-loc
+(deftest test-find-insert-loc
   (let [zipper (vector-zip [1 2 3])]
     (is (= 2 (-> zipper down right node)))
-    (is (= 3 (-> zipper down right cg/goto-insert-loc node)))
-    (is (= 3 (-> zipper down right right cg/goto-insert-loc node))))
+    (is (= 3 (-> zipper down right cg/find-anchor node)))
+    (is (= 3 (-> zipper down right right cg/find-anchor node))))
   (let [zipper (vector-zip [1 2 3 4 [:a :b] [:c :d] 5])]
     (is (= 2 (-> zipper down right node)))
-    (is (= 3 (-> zipper down right cg/goto-insert-loc node)))
+    (is (= 3 (-> zipper down right cg/find-anchor node)))
     (is (= 3 (-> zipper down right right node)))
-    (is (= [:c :d] (-> zipper down right right cg/goto-insert-loc node)))
+    (is (= [:c :d] (-> zipper down right right cg/find-anchor node)))
     (is (= 5 (-> zipper down right rightmost node)))
-    (is (= 5 (-> zipper down right rightmost cg/goto-insert-loc node))))
+    (is (= 5 (-> zipper down right rightmost cg/find-anchor node))))
   (let [zipper (vector-zip [1 2 [:a :b] [:c :d]])]
     (is (= 2 (-> zipper down right node)))
-    (is (= [:c :d] (-> zipper down right cg/goto-insert-loc node))))
+    (is (= [:c :d] (-> zipper down right cg/find-anchor node))))
   (let [zipper (vector-zip [1 2 3 [:a :b] 4 [:c :d] 5])]
     (is (= 2 (-> zipper down right node)))
-    (is (= [:a :b] (-> zipper down right cg/goto-insert-loc node)))
+    (is (= [:a :b] (-> zipper down right cg/find-anchor node)))
     (is (= 3 (-> zipper down right right node)))
-    (is (= [:c :d] (-> zipper down right right cg/goto-insert-loc node))))
+    (is (= [:c :d] (-> zipper down right right cg/find-anchor node))))
   (let [zipper (vector-zip [1 2 3 [:a :b] [:c :d] 4 [:e :f [:g :h [:i [:j]]]] 5])]
     (is (= 2 (-> zipper down right node)))
-    (is (= [:c :d] (-> zipper down right cg/goto-insert-loc node)))
+    (is (= [:c :d] (-> zipper down right cg/find-anchor node)))
     (is (= 3 (-> zipper down right right node)))
-    (is (= [:e :f [:g :h [:i [:j]]]] (-> zipper down right right cg/goto-insert-loc node))))
+    (is (= [:e :f [:g :h [:i [:j]]]] (-> zipper down right right cg/find-anchor node))))
   (let [zipper (vector-zip [1 2 3 [:a :b] [:c :d] 4 [:e :f] [:g :h] 5])]
     (is (= 2 (-> zipper down right node)))
-    (is (= [:c :d] (-> zipper down right cg/goto-insert-loc node)))
+    (is (= [:c :d] (-> zipper down right cg/find-anchor node)))
     (is (= 3 (-> zipper down right right node)))
-    (is (= [:g :h] (-> zipper down right right cg/goto-insert-loc node))))
+    (is (= [:g :h] (-> zipper down right right cg/find-anchor node))))
   )
 
 (deftest test-end-of-variation?
@@ -132,46 +132,86 @@
   (is (= [:start "e4" "c5" "Nf3" ["Nc3"]] (navigate-or-insert ["e4" "c5" "Nf3" :back "Nc3" :out])))
   (is (= [:start "e4" "c5" "Nf3" ["Nc3"] ["c3"]] (navigate-or-insert ["e4" "c5" "Nf3" :back "Nc3" :out "c3"]))))
 
-(defn soak->str [& moves]
+(defn soak-str [& moves]
   (cg/game->str (cg/soak (map cr/parse-simple-move moves))))
 
 (deftest test-soak1
-  (is (= ">e2-e4" (soak->str :e4)))
-  (is (= "e2-e4 >c7-c5" (soak->str :e4 :c5)))
-  (is (= "e2-e4 c7-c5 >Ng1-f3" (soak->str :e4 :c5 :Nf3)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (>Nb1-c3)" (soak->str :e4 :c5 :Nf3 :back :Nc3)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 >Nb8-c6)" (soak->str :e4 :c5 :Nf3 :back :Nc3 :Nc6)))
-  (is (= "e2-e4 >c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6)" (soak->str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (>c2-c3)" (soak->str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 >Ng8-f6)" (soak->str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
-  (is (= "e2-e4 c7-c5 >Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 Ng8-f6)" (soak->str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 Ng8-f6) Nb8-c6 >d2-d4" (soak->str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4)))
+  (is (= ">e2-e4" (soak-str :e4)))
+  (is (= "e2-e4 >c7-c5" (soak-str :e4 :c5)))
+  (is (= "e2-e4 c7-c5 >Ng1-f3" (soak-str :e4 :c5 :Nf3)))
+  (is (= "e2-e4 c7-c5 Ng1-f3 (>Nb1-c3)" (soak-str :e4 :c5 :Nf3 :back :Nc3)))
+  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 >Nb8-c6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6)))
+  (is (= "e2-e4 >c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out)))
+  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (>c2-c3)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3)))
+  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 >Ng8-f6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
+  (is (= "e2-e4 c7-c5 >Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 Ng8-f6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward)))
+  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 Ng8-f6) Nb8-c6 >d2-d4" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4)))
 
   (testing "subsequent moves with variations"
-    (is (= "e2-e4 c7-c5 (e7-e5) Ng1-f3 (>Nb1-c3)" (soak->str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3)))
-    (is (= "e2-e4 >c7-c5 (e7-e5) Ng1-f3 (Nb1-c3)" (soak->str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out)))
-    (is (= "e2-e4 c7-c5 (e7-e5) Ng1-f3 (Nb1-c3) (c2-c3) >Nb8-c6" (soak->str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out :c3 :out :forward :Nc6))))
+    (is (= "e2-e4 c7-c5 (e7-e5) Ng1-f3 (>Nb1-c3)" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3)))
+    (is (= "e2-e4 >c7-c5 (e7-e5) Ng1-f3 (Nb1-c3)" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out)))
+    (is (= "e2-e4 c7-c5 (e7-e5) Ng1-f3 (Nb1-c3) (c2-c3) >Nb8-c6" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out :c3 :out :forward :Nc6))))
 
   (testing "nested variations"
-    (is (= "d2-d4 (e2-e4 e7-e5 (>c7-c5)) d7-d5" (soak->str :d4 :d5 :back :back :e4 :e5 :back :c5)))))
+    (is (= "d2-d4 d7-d5 (Ng8-f6 c2-c4 (c2-c3 g7-g6 g2-g3 (>a2-a3))) Ng1-f3" (soak-str :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :back :a3)))
+    (is (= "e2-e4 e7-e5 (c7-c5 Nb1-c3 (g2-g3 g7-g6 Bf1-g2 (a2-a3 Bf8-g7 (>h7-h5)))) Ng1-f3" (soak-str :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5)))
+    (is (= "d2-d4 d7-d5 (Ng8-f6 c2-c4 (c2-c3 g7-g6 g2-g3) (>h2-h4)) Ng1-f3" (soak-str :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4)))
+    )
 
-(defn soak->fen [& moves]
+  (testing "nested variation in very first move"
+    (is (= "d2-d4 (e2-e4 e7-e5 (>c7-c5)) d7-d5" (soak-str :d4 :d5 :back :back :e4 :e5 :back :c5)))))
+
+(defn soak-fen [& moves]
   (cg/game->board-fen (cg/soak (map cr/parse-simple-move moves))))
 
 (deftest test-soak2
-  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (soak->fen)))
-  (is (= "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR" (soak->fen :e4)))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR" (soak->fen :e4 :c5)))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R" (soak->fen :e4 :c5 :Nf3)))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR" (soak->fen :e4 :c5 :Nf3 :back)))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR" (soak->fen :e4 :c5 :Nf3 :back :Nc3)))
-  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR" (soak->fen :e4 :c5 :Nf3 :back :Nc3 :Nc6)))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR" (soak->fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out)))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR" (soak->fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3)))
-  (is (= "rnbqkb1r/pp1ppppp/5n2/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR" (soak->fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R" (soak->fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward)))
-  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R" (soak->fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6)))
-  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R" (soak->fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4))))
+  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" (soak-fen)))
+  (is (= "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR" (soak-fen :e4)))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR" (soak-fen :e4 :c5)))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R" (soak-fen :e4 :c5 :Nf3)))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR" (soak-fen :e4 :c5 :Nf3 :back)))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR" (soak-fen :e4 :c5 :Nf3 :back :Nc3)))
+  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6)))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out)))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3)))
+  (is (= "rnbqkb1r/pp1ppppp/5n2/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward)))
+  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6)))
+  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4))))
+
+(defn soak-path [& moves]
+  (:path (meta (zip/node (cg/soak (map cr/parse-simple-move moves)))))
+  )
+
+(deftest test-game-paths
+  (testing "basics"
+    (is (= [0 0 nil] (soak-path)))
+    (is (= [1 0 nil] (soak-path :e4)))
+    (is (= [2 0 nil] (soak-path :e4 :c5)))
+    (is (= [3 0 nil] (soak-path :e4 :c5 :Nf3)))
+    (is (= [2 0 nil] (soak-path :e4 :c5 :Nf3 :back)))
+    (is (= [3 1 [2 0 nil]] (soak-path :e4 :c5 :Nf3 :back :Nc3)))
+    (is (= [4 1 [2 0 nil]] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6)))
+    (is (= [2 0 nil] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out)))
+    (is (= [3 2 [2 0 nil]] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3)))
+    (is (= [4 2 [2 0 nil]] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
+    (is (= [2 0 nil] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out)))
+    (is (= [3 0 nil] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward))))
+
+  (testing "subsequent moves with variations"
+    (is (= [3 1 [2 0 nil]] (soak-path :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3))))
+
+  (testing "multiple variations"
+    (is (= [2 3 [1 0 nil]] (soak-path :e4 :c5 :back :e5 :out :e6 :out :c6)))) ; third variation
+
+  (testing "nested variations"
+    (is (= [5 1 [4 1 [2 1 [1 0 nil]]]] (soak-path :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :back :a3))) ; "d2-d4 d7-d5 (Ng8-f6 c2-c4 (c2-c3 g7-g6 g2-g3 (>a2-a3))) Ng1-f3"
+    (is (= [3 2 [2 1 [1 0 nil]]] (soak-path :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4))))
+
+  (testing "nested variation in very first move"
+    (is (= [2 1 [1 1 [0 0 nil]]] (soak-path :d4 :d5 :back :back :e4 :e5 :back :c5))))
+
+  )
 
 (deftest test-soak-with-move-coords
   (is (= "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"

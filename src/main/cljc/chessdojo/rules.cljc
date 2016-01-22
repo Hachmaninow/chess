@@ -11,19 +11,10 @@
 
 (def piece-type {:K :K :Q :Q :R :R :B :B :N :N :P :P :k :K :q :Q :r :R :b :B :n :N :p :P})
 
-(def colored-piece-map {:white {:K :K :Q :Q :R :R :B :B :N :N :P :P} :black {:K :k :Q :q :R :r :B :b :N :n :P :p}})
+(def colored-piece-lookup {:white {:K :K :Q :Q :R :R :B :B :N :N :P :P} :black {:K :k :Q :q :R :r :B :b :N :n :P :p}})
 
 (defn colored-piece [turn piece-type]
-  (get-in colored-piece-map [turn piece-type]))
-
-
-;
-; board arithmetics
-;
-
-(defn rank [idx] (int (/ idx 8)))
-
-(defn file [index] (int (rem index 8)))
+  (get-in colored-piece-lookup [turn piece-type]))
 
 (def square-names [:a1 :b1 :c1 :d1 :e1 :f1 :g1 :h1
                    :a2 :b2 :c2 :d2 :e2 :f2 :g2 :h2
@@ -42,6 +33,13 @@
 
 (defn to-sqr [index] (get square-names index))
 
+;
+; board arithmetics
+;
+
+(defn rank [idx] (int (/ idx 8)))
+
+(defn file [index] (int (rem index 8)))
 
 (defn distance [i1 i2]
   (max (Math/abs (- (rank i1) (rank i2))) (Math/abs (- (file i1) (file i2)))))
@@ -51,7 +49,6 @@
 
 (defn still-on-board? [idx]
   (and (< idx 64) (>= idx 0)))
-
 
 ;
 ; lookups

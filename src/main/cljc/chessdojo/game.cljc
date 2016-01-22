@@ -1,13 +1,14 @@
 (ns chessdojo.game
   (:require [chessdojo.rules :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
-            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
-            ;[spyscope.core]
-            ))
+            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]))
 
 (def new-game
-  (zip/down (zip/vector-zip [{:position (setup-position)}])))
-
+  (-> {:position (setup-position)}
+      (with-meta {:path [0 0 nil]})
+      vector
+      zip/vector-zip
+      zip/down))
 
 ;
 ; move to string
@@ -49,8 +50,8 @@
     false
     ))
 
-(defn goto-insert-loc
-  "For a given game find the loc at which a new continuation can be inserted."
+(defn find-anchor
+  "In a given game navigate the game to the point at at which a new continuation can be inserted."
   [game]
   (let [right-sibling (right game)
         same-depth-sibling (when (and right-sibling (not (end-of-variation? right-sibling))) (first (remove branch? (iterate right right-sibling))))
@@ -63,11 +64,43 @@
       )))
 
 
-(defn insert-node [zipper node]
+
+(defn game-path [game]
+  "Extract the path-metadata from the current node of the given game."
+  (if (branch? game)
+    (:path (meta (node (down game))))                       ; path of a variation is the path of first move
+    (:path (meta (node game)))))
+
+(defn with-path [node ply index-ctr parent]
+  "Augment node with path-metadata consisting of the given ply, index-ctr and parent."
+  (with-meta node {:path [ply index-ctr parent]}))
+
+(defn with-successor-path [cur-game node]
+  "Add path-metadata to a given node to be appended to the given current game."
+  (if (map? node)
+    (let [[ply var-index pre-path] (game-path cur-game)]
+      (with-path node (inc ply) var-index pre-path))
+    node))
+
+(defn with-variation-path [cur-game anchor node]
+  "Add path-metadata to a given node to be inserted into a given current game after a given anchor."
+  (if (map? node)
+    (let [[ply _ _] (game-path cur-game) [_ index-ctr _] (game-path anchor)]
+      (with-path node (inc ply) (if (branch? anchor) (inc index-ctr) 1) (game-path cur-game)))
+    node))
+
+(defn insert-node [game node]
+  "Insert a node into the given game by appending the current variation or creating a new one."
   (cond
-    (end-of-variation? zipper) (-> (goto-insert-loc zipper) (insert-right node) right) ; end of a variation -> continue
-    (right zipper) (-> (goto-insert-loc zipper) (insert-right [node]) right down) ; there are already items following -> add as last variation
-    ))
+    ; end of a variation -> continue
+    (end-of-variation? game) (-> (find-anchor game)
+                                 (insert-right (with-successor-path game node))
+                                 right)
+    ; there are already items following -> create a new variation in insert as last sibling
+    (right game) (-> (let [anchor (find-anchor game)]
+                       (insert-right anchor [(with-variation-path game anchor node)]))
+                     right
+                     down)))
 
 (defn highlight-move [highlight-move move]
   (if (identical? highlight-move move) (assoc move :highlight true) move))
@@ -100,10 +133,10 @@
 (defn soak [events]
   (reduce
     ;#(try
-      #(or
-        (navigate %1 %2)
-        (insert-move %1 %2))
-      ;(catch Exception e (throw (Exception. (str e "Trying to play: " %2 " in game:" (game->str %1)) e))))
+    #(or
+      (navigate %1 %2)
+      (insert-move %1 %2))
+    ;(catch Exception e (throw (ex-info (str "Trying to play: " %2 " in game") {}) e)))
     new-game
     events))
 
