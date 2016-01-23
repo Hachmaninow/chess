@@ -59,26 +59,6 @@
   (is (= "2..." (cg/ply->move-number 5)))
   (is (= "3." (cg/ply->move-number 6))))
 
-(deftest test-navigate
-  (testing "simple zipper"
-    (let [zipper (down (vector-zip [1 2 3]))]
-      (is (= 1 (-> zipper node)))
-      (is (= 2 (-> zipper (navigate :forward) node)))
-      (is (= 3 (-> zipper (navigate :forward) (navigate :forward) node)))
-      (testing "navigatation beyond last move is ignored"
-        (is (= 3 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) node))))))
-
-  (testing "nested zipper"
-    (let [zipper (down (vector-zip [1 2 [:a :b] [:c [:c1 :c2 :c3 [:c3a]] :d] 3]))]
-      (is (= 1 (-> zipper node)))
-      (is (= 2 (-> zipper (navigate :forward) node)))
-      (is (= 3 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) node)))
-      (is (= 2 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) (navigate :back) node)))
-      (is (= 1 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) (navigate :back) (navigate :back) (navigate :back) (navigate :back) node)))
-      )
-    )
-  )
-
 ; can be tested using simple vector-zippers
 (deftest test-find-insert-loc
   (let [zipper (vector-zip [1 2 3])]
@@ -206,12 +186,13 @@
 
   (testing "nested variations"
     (is (= [5 1 [4 1 [2 1 [1 0 nil]]]] (soak-path :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :back :a3))) ; "d2-d4 d7-d5 (Ng8-f6 c2-c4 (c2-c3 g7-g6 g2-g3 (>a2-a3))) Ng1-f3"
-    (is (= [3 2 [2 1 [1 0 nil]]] (soak-path :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4))))
+    (is (= [3 2 [2 1 [1 0 nil]]] (soak-path :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4)))
+    (is (= [6 1 [5 1 [4 1 [2 1 [1 0 nil]]]]] (soak-path :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5)))
+    )
+
 
   (testing "nested variation in very first move"
-    (is (= [2 1 [1 1 [0 0 nil]]] (soak-path :d4 :d5 :back :back :e4 :e5 :back :c5))))
-
-  )
+    (is (= [2 1 [1 1 [0 0 nil]]] (soak-path :d4 :d5 :back :back :e4 :e5 :back :c5)))))
 
 (deftest test-soak-with-move-coords
   (is (= "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
@@ -219,3 +200,48 @@
                                  :back {:piece "N" :to-file "c" :to-rank "3"} :out :forward
                                  {:piece "N" :to-file "c" :to-rank "6"} {:piece "B" :to-file "b" :to-rank "5"} {:to-file "a" :to-rank "6"}
                                  {:capture "x" :piece "B" :to-file "c" :to-rank "6"}])))))
+
+;
+; navigation
+;
+
+(deftest test-navigate
+  (testing "simple zipper"
+    (let [zipper (down (vector-zip [1 2 3]))]
+      (is (= 1 (-> zipper node)))
+      (is (= 2 (-> zipper (navigate :forward) node)))
+      (is (= 3 (-> zipper (navigate :forward) (navigate :forward) node)))
+      (testing "navigatation beyond last move is ignored"
+        (is (= 3 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) node))))))
+
+  (testing "nested zipper"
+    (let [zipper (down (vector-zip [1 2 [:a :b] [:c [:c1 :c2 :c3 [:c3a]] :d] 3]))]
+      (is (= 1 (-> zipper node)))
+      (is (= 2 (-> zipper (navigate :forward) node)))
+      (is (= 3 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) node)))
+      (is (= 2 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) (navigate :back) node)))
+      (is (= 1 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) (navigate :back) (navigate :back) (navigate :back) (navigate :back) node)))
+      )
+    )
+
+  (testing "start"
+    (let [zipper (down (vector-zip [1 2 [:a :b] [:c [:c1 :c2 :c3 [:c3a]] :d] 3]))]
+      (is (= 1 (-> zipper (navigate :start) node)))
+      (is (= 2 (-> zipper (navigate :start) (navigate :forward) node)))
+      ))
+  )
+
+(deftest test-jump
+  (let [game (cg/soak (map cr/parse-simple-move [:e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5]))]
+    (testing "jump to existing paths return game with this path"
+      (is (= [0 0 nil] (cg/game-path (cg/jump game "0.0"))))
+      (is (= [1 0 nil] (cg/game-path (cg/jump game "1.0"))))
+      (is (= [3 0 nil] (cg/game-path (cg/jump game "3.0"))))
+      (is (= [3 1 [1 0 nil]] (cg/game-path (cg/jump game "1.0/3.1"))))
+      (is (= [6 1 [5 1 [4 1 [2 1 [1 0 nil]]]]] (cg/game-path (cg/jump game "1.0/2.1/4.1/5.1/6.1")))))
+    (testing "non-existing path return original game"
+      (is (= game (cg/jump game "1.0/2.1/4.1/5.1/6.2"))))))
+
+(deftest test-path->str
+  (is (= "3.0" (cg/path->str [3 0 nil])))
+  (is (= "1.0/2.1/4.1/5.1" (cg/path->str [5 1 [4 1 [2 1 [1 0 nil]]]])))) ;;  :e4 :e5 :Nf3 :back :back :c5 :Nc3

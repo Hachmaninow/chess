@@ -6,7 +6,8 @@
     [secretary.core :as secretary :include-macros true]
     [accountant.core :as accountant]
     [chessdojo.game :as cg]
-    [chessdojo.fen :as cf]))
+    [chessdojo.fen :as cf]
+    [chessdojo.rules :as cr]))
 
 ;; -------------------------
 ;; Views
@@ -54,8 +55,21 @@
 
 (defn update-board [position]
   (let [fen (cf/position->fen position)]
-    (.position js/board fen false)
+    (js/updateBoard fen)
     )
+  )
+
+(defn ^:export insert-move [move]
+  (println (js->clj move))
+  (println (get (js->clj move) "from"))
+  (println (get (js->clj move) "to"))
+  (let [move-info (js->clj move)
+        move-coords {:from (cr/to-idx (keyword (get move-info "from"))) :to (cr/to-idx (keyword (get move-info "to")))}
+        position (:position @state)]
+    (println position)
+    ;(println (cr/select-move position move-coords))
+    )
+
   )
 
 (defn move-view [move position]
