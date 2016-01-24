@@ -4,7 +4,8 @@
                [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node path root]]
                [chessdojo.game :as cg :refer [navigate]]
                [chessdojo.rules :as cr :refer [to-idx to-sqr]]
-               [chessdojo.fen :as cf]))
+               [chessdojo.fen :as cf]
+               ))
   #?(:cljs (:require [cljs.test :refer-macros [deftest is testing run-tests]]
              [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node path root]]
              [chessdojo.game :as cg :refer [navigate]]
@@ -41,7 +42,10 @@
              :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :black, :call nil, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}, :ep-info [20 28] :ply 2},
              :move {:piece :P, :from 12, :to 28, :ep-info [20 28]}
              }
-            ] (root (cg/insert-move cg/new-game (cr/parse-simple-move :e4)))))))
+            ] (root (cg/insert-move cg/new-game (cr/parse-simple-move :e4))))))
+  (testing "zip/next"
+    (is (= [:a :b] (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/next zip/next node)))
+    (is (= :a (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/next zip/next zip/next node)))))
 
 (deftest test-new-game
   (is (= cr/start-position (:position (zip/node cg/new-game))))
@@ -213,35 +217,25 @@
       (is (= 3 (-> zipper (navigate :forward) (navigate :forward) node)))
       (testing "navigatation beyond last move is ignored"
         (is (= 3 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) node))))))
-
   (testing "nested zipper"
     (let [zipper (down (vector-zip [1 2 [:a :b] [:c [:c1 :c2 :c3 [:c3a]] :d] 3]))]
       (is (= 1 (-> zipper node)))
       (is (= 2 (-> zipper (navigate :forward) node)))
       (is (= 3 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) node)))
       (is (= 2 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) (navigate :back) node)))
-      (is (= 1 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) (navigate :back) (navigate :back) (navigate :back) (navigate :back) node)))
-      )
-    )
-
+      (is (= 1 (-> zipper (navigate :forward) (navigate :forward) (navigate :forward) (navigate :back) (navigate :back) (navigate :back) (navigate :back) node)))))
   (testing "start"
     (let [zipper (down (vector-zip [1 2 [:a :b] [:c [:c1 :c2 :c3 [:c3a]] :d] 3]))]
       (is (= 1 (-> zipper (navigate :start) node)))
-      (is (= 2 (-> zipper (navigate :start) (navigate :forward) node)))
-      ))
-  )
+      (is (= 2 (-> zipper (navigate :start) (navigate :forward) node))))))
 
 (deftest test-jump
-  (let [game (cg/soak (map cr/parse-simple-move [:e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5]))]
+  (let [game (cg/soak (map cr/parse-simple-move [:e4 :e5 :Nf3 :back :Nc3 :out :g3 :g6 :Bg2 :Bg7 :back :Bh6 :start]))]
     (testing "jump to existing paths return game with this path"
-      (is (= [0 0 nil] (cg/game-path (cg/jump game "0.0"))))
-      (is (= [1 0 nil] (cg/game-path (cg/jump game "1.0"))))
-      (is (= [3 0 nil] (cg/game-path (cg/jump game "3.0"))))
-      (is (= [3 1 [1 0 nil]] (cg/game-path (cg/jump game "1.0/3.1"))))
-      (is (= [6 1 [5 1 [4 1 [2 1 [1 0 nil]]]]] (cg/game-path (cg/jump game "1.0/2.1/4.1/5.1/6.1")))))
-    (testing "non-existing path return original game"
-      (is (= game (cg/jump game "1.0/2.1/4.1/5.1/6.2"))))))
-
-(deftest test-path->str
-  (is (= "3.0" (cg/path->str [3 0 nil])))
-  (is (= "1.0/2.1/4.1/5.1" (cg/path->str [5 1 [4 1 [2 1 [1 0 nil]]]])))) ;;  :e4 :e5 :Nf3 :back :back :c5 :Nc3
+      (is (= "e2-e4" (cg/move->long-str (:move (node (cg/jump game [1 0 nil]))))))
+      (is (= "Ng1-f3" (cg/move->long-str (:move (node (cg/jump game [3 0 nil]))))))
+      (is (= "Nb1-c3" (cg/move->long-str (:move (node (cg/jump game [3 1 [2 0 nil]]))))))
+      (is (= "Bf8-g7" (cg/move->long-str (:move (node (cg/jump game [6 2 [2 0 nil]]))))))
+      (is (= "Bf8-h6" (cg/move->long-str (:move (node (cg/jump game [6 1 [5 2 [2 0 nil]]]))))))
+      (testing "non-existing path return original game"
+        (is (= game (cg/jump game [6 3 [2 0 nil]])))))))

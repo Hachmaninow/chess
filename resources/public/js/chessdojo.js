@@ -1,8 +1,7 @@
 var init = function() {
+  game = new Chess();
 
-  //--- start example JS ---
-  var game = new Chess(),
-      statusEl = $('#status'),
+  var statusEl = $('#status'),
       fenEl = $('#fen'),
       pgnEl = $('#pgn');
 
@@ -27,7 +26,7 @@ var init = function() {
     // illegal move
     if (move === null) return 'snapback';
 
-    updateStatus();
+    updateStatus(move);
   };
 
   // update the board position after the piece snap
@@ -45,7 +44,7 @@ var init = function() {
   };
   board = ChessBoard('board', cfg);
 
-  var updateStatus = function() {
+  var updateStatus = function(move) {
     var status = '';
 
     var moveColor = 'White';
@@ -76,11 +75,13 @@ var init = function() {
     statusEl.html(status);
     fenEl.html(game.fen());
     pgnEl.html(game.pgn());
+
+    if (move != null) {
+      chessdojo.core.insert_move(move);
+    }
   };
 
-
-
-  updateStatus();
+  updateStatus(null);
 
   //$("body #notation move").click(function(){
   //  var fen = $(this).attr("fen");
@@ -91,5 +92,10 @@ var init = function() {
   //  console.log("validate: " + game.validate_fen(fen).error)
   //});
 };
+
+function updateBoard(fen) {
+  board.position(fen, false);
+  game.load(fen);
+}
 
 $(document).ready(init);

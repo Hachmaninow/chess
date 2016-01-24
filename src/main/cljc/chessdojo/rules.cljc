@@ -373,7 +373,7 @@
   "Very limited support for move parsing for testing purposes (as Instaparse is unavailable in cljs tests)."
   (let [move-str (name move-coords)]
     (cond
-      (re-matches #"back|forward|out" move-str) move-coords
+      (re-matches #"back|forward|out|start" move-str) move-coords
       (re-matches #"O-O" move-str) {:castling :O-O}
       (re-matches #"O-O-O" move-str) {:castling :O-O-O}
       (re-matches #".." move-str) {:to move-str}
@@ -386,19 +386,20 @@
       (re-matches #".[1-8]x.." move-str) {:piece (subs move-str 0 1) :from-rank (subs move-str 1 2) :capture "x" :to (subs move-str 3)}
       )))
 
-(def rank-names {"1" 0 "2" 1 "3" 2 "4" 3 "5" 4 "6" 5 "7" 6 "8" 7})   ; TODO: investigate (int \a) not supported in cljs (???)
-(def file-names {"a" 0 "b" 1 "c" 2 "d" 3 "e" 4 "f" 5 "g" 6 "h" 7})   ; TODO: investigate (int \1) not supported in cljs (???)
+(def rank-names {"1" 0 "2" 1 "3" 2 "4" 3 "5" 4 "6" 5 "7" 6 "8" 7}) ; TODO: investigate (int \a) not supported in cljs (???)
+(def file-names {"a" 0 "b" 1 "c" 2 "d" 3 "e" 4 "f" 5 "g" 6 "h" 7}) ; TODO: investigate (int \1) not supported in cljs (???)
 
-(defn move-matcher [{:keys [:castling :piece :to :to-file :to-rank :capture :from-file :from-rank :promote-to]}]
+(defn move-matcher [{:keys [:castling :piece :from :to :to-file :to-rank :capture :from-file :from-rank :promote-to]}]
   (remove nil?
           (vector
             (when castling (fn [move] (= (move :castling) (keyword castling))))
             (when (and to-file to-rank) (fn [move] (= (move :to) (to-idx (keyword (apply str to-file to-rank))))))
+            (when from (fn [move] (= (move :from) (to-idx (keyword from)))))
             (when to (fn [move] (= (move :to) (to-idx (keyword to)))))
-            (when piece (fn [move] (= (keyword piece) (piece-type (move :piece))))) ; if a piece is specified it could be either black or white
+            (when piece (fn [move] (= (piece-type (move :piece)) (piece-type (keyword piece))))) ; if a piece is specified, it does not matter if it's black or white
             (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
             (when capture (fn [move] (or (move :capture) (move :ep-capture))))
-            (when from-file (fn [move] (= (get file-names from-file ) (file (move :from)))))
+            (when from-file (fn [move] (= (get file-names from-file) (file (move :from)))))
             (when from-rank (fn [move] (= (get rank-names from-rank) (rank (move :from)))))
             (when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
             )))
@@ -412,5 +413,5 @@
     (condp = (count matching-moves)
       1 (first matching-moves)
       0 (throw (ex-info "No matching moves" {:for move-coords :valid-moves (seq valid-moves)}))
-      (throw (ex-info "Multiple matching moves" {:for move-coords :valid-moves (seq valid-moves)})))
+      (throw (ex-info "Multiple matching moves" {:for move-coords :valid-moves (seq valid-moves) :matching-moves matching-moves})))
     ))

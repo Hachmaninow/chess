@@ -1,7 +1,9 @@
 (ns chessdojo.game
   (:require [chessdojo.rules :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
-            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]))
+            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
+;            [spyscope.core]
+            ))
 
 (def new-game
   (-> {:position (setup-position)}
@@ -16,7 +18,7 @@
 
 (defn move->long-str [{:keys [:piece :from :to :capture :castling :ep-capture :promote-to :highlight]}]
   (cond
-    (nil? piece) ""
+    (nil? piece) "$"
     castling (name castling)
     :else (str
             (when highlight ">")
@@ -56,21 +58,12 @@
       :default same-depth-sibling                           ; usually: insert variation at sibling of same depth
       )))
 
-(defn path->str [path]
-  "Return a string representation of the given path."
-  (if (nil? (last path))
-    (str (first path) "." (second path))
-    (str (path->str (last path)) "/" (first path) "." (second path))))
-
 (defn game-path
   "Extract the path-metadata from the current node of the given game."
   [game]
   (if (branch? game)
     (:path (meta (node (down game))))                       ; path of a variation is the path of first move
     (:path (meta (node game)))))
-
-(defn game-path-str [game]
-  (path->str (game-path game)))
 
 (defn with-path
   "Augment node with path-metadata consisting of the given ply, index-ctr and parent."
@@ -130,14 +123,20 @@
     :forward (if (end-of-variation? game) game (first (remove branch? (iterate right (right game)))))
     :out (second (remove branch? (iterate left (up game)))) ; variations are inserted after following move
     :start (down (last (take-while some? (iterate zip/prev game))))
+    ;:start (-> game zip/root zip/down)
     nil))
 
 (defn jump
-  "Within the given game navigate to the given target path represented as string or stay if not-existing."
+  "Within the given game navigate to the given target path or leave game unchanged if not found."
   [game target]
-  (let [start (navigate game :start)
-        match (first (filter #(or (zip/end? %) (= target (game-path-str %))) (iterate zip/next start)))] ; zip/next finally returns end node
-    (if (zip/end? match) game match)))
+  (loop [start (navigate game :start)]
+       (if (zip/end? start)
+         game
+         (if (and (map? (node start)) (= (game-path start) target)) start (recur (zip/next start)))
+         )))
+
+         ;match (first (filter #(or (zip/end? %) (= target (game-path %))) (remove zip/branch? (iterate zip/next start))))] ; zip/next finally returns end node
+    ;(if (zip/end? match) game match)))
 
 (defn soak [events]
   (reduce

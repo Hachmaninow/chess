@@ -53,35 +53,37 @@
               ])))
 
 
-(defn update-board [position]
-  (let [fen (cf/position->fen position)]
-    (js/updateBoard fen)
+(defn update-board [path]
+  (println path)
+  (let [game @state new-game (cg/jump game path)]
+    (println (zip/node new-game))
+    (let [new-fen (cf/position->fen (:position (node new-game)))]
+      (reset! state new-game)
+      (js/updateBoard new-fen)
     )
-  )
+  ))
 
 (defn ^:export insert-move [move]
-  (println (js->clj move))
-  (println (get (js->clj move) "from"))
-  (println (get (js->clj move) "to"))
   (let [move-info (js->clj move)
-        move-coords {:from (cr/to-idx (keyword (get move-info "from"))) :to (cr/to-idx (keyword (get move-info "to")))}
-        position (:position @state)]
-    (println position)
-    ;(println (cr/select-move position move-coords))
+        move-coords {:from (get move-info "from") :to (get move-info "to") :piece (get move-info "piece") }
+        new-game (cg/insert-move @state move-coords)
+        new-fen (cf/position->fen (:position (node new-game)))
+        ]
+    (reset! state new-game)
+    (js/updateBoard new-fen)
     )
-
   )
 
-(defn move-view [move position]
-  [:span {:style {:margin-right "5px"} :on-click #(update-board position)} (cg/move->long-str move)])
+(defn move-view [move position path]
+  [:span {:style {:margin-right "5px"} :on-click #(update-board path)} (cg/move->long-str move)])
 
 (defn variation-view [nodes depth]
   [:div
    (for [node nodes]
      (if (vector? node)
-       ^{:key (str depth )} [variation-view node (inc depth)]
-       (let [move (:move node) position (:position node) idx (dec (:ply position))]
-         ^{:key (str depth "." idx)} [move-view move position]
+       ^{:key (str depth)} [variation-view node (inc depth)]
+       (let [move (:move node) position (:position node) path (:path (meta node))]
+         ^{:key path} [move-view move position path]
          )
        )
      )
