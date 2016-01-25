@@ -2,3 +2,12 @@
 div.variation {
     margin-left: 20px;
 }
+
+span.move {
+    margin-right: 5px;
+}
+
+span.focus {
+    color: firebrick;
+    font-weight: 500;
+}

@@ -69,17 +69,18 @@
 (defn move-no [ply]
   (when (odd? ply) (str (inc (quot ply 2)) ".")))
 
-(defn move-view [move path]
-  [:span {:style {:margin-right "5px"} :on-click #(update-board path)}
+(defn move-view [move path focus]
+  (println focus)
+  [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
    (str (move-no (first path)) (cg/move->long-str move))])
 
-(defn variation-view [nodes depth]
+(defn variation-view [nodes current-path depth]
   [:div (when (> depth 0) {:className "variation"})
    (for [node nodes]
      (if (vector? node)
-       ^{:key (rand-int 100000)} [variation-view node (inc depth)]
+       ^{:key (rand-int 100000)} [variation-view node current-path (inc depth)]
        (let [move (:move node) path (:path (meta node))]
-         ^{:key path} [move-view move path]
+         ^{:key path} [move-view move path (= current-path path)]
          )
        )
      )
@@ -87,9 +88,10 @@
   )
 
 (defn game-view []
-  [:div
-   [variation-view (rest (zip/root @state)) 0]
-   ]
+  (let [game @state current-path (cg/game-path game)]
+    [:div
+     [variation-view (rest (zip/root game)) current-path 0]            ; skip the start-node
+     ])
   )
 
 (defn buttons []
