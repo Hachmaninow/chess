@@ -22,7 +22,7 @@
       (include-css "css/normalize.css")
       (include-css "css/skeleton.css")
       (include-css "css/chessboard-0.3.0.min.css")
-      (include-css (if (env :dev) "css/site.css" "css/site.min.css"))
+      (include-css "css/chessdojo.css")
       ]
      [:body
       [:div {:class "container"}

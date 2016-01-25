@@ -54,21 +54,15 @@
 
 
 (defn update-board [path]
-  (println path)
-  (let [game @state new-game (cg/jump game path)]
-    (println (zip/node new-game))
-    (let [new-fen (cf/position->fen (:position (node new-game)))]
-      (reset! state new-game)
-      (js/updateBoard new-fen)
-      )
-    ))
+  (let [game @state new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
+    (reset! state new-game)
+    (js/updateBoard new-fen)))
 
 (defn ^:export insert-move [move]
   (let [move-info (js->clj move)
         move-coords {:from (get move-info "from") :to (get move-info "to") :piece (get move-info "piece")}
         new-game (cg/insert-move @state move-coords)
-        new-fen (cf/position->fen (:position (node new-game)))
-        ]
+        new-fen (cf/position->fen (:position (node new-game)))]
     (reset! state new-game)
     (js/updateBoard new-fen)))
 
@@ -80,7 +74,7 @@
    (str (move-no (first path)) (cg/move->long-str move))])
 
 (defn variation-view [nodes depth]
-  [:div
+  [:div (when (> depth 0) {:className "variation"})
    (for [node nodes]
      (if (vector? node)
        ^{:key (rand-int 100000)} [variation-view node (inc depth)]
