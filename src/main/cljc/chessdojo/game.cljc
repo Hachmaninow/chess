@@ -2,7 +2,7 @@
   (:require [chessdojo.rules :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
             [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
-;            [spyscope.core]
+    ;            [spyscope.core]
             ))
 
 (def new-game
@@ -39,8 +39,7 @@
 ;
 
 (defn start-of-variation? [game]
-  (nil? (left game))
-  )
+  (nil? (left game)))
 
 (defn end-of-variation? [game]
   (every? vector? (rights game)))
@@ -61,30 +60,30 @@
 (defn game-path
   "Extract the path-metadata from the current node of the given game."
   [game]
-  (if (branch? game)
-    (:path (meta (node (down game))))                       ; path of a variation is the path of first move
-    (:path (meta (node game)))))
+  (:path (meta (node game))))
 
 (defn with-path
-  "Augment node with path-metadata consisting of the given ply, index-ctr and parent."
-  [node ply index-ctr parent]
-  (with-meta node {:path [ply index-ctr parent]}))
+  "Augment node with path-metadata consisting of the given ply, index and parent."
+  ([node ply index parent]
+   (with-meta node {:path [ply index parent]}))
+  ([node index parent]
+   (with-meta node {:path [index parent]})))
 
 (defn with-successor-path
   "Add path-metadata to a given node to be appended to the given current game."
   [cur-game node]
-  (if (map? node)
-    (let [[ply var-index pre-path] (game-path cur-game)]
-      (with-path node (inc ply) var-index pre-path))
-    node))
+  (let [[ply var-index pre-path] (game-path cur-game)]
+    (with-path node (inc ply) var-index pre-path)))
 
 (defn with-variation-path
   "Add path-metadata to a given node to be inserted into a given current game after a given anchor."
   [cur-game anchor node]
-  (if (map? node)
-    (let [[ply _ _] (game-path cur-game) [_ index-ctr _] (game-path anchor)]
-      (with-path node (inc ply) (if (branch? anchor) (inc index-ctr) 1) (game-path cur-game)))
-    node))
+  (let [[ply _ _] (game-path cur-game)]
+    (with-path node (inc ply) (if (branch? anchor) (inc (first (game-path anchor))) 1) (game-path cur-game))))
+
+(defn make-variation [first-move]
+  (let [[_ index parent] (:path (meta first-move))]
+    (with-path (vector first-move) index parent)))          ; variation nodes have the index at first element
 
 (defn insert-node
   "Insert a node into the given game by appending the current variation or creating a new one."
@@ -96,7 +95,7 @@
                                  right)
     ; there are already items following -> create a new variation in insert as last sibling
     (right game) (-> (let [anchor (find-anchor game)]
-                       (insert-right anchor [(with-variation-path game anchor node)]))
+                       (insert-right anchor (make-variation (with-variation-path game anchor node))))
                      right
                      down)))
 
@@ -130,13 +129,9 @@
   "Within the given game navigate to the given target path or leave game unchanged if not found."
   [game target]
   (loop [start (navigate game :start)]
-       (if (zip/end? start)
-         game
-         (if (and (map? (node start)) (= (game-path start) target)) start (recur (zip/next start)))
-         )))
-
-         ;match (first (filter #(or (zip/end? %) (= target (game-path %))) (remove zip/branch? (iterate zip/next start))))] ; zip/next finally returns end node
-    ;(if (zip/end? match) game match)))
+    (if (zip/end? start)
+      game
+      (if (and (map? (node start)) (= (game-path start) target)) start (recur (zip/next start))))))
 
 (defn soak [events]
   (reduce

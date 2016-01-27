@@ -106,16 +106,6 @@
     (is (= 1 (-> zipper down node)))
     (is (true? (-> zipper down cg/end-of-variation?)))))
 
-(defn navigate-or-insert [nodes]
-  (zip/root (reduce #(or (navigate %1 %2) (cg/insert-node %1 %2)) (zip/down (zip/vector-zip [:start])) nodes)))
-
-(deftest test-insert-node
-  (is (= [:start "e4"] (navigate-or-insert ["e4"])))
-  (is (= [:start "e4" "c5" "Nf3"] (navigate-or-insert ["e4" "c5" "Nf3"])))
-  (is (= [:start "e4" "c5" "Nf3" ["Nc3"]] (navigate-or-insert ["e4" "c5" "Nf3" :back "Nc3"])))
-  (is (= [:start "e4" "c5" "Nf3" ["Nc3"]] (navigate-or-insert ["e4" "c5" "Nf3" :back "Nc3" :out])))
-  (is (= [:start "e4" "c5" "Nf3" ["Nc3"] ["c3"]] (navigate-or-insert ["e4" "c5" "Nf3" :back "Nc3" :out "c3"]))))
-
 (defn soak-str [& moves]
   (cg/game->str (cg/soak (map cr/parse-simple-move moves))))
 
@@ -164,8 +154,7 @@
   (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R" (soak-fen :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4))))
 
 (defn soak-path [& moves]
-  (:path (meta (zip/node (cg/soak (map cr/parse-simple-move moves)))))
-  )
+  (cg/game-path (cg/soak (map cr/parse-simple-move moves))))
 
 (deftest test-game-paths
   (testing "basics"
@@ -181,22 +170,22 @@
     (is (= [4 2 [2 0 nil]] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
     (is (= [2 0 nil] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out)))
     (is (= [3 0 nil] (soak-path :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward))))
-
   (testing "subsequent moves with variations"
     (is (= [3 1 [2 0 nil]] (soak-path :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3))))
-
   (testing "multiple variations"
     (is (= [2 3 [1 0 nil]] (soak-path :e4 :c5 :back :e5 :out :e6 :out :c6)))) ; third variation
-
   (testing "nested variations"
     (is (= [5 1 [4 1 [2 1 [1 0 nil]]]] (soak-path :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :back :a3))) ; "d2-d4 d7-d5 (Ng8-f6 c2-c4 (c2-c3 g7-g6 g2-g3 (>a2-a3))) Ng1-f3"
     (is (= [3 2 [2 1 [1 0 nil]]] (soak-path :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4)))
-    (is (= [6 1 [5 1 [4 1 [2 1 [1 0 nil]]]]] (soak-path :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5)))
+    (is (= [6 1 [5 1 [4 1 [2 1 [1 0 nil]]]]] (soak-path :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5))))
+  (testing "nested variation in very first move"
+    (is (= [2 1 [1 1 [0 0 nil]]] (soak-path :d4 :d5 :back :back :e4 :e5 :back :c5))))
+  (testing "paths of variation node"
+    (is (= [1 [4 1 [2 1 [1 0 nil]]]] (cg/game-path (zip/up (cg/soak (map cr/parse-simple-move [:d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :back :a3])))))) ; third variation of that parent
+    (is (= [3 [1 0 nil]] (cg/game-path (zip/up (cg/soak (map cr/parse-simple-move [:e4 :c5 :back :e5 :out :e6 :out :c6])))))) ; third variation of that parent
     )
 
-
-  (testing "nested variation in very first move"
-    (is (= [2 1 [1 1 [0 0 nil]]] (soak-path :d4 :d5 :back :back :e4 :e5 :back :c5)))))
+  )
 
 (deftest test-soak-with-move-coords
   (is (= "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"

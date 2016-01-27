@@ -70,7 +70,6 @@
   (when (odd? ply) (str (inc (quot ply 2)) ".")))
 
 (defn move-view [move path focus]
-  (println focus)
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
    (str (move-no (first path)) (cg/move->long-str move))])
 
@@ -78,10 +77,9 @@
   [:div (when (> depth 0) {:className "variation"})
    (for [node nodes]
      (if (vector? node)
-       ^{:key (rand-int 100000)} [variation-view node current-path (inc depth)]
+       ^{:key (:path (meta node))} [variation-view node current-path (inc depth)]
        (let [move (:move node) path (:path (meta node))]
-         ^{:key path} [move-view move path (= current-path path)]
-         )
+         ^{:key path} [move-view move path (= current-path path)])
        )
      )
    ]
@@ -90,7 +88,7 @@
 (defn game-view []
   (let [game @state current-path (cg/game-path game)]
     [:div
-     [variation-view (rest (zip/root game)) current-path 0]            ; skip the start-node
+     [variation-view (rest (zip/root game)) current-path 0] ; skip the start-node
      ])
   )
 
