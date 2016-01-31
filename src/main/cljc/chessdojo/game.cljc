@@ -2,7 +2,7 @@
   (:require [chessdojo.rules :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
             [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
-    ;            [spyscope.core]
+            [taoensso.timbre.profiling :as profiler]
             ))
 
 (def new-game
@@ -100,14 +100,14 @@
                      down)))
 
 (defn create-move-node
-  "Create a new zipper node representing a hash with move and position."
-  [game move-coords]
-  (let [position (:position (node game)) move (select-move position move-coords)]
+  "Given a game and move criteria find a matching valid move and create a new map containing move and resulting position."
+  [game criteria]
+  (let [position (:position (node game)) move (select-move position criteria)]
     {:move move :position (update-position position move)}))
 
 (defn insert-move
-  [game move-coords]
-  (insert-node game (create-move-node game move-coords)))
+  [game criteria]
+  (insert-node game (create-move-node game criteria)))
 
 
 ;
@@ -163,15 +163,3 @@
 
 (defn game->board-fen [game]
   (board->fen (:board (:position (node game)))))
-
-
-;(defn game-benchmark []
-;  (load-pgn "1.c4 d5 2.Qb3 Bh3 3.gxh3 f5 4.Qxb7 Kf7 5.Qxa7 Kg6 6.f3 c5 7.Qxe7 Rxa2 8.Kf2 Rxb2 9.Qxg7+ Kh5 10.Qxg8 Rxb1 11.Rxb1 Kh4 12.Qxh8 h5 13.Qh6 Bxh6 14.Rxb8 Be3+ 15.dxe3 Qxb8 16.Kg2 Qf4 17.exf4 d4 18.Be3 dxe3")
-;  )
-;; 1.3s
-;
-;(defn game-benchmark2 []
-;  (load-pgn (slurp "test/test-pgns/complete.pgn")))
-;; 50.2s
-;
-;(taoensso.timbre.profiling/profile :info :Arithmetic (dotimes [n 10] (game-benchmark)))

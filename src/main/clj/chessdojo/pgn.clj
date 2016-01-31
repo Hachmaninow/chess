@@ -1,12 +1,16 @@
 (ns chessdojo.pgn
   (:require [chessdojo.game :refer [soak]]
+            [chessdojo.rules :refer [piece-type rank-names file-names to-idx]]
             [instaparse.core :as insta]
-            [instaparse.failure]))
+            [instaparse.failure]
+            [taoensso.timbre.profiling :as profiler]
+
+            ))
 
 (def pgn
   (insta/parser
     "<game> = tags move-text
-     <move-text> = (token space | token Epsilon)+
+     <move-text> = (token space | token ε)+
      <token> = move-number | black-move-number | move | comment | variation | annotation | game-result
      <space> = <#'\\s+'>
      move-number = #'\\d+' <#'\\.'>
@@ -52,14 +56,30 @@
 ; pgn to event seq
 ;
 
-(defn tokens->events [tokens])
+(declare tokens->events)
+
+(defn normalize
+  ""
+  [{:keys [:castling :piece :from-file :from-rank :to-file :to-rank :capture]}]
+  (into {}
+        (remove nil?
+                (vector
+                  (when (nil? piece) [:piece :P])
+                  (when castling [:castling (keyword castling)])
+                  (when castling [:piece :K])
+                  (when piece [:piece (piece-type (keyword piece))])
+                  (when (and to-file to-rank) [:to (to-idx (keyword (str to-file to-rank)))])
+                  (when capture [:capture (piece-type (keyword capture))])
+                  (when from-file [:from-file (get file-names from-file)])
+                  (when from-rank [:from-rank (get rank-names from-rank)])
+                  ))))
+
 
 (defn token->event [token]
   (condp = (first token)
-    :move (into {} (rest token))                            ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+    :move (normalize (into {} (rest token)))                ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
     :variation [:back (tokens->events (rest token)) :out :forward]
-    nil
-    ))
+    nil))
 
 (defn tokens->events [tokens]
   (remove nil? (flatten (map token->event tokens))))

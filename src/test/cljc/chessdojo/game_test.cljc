@@ -30,16 +30,16 @@
   (testing "zip/node"
     (is (= {
             :move {:ep-info [20 28] :from 12 :piece :P :to 28}
-            :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :call nil :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black :ply 2}
+            :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black :ply 2}
             }
            (node (cg/insert-move cg/new-game (cr/parse-simple-move :e4))))))
   (testing "zip/root"
     (is (= [
             {
-             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :white, :call nil, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}} :ply 1}
+             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P :P :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :white, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}} :ply 1}
              }
             {
-             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :black, :call nil, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}, :ep-info [20 28] :ply 2},
+             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :black, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}, :ep-info [20 28] :ply 2},
              :move {:piece :P, :from 12, :to 28, :ep-info [20 28]}
              }
             ] (root (cg/insert-move cg/new-game (cr/parse-simple-move :e4))))))
@@ -189,10 +189,10 @@
 
 (deftest test-soak-with-move-coords
   (is (= "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
-         (cg/game->str (cg/soak [{:to-file "e" :to-rank "4"} {:to-file "e" :to-rank "5"} {:piece "N" :to-file "f" :to-rank "3"}
-                                 :back {:piece "N" :to-file "c" :to-rank "3"} :out :forward
-                                 {:piece "N" :to-file "c" :to-rank "6"} {:piece "B" :to-file "b" :to-rank "5"} {:to-file "a" :to-rank "6"}
-                                 {:capture "x" :piece "B" :to-file "c" :to-rank "6"}])))))
+         (cg/game->str (cg/soak [{:piece :P :to 28} {:piece :P :to 36} {:piece :N :to 21}
+                                 :back {:piece :N :to 18} :out :forward
+                                 {:piece :N :to 42} {:piece :B :to 33} {:piece :P :to 40}
+                                 {:piece :B :capture :X :to 42}])))))
 
 ;
 ; navigation

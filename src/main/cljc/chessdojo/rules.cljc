@@ -1,5 +1,7 @@
 (ns chessdojo.rules
-  (:require [clojure.set :refer [intersection]]))
+  (:require [clojure.set :refer [intersection]]
+            [taoensso.timbre.profiling :as profiler]
+            ))
 
 ;
 ; basics
@@ -9,7 +11,7 @@
 
 (defn piece-color [piece] (if (nil? piece) nil (if (contains? #{:P :N :B :R :Q :K} piece) :white :black)))
 
-(def piece-type {:K :K :Q :Q :R :R :B :B :N :N :P :P :k :K :q :Q :r :R :b :B :n :N :p :P})
+(def piece-type {:K :K :Q :Q :R :R :B :B :N :N :P :P :k :K :q :Q :r :R :b :B :n :N :p :P :x :X})
 
 (def colored-piece-lookup {:white {:K :K :Q :Q :R :R :B :B :N :N :P :P} :black {:K :k :Q :q :R :r :B :b :N :n :P :p}})
 
@@ -33,6 +35,7 @@
 
 (defn to-sqr [index] (get square-names index))
 
+
 ;
 ; board arithmetics
 ;
@@ -50,6 +53,7 @@
 (defn still-on-board? [idx]
   (and (< idx 64) (>= idx 0)))
 
+
 ;
 ; lookups
 ;
@@ -64,8 +68,13 @@
 (defn is-piece? [board idx turn piece-type]
   (= (board idx) (colored-piece turn piece-type)))
 
-(defn occupied-indexes [board color]
-  (set (filter #(= color (piece-color (board %))) (range 0 64))))
+(defn occupied-indexes
+  "Return all indexes on the given board occupied by given player or given player/piece-type combination."
+  ([board turn] (occupied-indexes board turn nil))
+  ([board turn piece-type]
+   (set
+     (filter #(if piece-type (is-piece? board % turn piece-type) (= (piece-color (board %)) turn))
+             (range 0 64)))))
 
 (defn empty-square? [board index]
   (nil? (get board index)))
@@ -99,8 +108,6 @@
 
 (defn update-board [board move]
   (place-pieces board (move-to-piece-movements board move)))
-
-
 
 
 ;
@@ -243,10 +250,10 @@
 
 (def castlings
   {:white {
-           :O-O {:piece :K :from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
+           :O-O   {:piece :K :from (to-idx :e1) :to (to-idx :g1) :rook-from (to-idx :h1) :rook-to (to-idx :f1)}
            :O-O-O {:piece :K :from (to-idx :e1) :to (to-idx :c1) :rook-from (to-idx :a1) :rook-to (to-idx :d1)}}
    :black {
-           :O-O {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
+           :O-O   {:piece :k :from (to-idx :e8) :to (to-idx :g8) :rook-from (to-idx :h8) :rook-to (to-idx :f8)}
            :O-O-O {:piece :k :from (to-idx :e8) :to (to-idx :c8) :rook-from (to-idx :a8) :rook-to (to-idx :d8)}}})
 
 (defn- check-castling [board turn [castling-type {:keys [from to rook-from rook-to] :as rules}]]
@@ -284,14 +291,31 @@
 ; find valid moves
 ;
 
+(defn criteria-matcher [{:keys [:castling :piece :from :to :capture :from-file :from-rank :promote-to]}]
+  (remove nil?
+          (vector
+            (when castling (fn [move] (= (:castling move) castling)))
+            (when from (fn [move] (= (:from move) from)))
+            (when to (fn [move] (= (:to move) to)))
+            (when piece (fn [move] (= (piece-type (:piece move)) piece))) ; if a piece is specified, it does not matter if it's black or white
+            (when capture (fn [move] (or (move :capture) (move :ep-capture))))
+            (when from-file (fn [move] (= (file (:from move)) from-file)))
+            (when from-rank (fn [move] (= (rank (:from move)) from-rank)))
+            ;(when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
+            )))
+
+(defn matches-criteria? [valid-move criteria]
+  (every? #(% valid-move) (criteria-matcher criteria)))
+
 (defn find-moves
-  "Find all possible moves on the given board and player without considering check situation."
-  ([board turn] (find-moves board turn nil))
-  ([board turn en-passant-info]
-   (let [owned-indexes (occupied-indexes board turn)]
+  "Find all possible moves on the given board and player without considering check situation, but considering given criteria."
+  ([board turn] (find-moves board turn nil nil))
+  ([board turn en-passant-info {moving-piece-type :piece}]
+   (let [owned-indexes (occupied-indexes board turn moving-piece-type)]
      (remove #(= turn (piece-color (% :capture)))           ; remove all moves to squares already owned by the player
              (remove nil?
-                     (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacks board turn %)) owned-indexes))))))
+                     (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacks board turn %))
+                             owned-indexes))))))
 
 (defn king-covered?
   "Check if the given move applied to the given board covers the king from opponent's checks."
@@ -301,17 +325,20 @@
     (not (under-attack? new-board kings-pos (opponent turn)))))
 
 (defn valid-moves
-  "Find all valid moves in the given game considering check situations."
-  [{:keys [board turn ep-info] :as position}]
-  (concat
-    (filter #(king-covered? board turn %) (find-moves board turn ep-info))
-    (filter #(castling-available? position %) (find-castlings board turn))))
+  "Find all valid moves in the given game considering check situations and considering given criteria."
+  ([position] (valid-moves position nil))
+  ([{:keys [board turn ep-info] :as position} criteria]
+   (concat
+     (filter #(king-covered? board turn %)
+             (filter #(matches-criteria? % criteria)        ; filter moves using criteria to save expensive check for king-coverage
+                     (find-moves board turn ep-info criteria))) ; use criteria even for restricting move candidate generation
+     (filter #(castling-available? position %)
+             (find-castlings board turn)))))
 
 
 ;
 ; position
 ;
-
 
 (defn gives-check?
   "Check if the given player gives check to the opponent's king on the current board."
@@ -323,8 +350,9 @@
   (some #(king-covered? board turn %) (find-moves board turn)))
 
 (defn call
-  [board turn]
-  (let [gives-check (gives-check? board turn) has-moves (has-moves? board (opponent turn))]
+  ""
+  [{:keys [board turn]}]
+  (let [gives-check (gives-check? board (opponent turn)) has-moves (has-moves? board turn)]
     (cond
       (and gives-check has-moves) :check
       (and gives-check (not has-moves)) :checkmate
@@ -341,11 +369,10 @@
   ([piece-locations]
    (let [board (place-pieces piece-locations)]
      {
-      :board board
-      :turn :white
-      :call (call board :white)
+      :board                 board
+      :turn                  :white
       :castling-availability (deduce-castling-availability board)
-      :ply 1                                                ; half-move clock awaited move
+      :ply                   1                              ; half-move clock awaited move
       })))
 
 (def start-position (setup-position))
@@ -356,12 +383,11 @@
   [{:keys [board turn castling-availability ply]} move]
   (let [new-board (update-board board move)]
     {
-     :board new-board
-     :turn (opponent turn)
-     :call (call new-board turn)
+     :board                 new-board
+     :turn                  (opponent turn)
      :castling-availability (intersect-castling-availability castling-availability (deduce-castling-availability new-board))
-     :ep-info (:ep-info move)
-     :ply (inc ply)
+     :ep-info               (:ep-info move)
+     :ply                   (inc ply)
      }))
 
 
@@ -369,49 +395,36 @@
 ; move selection
 ;
 
-(defn parse-simple-move [move-coords]
-  "Very limited support for move parsing for testing purposes (as Instaparse is unavailable in cljs tests)."
-  (let [move-str (name move-coords)]
-    (cond
-      (re-matches #"back|forward|out|start" move-str) move-coords
-      (re-matches #"O-O" move-str) {:castling :O-O}
-      (re-matches #"O-O-O" move-str) {:castling :O-O-O}
-      (re-matches #".." move-str) {:to move-str}
-      (re-matches #"..." move-str) {:piece (subs move-str 0 1) :to (subs move-str 1)}
-      (re-matches #"[a-h]x.." move-str) {:piece "P" :from-file (subs move-str 0 1) :capture "x" :to (subs move-str 2)}
-      (re-matches #".x.." move-str) {:piece (subs move-str 0 1) :capture "x" :to (subs move-str 2)}
-      (re-matches #".[a-h].." move-str) {:piece (subs move-str 0 1) :from-file (subs move-str 1 2) :to (subs move-str 2)}
-      (re-matches #".[1-8].." move-str) {:piece (subs move-str 0 1) :from-rank (subs move-str 1 2) :to (subs move-str 2)}
-      (re-matches #".[a-h]x.." move-str) {:piece (subs move-str 0 1) :from-file (subs move-str 1 2) :capture "x" :to (subs move-str 3)}
-      (re-matches #".[1-8]x.." move-str) {:piece (subs move-str 0 1) :from-rank (subs move-str 1 2) :capture "x" :to (subs move-str 3)}
-      )))
-
 (def rank-names {"1" 0 "2" 1 "3" 2 "4" 3 "5" 4 "6" 5 "7" 6 "8" 7}) ; TODO: investigate (int \a) not supported in cljs (???)
 (def file-names {"a" 0 "b" 1 "c" 2 "d" 3 "e" 4 "f" 5 "g" 6 "h" 7}) ; TODO: investigate (int \1) not supported in cljs (???)
+(defn- ex-piece [str] (keyword (subs str 0 1)))
+(defn- ex-sqr [str index] (to-idx (keyword (subs str index))))
+(defn- ex-file [str index] (get file-names (subs str index (inc index))))
+(defn- ex-rank [str index] (get rank-names (subs str index (inc index))))
 
-(defn move-matcher [{:keys [:castling :piece :from :to :to-file :to-rank :capture :from-file :from-rank :promote-to]}]
-  (remove nil?
-          (vector
-            (when castling (fn [move] (= (move :castling) (keyword castling))))
-            (when (and to-file to-rank) (fn [move] (= (move :to) (to-idx (keyword (apply str to-file to-rank))))))
-            (when from (fn [move] (= (move :from) (to-idx (keyword from)))))
-            (when to (fn [move] (= (move :to) (to-idx (keyword to)))))
-            (when piece (fn [move] (= (piece-type (move :piece)) (piece-type (keyword piece))))) ; if a piece is specified, it does not matter if it's black or white
-            (when (and (not piece) (not castling)) (fn [move] (= (piece-type (move :piece)) :P))) ; if no piece is specified, then it is a pawn move (or a castling)
-            (when capture (fn [move] (or (move :capture) (move :ep-capture))))
-            (when from-file (fn [move] (= (get file-names from-file) (file (move :from)))))
-            (when from-rank (fn [move] (= (get rank-names from-rank) (rank (move :from)))))
-            (when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
-            )))
+(defn parse-simple-move [input]
+  "Regexp-based parsing of single moves for testing purposes (as Instaparse is unavailable in cljs tests)."
+  (let [s (name input)]
+    (cond
+      (re-matches #"back|forward|out|start" s) input
+      (re-matches #"O-O" s) {:piece :K :castling :O-O}
+      (re-matches #"O-O-O" s) {:piece :K :castling :O-O-O}
+      (re-matches #"[a-h][1-8]" s) {:piece :P :to (ex-sqr s 0)}
+      (re-matches #"[N|B|R|Q|K].." s) {:piece (ex-piece s) :to (ex-sqr s 1)}
+      (re-matches #"[a-h]x[a-h][1-8]" s) {:piece :P :from-file (ex-file s 0) :capture :X :to (ex-sqr s 2)}
+      (re-matches #"[N|B|R|Q|K]x[a-h][1-8]" s) {:piece (ex-piece s) :capture :X :to (ex-sqr s 2)}
+      (re-matches #"[N|B|R|Q|K][a-h][a-h][1-8]" s) {:piece (ex-piece s) :from-file (ex-file s 1) :to (ex-sqr s 2)}
+      (re-matches #"[N|B|R|Q|K][1-8][a-h][1-8]" s) {:piece (ex-piece s) :from-rank (ex-rank s 1) :to (ex-sqr s 2)}
+      (re-matches #"[N|B|R|Q|K][a-h]x[a-h][1-8]" s) {:piece (ex-piece s) :from-file (ex-file s 1) :capture :X :to (ex-sqr s 3)}
+      (re-matches #"[N|B|R|Q|K][1-8]x[a-h][1-8]" s) {:piece (ex-piece s) :from-rank (ex-rank s 1) :capture :X :to (ex-sqr s 3)}
+      )))
 
-(defn matches-move-coords? [move-coords valid-move]
-  (every? #(% valid-move) (move-matcher move-coords)))
 
-(defn select-move [position move-coords]
-  (let [valid-moves (valid-moves position)
-        matching-moves (filter #(matches-move-coords? move-coords %) valid-moves)]
+
+(defn select-move [position criteria]
+  (let [valid-moves (valid-moves position criteria)
+        matching-moves (filter #(matches-criteria? % criteria) valid-moves)]
     (condp = (count matching-moves)
       1 (first matching-moves)
-      0 (throw (ex-info "No matching moves" {:for move-coords :valid-moves (seq valid-moves)}))
-      (throw (ex-info "Multiple matching moves" {:for move-coords :valid-moves (seq valid-moves) :matching-moves matching-moves})))
-    ))
+      0 (throw (ex-info "No matching moves" {:for criteria :valid-moves (seq valid-moves)}))
+      (throw (ex-info "Multiple matching moves" {:for criteria :valid-moves (seq valid-moves) :matching-moves matching-moves})))))

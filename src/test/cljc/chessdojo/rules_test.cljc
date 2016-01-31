@@ -264,7 +264,7 @@
   (testing "pawn move"
     (is (= [{:piece :P :from 12 :to 20} {:piece :P :from 12 :to 28 :ep-info [20 28]}] (cr/find-moves (cr/place-pieces [:P :e2]) :white))))
   (testing "en-passant"
-    (is (= [{:ep-capture (to-idx :c4) :piece :p :from (to-idx :d4) :to (to-idx :c3) :capture nil}] (cr/find-moves (cr/place-pieces [:p :d4 :P :c4 :P :d3]) :black [(to-idx :c3) (to-idx :c4)]))))
+    (is (= [{:ep-capture (to-idx :c4) :piece :p :from (to-idx :d4) :to (to-idx :c3) :capture nil}] (cr/find-moves (cr/place-pieces [:p :d4 :P :c4 :P :d3]) :black [(to-idx :c3) (to-idx :c4)] nil))))
   (testing "promotion"
     (is (= [:Q :R :B :N] (map :promote-to (cr/find-moves (cr/place-pieces [:P :e7]) :white))))
     (is (= [:Q :R :B :N] (map :promote-to (cr/find-moves (cr/place-pieces [:P :e7 :n :e8 :n :f8]) :white)))))
@@ -362,19 +362,15 @@
   (let [move (cr/parse-simple-move (name move-coords))]
     (cr/update-position position (cr/select-move position move))))
 
-;(defn play-move [position move-coords]
-;  (let [move (parse-simple-move move-coords)]
-;    (update-position position (select-move position move))))
-
 (defn play-line [position & move-coords]
   (reduce play-move position move-coords))
 
 (deftest test-calls
-  (is (nil? (:call cr/start-position)))
-  (is (nil? (:call (play-line cr/start-position :d4))))
-  (is (= :check (:call (play-line cr/start-position :d4 :c5 :dxc5 :Qa5))))
-  (is (= :checkmate (:call (play-line cr/start-position :f3 :e5 :g4 :Qh4))))
-  (is (= :stalemate (:call (play-line cr/start-position :c4 :d5 :Qb3 :Bh3 :gxh3 :f5 :Qxb7 :Kf7 :Qxa7 :Kg6 :f3 :c5 :Qxe7 :Rxa2 :Kf2 :Rxb2 :Qxg7 :Kh5 :Qxg8 :Rxb1 :Rxb1 :Kh4 :Qxh8 :h5 :Qh6 :Bxh6 :Rxb8 :Be3 :dxe3 :Qxb8 :Kg2 :Qf4 :exf4 :d4 :Be3 :dxe3)))))
+  (is (nil? (cr/call cr/start-position)))
+  (is (nil? (cr/call (play-line cr/start-position :d4))))
+  (is (= :check (cr/call (play-line cr/start-position :d4 :c5 :dxc5 :Qa5))))
+  (is (= :checkmate (cr/call (play-line cr/start-position :f3 :e5 :g4 :Qh4))))
+  (is (= :stalemate (cr/call (play-line cr/start-position :c4 :d5 :Qb3 :Bh3 :gxh3 :f5 :Qxb7 :Kf7 :Qxa7 :Kg6 :f3 :c5 :Qxe7 :Rxa2 :Kf2 :Rxb2 :Qxg7 :Kh5 :Qxg8 :Rxb1 :Rxb1 :Kh4 :Qxh8 :h5 :Qh6 :Bxh6 :Rxb8 :Be3 :dxe3 :Qxb8 :Kg2 :Qf4 :exf4 :d4 :Be3 :dxe3)))))
 
 (defn play-move-on-board
   "Setup a board with the given piece-locations, then make the given move and return a FEN-representation of the board."
@@ -417,47 +413,47 @@
 ;
 
 (deftest parse-simple-move-test
-  (is (= {:to "a6"} (cr/parse-simple-move :a6)))
-  (is (= {:piece "N" :to "e5"} (cr/parse-simple-move :Ne5)))
-  (is (= {:piece "N" :capture "x" :to "e5"} (cr/parse-simple-move :Nxe5)))
-  (is (= {:piece "P" :from-file "d" :capture "x" :to "e5"} (cr/parse-simple-move :dxe5)))
-  (is (= {:piece "N" :from-file "f" :to "e5"} (cr/parse-simple-move :Nfe5)))
-  (is (= {:piece "N" :from-rank "3" :to "e5"} (cr/parse-simple-move :N3e5)))
-  (is (= {:piece "N" :from-file "f" :capture "x" :to "e5"} (cr/parse-simple-move :Nfxe5)))
-  (is (= {:piece "N" :from-rank "3" :capture "x" :to "e5"} (cr/parse-simple-move :N3xe5))))
+  (is (= {:piece :P :to 40} (cr/parse-simple-move :a6)))
+  (is (= {:piece :N :to 36} (cr/parse-simple-move :Ne5)))
+  (is (= {:piece :N :capture :X :to 36} (cr/parse-simple-move :Nxe5)))
+  (is (= {:piece :P :from-file 3 :capture :X :to 36} (cr/parse-simple-move :dxe5)))
+  (is (= {:piece :N :from-file 5 :to 36} (cr/parse-simple-move :Nfe5)))
+  (is (= {:piece :N :from-rank 2 :to 36} (cr/parse-simple-move :N3e5)))
+  (is (= {:piece :N :from-file 5 :capture :X :to 36} (cr/parse-simple-move :Nfxe5)))
+  (is (= {:piece :N :from-rank 2 :capture :X :to 36} (cr/parse-simple-move :N3xe5))))
 
 (deftest test-matches-move-coords
   (testing "pawn moves"
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :a6) {:piece :P :to (to-idx :a6)})))
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :a5) {:piece :p, :to (to-idx :a6)})))
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :axb5) {:piece :p, :to (to-idx :b5), :from (to-idx :a6), :capture :P})))
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :axb5) {:piece :p, :to (to-idx :b5), :from (to-idx :a6)})), "capture missing")
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :axb5) {:piece :p, :to (to-idx :b5), :from (to-idx :c6), :capture :P})), "wrong file")
+    (is (true? (cr/matches-criteria? {:piece :P :to (to-idx :a6)} (cr/parse-simple-move :a6))))
+    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :a6)} (cr/parse-simple-move :a5))))
+    (is (true? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :a6), :capture :P} (cr/parse-simple-move :axb5))))
+    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :a6)} (cr/parse-simple-move :axb5))), "capture missing")
+    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :c6), :capture :P} (cr/parse-simple-move :axb5))), "wrong file")
     )
   (testing "piece moves"
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :Ne7) {:piece :N, :to (to-idx :e7)})))
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :Ne7) {:piece :n, :to (to-idx :e7)})))
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :Ne7) {:piece :B, :to (to-idx :e7)})))
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :Nxe7) {:piece :n, :to (to-idx :e7), :capture :b})))
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :Nxe7) {:piece :n, :to (to-idx :e7)})), "missing capture")
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :Ngxe7) {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B})))
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :N3xe5) {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B})))
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :Ncxe7) {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B})), "wrong file")
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :N7xe5) {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B})), "wrong rank"))
+    (is (true? (cr/matches-criteria? {:piece :N, :to (to-idx :e7)} (cr/parse-simple-move :Ne7))))
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7)} (cr/parse-simple-move :Ne7))))
+    (is (false? (cr/matches-criteria? {:piece :B, :to (to-idx :e7)} (cr/parse-simple-move :Ne7))))
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :capture :b} (cr/parse-simple-move :Nxe7))))
+    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e7)} (cr/parse-simple-move :Nxe7))), "missing capture")
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B} (cr/parse-simple-move :Ngxe7))))
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B} (cr/parse-simple-move :N3xe5))))
+    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B} (cr/parse-simple-move :Ncxe7))), "wrong file")
+    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B} (cr/parse-simple-move :N7xe5))), "wrong rank"))
   (testing "castlings"
-    (is (true? (cr/matches-move-coords? (cr/parse-simple-move :O-O) {:to (to-idx :g1), :from (to-idx :e1), :castling :O-O})))
-    (is (false? (cr/matches-move-coords? (cr/parse-simple-move :O-O-O) {:to (to-idx :g1), :from (to-idx :e1), :castling :O-O}))))
+    (is (true? (cr/matches-criteria? {:piece :K :to (to-idx :g1), :from (to-idx :e1), :castling :O-O} (cr/parse-simple-move :O-O))))
+    (is (false? (cr/matches-criteria? {:piece :K :to (to-idx :g1), :from (to-idx :e1), :castling :O-O} (cr/parse-simple-move :O-O-O)))))
   )
 
 (deftest test-select-move
   (testing "unambiguous valid move"
-    (is (= {:piece :P, :from 12, :to 20} (cr/select-move cr/start-position {:to :e3})))
-    (is (= {:piece :P, :from 12, :to 28, :ep-info [20 28]} (cr/select-move cr/start-position {:to :e4})))
-    (is (= {:piece :N :from 6 :to 21 :capture nil} (cr/select-move cr/start-position {:piece :N :to :f3}))))
+    (is (= {:piece :P, :from 12, :to 20} (cr/select-move cr/start-position {:piece :P :to 20})))
+    (is (= {:piece :P, :from 12, :to 28, :ep-info [20 28]} (cr/select-move cr/start-position {:to 28})))
+    (is (= {:piece :N :from 6 :to 21 :capture nil} (cr/select-move cr/start-position {:piece :N :to 21}))))
   #?(:cljs (testing "invalid move"
-             (is (thrown-with-msg? ExceptionInfo #"No matching moves" (cr/select-move cr/start-position {:piece :N :to :f4})))
-             (is (thrown-with-msg? ExceptionInfo #"Multiple matching moves" (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :to :f4})))))
+             (is (thrown-with-msg? ExceptionInfo #"No matching moves" (cr/select-move cr/start-position {:piece :N :to (to-idx :f4)})))
+             (is (thrown-with-msg? ExceptionInfo #"Multiple matching moves" (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :to (to-idx :f4)})))))
   #?(:clj (testing "invalid move"
-            (is (thrown-with-msg? Exception #"No matching moves" (cr/select-move cr/start-position {:piece :N :to :f4})))
-            (is (thrown-with-msg? Exception #"Multiple matching moves" (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :to :f4})))))
+            (is (thrown-with-msg? Exception #"No matching moves" (cr/select-move cr/start-position {:piece :N :to (to-idx :f4)})))
+            (is (thrown-with-msg? Exception #"Multiple matching moves" (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :to (to-idx :f4)})))))
   )
