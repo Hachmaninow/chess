@@ -1,5 +1,5 @@
 (ns chessdojo.game
-  (:require [chessdojo.rules :refer [piece-type to-sqr setup-position select-move update-position]]
+  (:require [chessdojo.rules :as cr :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
             [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
             [taoensso.timbre.profiling :as profiler]
@@ -142,6 +142,11 @@
     ;(catch Exception e (throw (ex-info (str "Trying to play: " %2 " in game") {}) e)))
     new-game
     events))
+
+(defn psoak
+  "Parse events as moves and soak into a new game."
+  [events]
+  (soak (map cr/parse-simple-move events)))
 
 (defn game-position [game]
   (:position (node game))

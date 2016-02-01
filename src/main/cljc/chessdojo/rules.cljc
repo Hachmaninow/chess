@@ -350,7 +350,7 @@
   (some #(king-covered? board turn %) (find-moves board turn)))
 
 (defn call
-  ""
+  "Check if the last move by the opponent of the given player included a check, checkmate or stalemate call."
   [{:keys [board turn]}]
   (let [gives-check (gives-check? board (opponent turn)) has-moves (has-moves? board turn)]
     (cond
