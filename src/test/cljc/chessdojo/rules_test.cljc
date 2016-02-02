@@ -153,9 +153,9 @@
 
 (deftest test-occupied-indexes
   (testing "occupied by white"
-    (is (= (set (range 0 16)) (cr/occupied-indexes (:board cr/start-position) :white))))
+    (is (= (range 0 16) (cr/occupied-indexes (:board cr/start-position) :white))))
   (testing "occupied by black"
-    (is (= (set (range 48 64)) (cr/occupied-indexes (:board cr/start-position) :black)))))
+    (is (= (range 48 64) (cr/occupied-indexes (:board cr/start-position) :black)))))
 
 (deftest test-empty-square
   (testing "empty square"

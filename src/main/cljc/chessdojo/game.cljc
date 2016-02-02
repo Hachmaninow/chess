@@ -1,9 +1,7 @@
 (ns chessdojo.game
   (:require [chessdojo.rules :as cr :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
-            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
-            [taoensso.timbre.profiling :as profiler]
-            ))
+            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]))
 
 (def new-game
   (-> {:position (setup-position)}

@@ -1,7 +1,5 @@
 (ns chessdojo.rules
-  (:require [clojure.set :refer [intersection]]
-            [taoensso.timbre.profiling :as profiler]
-            ))
+  (:require [clojure.set :refer [intersection]]))
 
 ;
 ; basics
@@ -71,10 +69,9 @@
 (defn occupied-indexes
   "Return all indexes on the given board occupied by given player or given player/piece-type combination."
   ([board turn] (occupied-indexes board turn nil))
-  ([board turn piece-type]
-   (set
-     (filter #(if piece-type (is-piece? board % turn piece-type) (= (piece-color (board %)) turn))
-             (range 0 64)))))
+  ([board turn {from :from piece-type :piece}]
+   (filter #(if piece-type (is-piece? board % turn piece-type) (= (piece-color (board %)) turn))
+           (if from (vector from) (range 0 64)))))
 
 (defn empty-square? [board index]
   (nil? (get board index)))
@@ -310,8 +307,8 @@
 (defn find-moves
   "Find all possible moves on the given board and player without considering check situation, but considering given criteria."
   ([board turn] (find-moves board turn nil nil))
-  ([board turn en-passant-info {moving-piece-type :piece}]
-   (let [owned-indexes (occupied-indexes board turn moving-piece-type)]
+  ([board turn en-passant-info criteria]
+   (let [owned-indexes (occupied-indexes board turn criteria)]
      (remove #(= turn (piece-color (% :capture)))           ; remove all moves to squares already owned by the player
              (remove nil?
                      (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacks board turn %))

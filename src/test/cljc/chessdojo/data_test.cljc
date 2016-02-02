@@ -2,7 +2,8 @@
   #?(:clj
      (:require [clojure.test :refer :all]
                [chessdojo.data :as cd]
-               [chessdojo.game :as cg]))
+               [chessdojo.game :as cg]
+               [clojure.java.io :as io]))
   #?(:cljs
      (:require [cljs.test :refer-macros [deftest is testing run-tests]]
        [chessdojo.data :as cd]
@@ -22,4 +23,13 @@
 
 (deftest test-load-game
   (is (= "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R"
-         (cg/game->board-fen (cd/load-game (cd/deflate (cg/psoak [:e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5])))))))
+         (-> [:e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5] cg/psoak cd/deflate cd/load-game cg/game->board-fen))))
+
+#?(:clj                                                     ; io/resource not available in cljs
+   (deftest test-complete-game
+     (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (-> "games/deflated/complete.dgn" io/resource slurp read-string cd/load-game cg/game->board-fen)))))
+
+;(time
+;  (-> "games/deflated/complete.dgn" io/resource slurp read-string cd/load-game cg/game->board-fen))
+; 200ms
+

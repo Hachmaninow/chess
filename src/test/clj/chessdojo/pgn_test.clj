@@ -3,6 +3,7 @@
             [chessdojo.pgn :refer :all]
             [chessdojo.rules :refer :all]
             [chessdojo.game :refer [game->board-fen game->str]]
+            [chessdojo.data :as cd]
             [instaparse.core :as insta]))
 
 (deftest test-parse-move
@@ -88,3 +89,6 @@
 
 (deftest load-complex-pgn
   (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))
+
+(cd/deflate (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn")))
+
