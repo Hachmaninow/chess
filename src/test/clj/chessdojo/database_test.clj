@@ -2,6 +2,6 @@
   (:require [clojure.test :refer :all]
             [chessdojo.database :refer :all]))
 
-(deftest test-load-pgn
-  (is (= 1346 (count (load-pgn "queens-gambit-declined"))))
+(deftest test-load-dgn
+  (is (= 128 (count (load-dgn "complete"))))
   )

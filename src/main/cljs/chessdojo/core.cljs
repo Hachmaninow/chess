@@ -7,7 +7,8 @@
     [accountant.core :as accountant]
     [chessdojo.game :as cg]
     [chessdojo.fen :as cf]
-    [chessdojo.rules :as cr]))
+    [chessdojo.rules :as cr]
+    [chessdojo.data :as cd]))
 
 ;; -------------------------
 ;; Views
@@ -36,21 +37,14 @@
 ;            :on-click #(swap! click-count inc)}]])
 
 
+(defn get-data
+  []
+  (cd/load-game (cljs.reader/read-string (.getAttribute (.getElementById js/document "game-data") "dgn"))))
+
 (def state
   (reagent/atom
-    (cg/soak [
-              {:to-file "e" :to-rank "4"}
-              {:to-file "e" :to-rank "5"}
-              {:piece "N" :to-file "f" :to-rank "3"}
-              :back
-              {:piece "N" :to-file "c" :to-rank "3"}
-              :out
-              :forward
-              {:piece "N" :to-file "c" :to-rank "6"}
-              {:piece "B" :to-file "b" :to-rank "5"}
-              {:to-file "a" :to-rank "6"}
-              {:piece "B" :capture "x" :to-file "c" :to-rank "6"}
-              ])))
+    (get-data)
+    ))
 
 
 (defn update-board [path]
@@ -60,7 +54,7 @@
 
 (defn ^:export insert-move [move]
   (let [move-info (js->clj move)
-        move-coords {:from (get move-info "from") :to (get move-info "to") :piece (get move-info "piece")}
+        move-coords {:from (cr/to-idx (keyword (get move-info "from"))) :to (cr/to-idx (keyword (get move-info "to"))) :piece (keyword (clojure.string/upper-case (get move-info "piece")))}
         new-game (cg/insert-move @state move-coords)
         new-fen (cf/position->fen (:position (node new-game)))]
     (reset! state new-game)

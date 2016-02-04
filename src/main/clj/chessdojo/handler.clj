@@ -1,5 +1,6 @@
 (ns chessdojo.handler
-  (:require [compojure.core :refer [GET defroutes]]
+  (:require [chessdojo.database :as cdb]
+            [compojure.core :refer [GET defroutes]]
             [compojure.route :refer [not-found resources]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-js include-css]]
@@ -25,6 +26,7 @@
       (include-css "css/chessdojo.css")
       ]
      [:body
+      [:div {:style {:display "hidden"} :id "game-data" :dgn (pr-str (cdb/load-dgn "complete"))}]
       [:div {:class "container"}
        [:div {:class "row"}
         [:div {:class "eight columns"}

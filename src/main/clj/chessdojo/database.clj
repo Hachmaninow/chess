@@ -1,7 +1,7 @@
-(ns chessdojo.database)
+(ns chessdojo.database
+  (:require [clojure.java.io :as io]))
 
-(def base-path "/Users/hman/Projects/labs/clojure/chess-dojo/src/main/clj/data/")
+(def base-path "games/deflated/")
 
-(defn load-pgn [name]
-  (slurp (str base-path name ".pgn"))
-  )
+(defn load-dgn [name]
+  (read-string (slurp (io/resource (str base-path name ".dgn")))))
