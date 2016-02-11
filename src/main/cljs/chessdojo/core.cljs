@@ -88,7 +88,7 @@
 
 (defn game-view []
   (let [game @state current-path (cg/game-path game)]
-    [:div
+    [:div {:className "game-view"}
      [variation-view (rest (zip/root game)) current-path 0] ; skip the start-node
      ])
   )
@@ -100,10 +100,10 @@
   )
 
 (defn home-page []
-  [:div [:h2 "Welcome to chess-dojo"]
-   [:div [:a {:href "/about"} "go to about page"]]
+  [:div
    [game-view]
    [buttons]
+   [:div [:a {:href "/about"} "go to about page"]]
    ])
 
 (defn about-page []
