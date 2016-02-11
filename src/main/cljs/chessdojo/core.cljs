@@ -36,16 +36,16 @@
 ;   [:input {:type "button" :value "Click me!"
 ;            :on-click #(swap! click-count inc)}]])
 
+(enable-console-print!)
 
 (defn get-data
   []
-  (cd/load-game (cljs.reader/read-string (.getAttribute (.getElementById js/document "game-data") "dgn"))))
+  (let [deflated-game (cljs.reader/read-string (.getAttribute (.getElementById js/document "game-data") "dgn"))]
+    (cd/load-game deflated-game)))
 
 (def state
   (reagent/atom
-    (get-data)
-    ))
-
+    (get-data)))
 
 (defn update-board [path]
   (let [game @state new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
@@ -67,13 +67,20 @@
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
    (str (move-no (first path)) (cg/move->long-str move))])
 
+(defn comment-view [comment]
+  [:span comment])
+
 (defn variation-view [nodes current-path depth]
   [:div (when (> depth 0) {:className "variation"})
    (for [node nodes]
      (if (vector? node)
        ^{:key (:path (meta node))} [variation-view node current-path (inc depth)]
-       (let [move (:move node) path (:path (meta node))]
-         ^{:key path} [move-view move path (= current-path path)])
+       (let [move (:move node) path (:path (meta node)) comment (:comment node)]
+         ^{:key path} [:span
+                       [move-view move path (= current-path path)]
+                       [comment-view comment]
+                       ]
+         )
        )
      )
    ]

@@ -26,7 +26,7 @@
       (include-css "css/chessdojo.css")
       ]
      [:body
-      [:div {:style {:display "hidden"} :id "game-data" :dgn (pr-str (cdb/load-dgn "complete"))}]
+      [:div {:style {:display "hidden"} :id "game-data" :dgn (pr-str (cdb/load-dgn "complete-with-annotations"))}]
       [:div {:class "container"}
        [:div {:class "row"}
         [:div {:class "eight columns"}

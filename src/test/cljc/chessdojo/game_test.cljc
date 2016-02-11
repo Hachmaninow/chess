@@ -228,3 +228,6 @@
       (is (= "Bf8-h6" (cg/move->long-str (:move (node (cg/jump game [6 1 [5 2 [2 0 nil]]]))))))
       (testing "non-existing path return original game"
         (is (= game (cg/jump game [6 3 [2 0 nil]])))))))
+
+(deftest test-annotate
+  (is (= "the sicilian defence" (:comment (zip/node (cg/soak [{:piece :P :to 28} {:piece :P :to 34} {:comment "the sicilian defence"}]))))))

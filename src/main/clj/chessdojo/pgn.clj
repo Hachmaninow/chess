@@ -79,6 +79,7 @@
   (condp = (first token)
     :move (normalize (into {} (rest token)))                ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
     :variation [:back (tokens->events (rest token)) :out :forward]
+    :comment {:comment (second token)}
     nil))
 
 (defn tokens->events [tokens]

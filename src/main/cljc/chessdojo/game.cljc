@@ -131,12 +131,19 @@
       game
       (if (and (map? (node start)) (= (game-path start) target)) start (recur (zip/next start))))))
 
+(defn annotate
+  [game annotation]
+  (cond
+    (:comment annotation) (zip/replace game (assoc (zip/node game) :comment (:comment annotation)))))
+
 (defn soak [events]
   (reduce
     ;#(try
     #(or
       (navigate %1 %2)
-      (insert-move %1 %2))
+      (annotate %1 %2)
+      (insert-move %1 %2)
+      )
     ;(catch Exception e (throw (ex-info (str "Trying to play: " %2 " in game") {}) e)))
     new-game
     events))

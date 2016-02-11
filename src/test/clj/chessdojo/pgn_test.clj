@@ -69,6 +69,9 @@
          (pgn->events "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6")))
   (is (= [{:piece :N :from-file 6 :to 21} {:piece :N :from-rank 0 :to 18}]
          (pgn->events "Ngf3 N1c3")))
+  (testing "comments"
+    (is (= [{:piece :P :to 27} {:piece :P :to 35} {:comment "a closed game"}]
+           (pgn->events "d4 d5 {a closed game}"))))
 
   )
 
@@ -90,5 +93,5 @@
 (deftest load-complex-pgn
   (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))
 
-(cd/deflate (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn")))
+;(cd/deflate (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn")))
 
