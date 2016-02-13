@@ -72,6 +72,7 @@
 
 (defn variation-view [nodes current-path depth]
   [:div (when (> depth 0) {:className "variation"})
+   (when (> depth 0) [:span (str (first (:path (meta nodes))) "] ")])
    (for [node nodes]
      (if (vector? node)
        ^{:key (:path (meta node))} [variation-view node current-path (inc depth)]
@@ -89,9 +90,7 @@
 (defn game-view []
   (let [game @state current-path (cg/game-path game)]
     [:div {:className "game-view"}
-     [variation-view (rest (zip/root game)) current-path 0] ; skip the start-node
-     ])
-  )
+     [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node
 
 (defn buttons []
   [:div
