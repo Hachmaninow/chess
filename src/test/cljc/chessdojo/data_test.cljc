@@ -57,6 +57,5 @@
      (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game cg/game->board-fen)))))
 
 ;(time
-;  (-> "games/deflated/complete.dgn" io/resource slurp read-string cd/load-game cg/game->board-fen))
-; 200ms
-
+;  (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game cg/game->board-fen))
+;530ms

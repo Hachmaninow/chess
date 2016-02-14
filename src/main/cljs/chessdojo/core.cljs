@@ -8,33 +8,8 @@
     [chessdojo.game :as cg]
     [chessdojo.fen :as cf]
     [chessdojo.rules :as cr]
-    [chessdojo.data :as cd]))
-
-;; -------------------------
-;; Views
-
-; samples
-
-;(defn simple-component []
-;  [:div
-;   [:p "I am a component!"]
-;   [:p.someclass
-;    "I have " [:strong "bold"]
-;    [:span {:style {:color "red"}} " and red "] "text."]])
-;
-;(defn lister [items]
-;  [:ul
-;   (for [item items]
-;     ^{:key item} [:li "Item " item])])
-;
-;(def click-count (reagent/atom 0))
-;
-;(defn counting-component []
-;  [:div
-;   "The atom " [:code "click-count"] " has value: "
-;   @click-count ". "
-;   [:input {:type "button" :value "Click me!"
-;            :on-click #(swap! click-count inc)}]])
+    [chessdojo.data :as cd]
+    [chessdojo.notation :as cn]))
 
 (enable-console-print!)
 
@@ -63,9 +38,12 @@
 (defn move-no [ply]
   (when (odd? ply) (str (inc (quot ply 2)) ".")))
 
+;; -------------------------
+;; Views
+
 (defn move-view [move path focus]
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
-   (str (move-no (first path)) (cg/move->long-str move))])
+   (str (move-no (first path)) (cn/san move))])
 
 (defn comment-view [comment]
   [:span comment])

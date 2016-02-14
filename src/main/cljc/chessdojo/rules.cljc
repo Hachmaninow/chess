@@ -69,9 +69,8 @@
 (defn occupied-indexes
   "Return all indexes on the given board occupied by given player or given player/piece-type combination."
   ([board turn] (occupied-indexes board turn nil))
-  ([board turn {from :from piece-type :piece}]
-   (filter #(if piece-type (is-piece? board % turn piece-type) (= (piece-color (board %)) turn))
-           (if from (vector from) (range 0 64)))))
+  ([board turn piece-type]
+   (filter #(if piece-type (is-piece? board % turn piece-type) (= (piece-color (board %)) turn)) (range 0 64))))
 
 (defn empty-square? [board index]
   (nil? (get board index)))
@@ -294,7 +293,7 @@
             (when castling (fn [move] (= (:castling move) castling)))
             (when from (fn [move] (= (:from move) from)))
             (when to (fn [move] (= (:to move) to)))
-            (when piece (fn [move] (= (piece-type (:piece move)) piece))) ; if a piece is specified, it does not matter if it's black or white
+            (when piece (fn [move] (= (piece-type (:piece move)) (piece-type piece)))) ; if a piece is specified, it does not matter if it's black or white
             (when capture (fn [move] (or (move :capture) (move :ep-capture))))
             (when from-file (fn [move] (= (file (:from move)) from-file)))
             (when from-rank (fn [move] (= (rank (:from move)) from-rank)))
@@ -305,10 +304,11 @@
   (every? #(% valid-move) (criteria-matcher criteria)))
 
 (defn find-moves
-  "Find all possible moves on the given board and player without considering check situation, but considering given criteria."
-  ([board turn] (find-moves board turn nil nil))
-  ([board turn en-passant-info criteria]
-   (let [owned-indexes (occupied-indexes board turn criteria)]
+  "Find all possible moves on the given board, player and optionally piece-type without considering check situation."
+  ([board turn]
+   (find-moves board turn nil nil))
+  ([board turn en-passant-info piece-type]
+   (let [owned-indexes (occupied-indexes board turn piece-type)]
      (remove #(= turn (piece-color (% :capture)))           ; remove all moves to squares already owned by the player
              (remove nil?
                      (mapcat #(if (is-piece? board % turn :P) (find-pawn-moves board turn en-passant-info %) (find-attacks board turn %))
@@ -323,12 +323,13 @@
 
 (defn valid-moves
   "Find all valid moves in the given game considering check situations and considering given criteria."
-  ([position] (valid-moves position nil))
-  ([{:keys [board turn ep-info] :as position} criteria]
+  ([position]
+   (valid-moves position nil))
+  ([{:keys [board turn ep-info] :as position} {piece :piece :as criteria}]
    (concat
      (filter #(king-covered? board turn %)
-             (filter #(matches-criteria? % criteria)        ; filter moves using criteria to save expensive check for king-coverage
-                     (find-moves board turn ep-info criteria))) ; use criteria even for restricting move candidate generation
+             (filter #(matches-criteria? % (dissoc criteria :from :from-file :from-rank)) ; filter moves using criteria to save expensive check for king-coverage
+                     (find-moves board turn ep-info (piece-type piece)))) ; use criteria even for restricting move candidate generation
      (filter #(castling-available? position %)
              (find-castlings board turn)))))
 
@@ -416,12 +417,19 @@
       (re-matches #"[N|B|R|Q|K][1-8]x[a-h][1-8]" s) {:piece (ex-piece s) :from-rank (ex-rank s 1) :capture :X :to (ex-sqr s 3)}
       )))
 
-
+(defn disambiguate
+  "Disambiguate the given move against the given list of valid moves."
+  [{piece :piece from :from to :to :as move} valid-moves]
+  (cond
+    (= 1 (count (filter #(matches-criteria? % {:piece piece :to to}) valid-moves))) move
+    (= 1 (count (filter #(matches-criteria? % {:piece piece :to to :from-file (file from)}) valid-moves))) (assoc move :disambig-file (file from))
+    (= 1 (count (filter #(matches-criteria? % {:piece piece :to to :from-rank (rank from)}) valid-moves))) (assoc move :disambig-rank (rank from))
+    :else (assoc move :disambig-square from)))
 
 (defn select-move [position criteria]
   (let [valid-moves (valid-moves position criteria)
         matching-moves (filter #(matches-criteria? % criteria) valid-moves)]
     (condp = (count matching-moves)
-      1 (first matching-moves)
+      1 (disambiguate (first matching-moves) valid-moves)
       0 (throw (ex-info "No matching moves" {:for criteria :valid-moves (seq valid-moves)}))
       (throw (ex-info "Multiple matching moves" {:for criteria :valid-moves (seq valid-moves) :matching-moves matching-moves})))))
