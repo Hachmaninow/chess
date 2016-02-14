@@ -35,15 +35,19 @@
     (reset! state new-game)
     (js/updateBoard new-fen)))
 
-(defn move-no [ply]
-  (when (odd? ply) (str (inc (quot ply 2)) ".")))
+(defn move-no
+  "Return a move-number for white moves and first moves in variations."
+  [ply is-first]
+  (cond
+    (odd? ply) (str (inc (quot ply 2)) ".")
+    (and is-first (even? ply)) (str (quot ply 2) "...")))
 
 ;; -------------------------
 ;; Views
 
-(defn move-view [move path focus]
+(defn move-view [move path focus is-first]
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
-   (str (move-no (first path)) (cn/san move))])
+   (str (move-no (first path) is-first) (cn/san move))])
 
 (defn comment-view [comment]
   [:span (str comment " ")])
@@ -56,7 +60,7 @@
        ^{:key (:path (meta node))} [variation-view node current-path (inc depth)]
        (let [move (:move node) path (:path (meta node)) comment (:comment node)]
          ^{:key path} [:span
-                       [move-view move path (= current-path path)]
+                       [move-view move path (= current-path path) (identical? (first nodes) node)]
                        [comment-view comment]
                        ]
          )
