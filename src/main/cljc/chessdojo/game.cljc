@@ -10,27 +10,6 @@
       zip/vector-zip
       zip/down))
 
-;
-; move to string
-;
-
-(defn move->long-str [{:keys [:piece :from :to :capture :castling :ep-capture :promote-to :highlight]}]
-  (cond
-    (nil? piece) "$"
-    castling (name castling)
-    :else (str
-            (when highlight ">")
-            (if (not= (piece-type piece) :P) (name (piece-type piece)))
-            (name (to-sqr from))
-            (if (or capture ep-capture) "x" "-")
-            (name (to-sqr to)) (if ep-capture "ep")
-            (if promote-to (str "=" (name (piece-type promote-to)))))
-    )
-  )
-
-(defn ply->move-number [ply]
-  (if (odd? ply) (str (quot ply 2) "...") (str (quot ply 2) ".")))
-
 
 ;
 ; maintainance of the game zipper
@@ -156,20 +135,6 @@
 (defn game-position [game]
   (:position (node game))
   )
-
-(defn highlight-move [highlight-move move]
-  (if (identical? highlight-move move) (assoc move :highlight true) move))
-
-(defn variation->str [variation-vec highlighter-fn]
-  (clojure.string/join " "
-                       (map #(cond
-                              (vector? %) (str "(" (variation->str % highlighter-fn) ")")
-                              (:move %) (move->long-str (highlighter-fn (:move %)))
-                              ) variation-vec)))
-
-(defn game->str [game]
-  (let [highlighter-fn (partial highlight-move (:move (node game)))]
-    (variation->str (rest (zip/root game)) highlighter-fn))) ; skip the first element as it's the anchor containing the start position
 
 (defn game->board-fen [game]
   (board->fen (:board (:position (node game)))))

@@ -455,22 +455,18 @@
   (testing "valid moves with ambiguous files"
     (is (= {:piece :N :from 12 :to 29 :capture nil :disambig-file 4} (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :from (to-idx :e2) :to (to-idx :f4)})))
     (is (= {:piece :N :from 14 :to 29 :capture nil :disambig-file 6} (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :from (to-idx :g2) :to (to-idx :f4)})))
-    (is (= {:piece :N :from 21 :to 27 :capture nil :disambig-file 5} (cr/select-move (cr/setup-position [:N :f3 :N :b5]) {:piece :N :from (to-idx :f3) :to (to-idx :d4)})))
-    )
+    (is (= {:piece :N :from 21 :to 27 :capture nil :disambig-file 5} (cr/select-move (cr/setup-position [:N :f3 :N :b5]) {:piece :N :from (to-idx :f3) :to (to-idx :d4)}))))
 
   (testing "valid moves with ambiguous rank"
     (is (= {:piece :N :from 12 :to 22 :capture nil :disambig-rank 1} (cr/select-move (cr/setup-position [:N :e2 :N :e4]) {:piece :N :from (to-idx :e2) :to (to-idx :g3)})))
     (is (= {:piece :N :from 28 :to 22 :capture nil :disambig-rank 3} (cr/select-move (cr/setup-position [:N :e2 :N :e4]) {:piece :N :from (to-idx :e4) :to (to-idx :g3)}))))
 
   (testing "valid moves with ambiguous rank and file"
-    (is (= {:piece :N :from 15 :to 21 :capture nil :disambig-square 15} (cr/select-move (cr/setup-position [:N :d2 :N :d4 :N :h2 :N :h4]) {:piece :N :from (to-idx :h2) :to (to-idx :f3)})))
-    )
+    (is (= {:piece :N :from 15 :to 21 :capture nil :disambig-square 15} (cr/select-move (cr/setup-position [:N :d2 :N :d4 :N :h2 :N :h4]) {:piece :N :from (to-idx :h2) :to (to-idx :f3)}))))
 
   #?(:cljs (testing "invalid move"
              (is (thrown-with-msg? ExceptionInfo #"No matching moves" (cr/select-move cr/start-position {:piece :N :to (to-idx :f4)})))
              (is (thrown-with-msg? ExceptionInfo #"Multiple matching moves" (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :to (to-idx :f4)})))))
   #?(:clj (testing "invalid move"
             (is (thrown-with-msg? Exception #"No matching moves" (cr/select-move cr/start-position {:piece :N :to (to-idx :f4)})))
-            (is (thrown-with-msg? Exception #"Multiple matching moves" (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :to (to-idx :f4)})))))
-
-  )
+            (is (thrown-with-msg? Exception #"Multiple matching moves" (cr/select-move (cr/setup-position [:N :e2 :N :g2]) {:piece :N :to (to-idx :f4)}))))))

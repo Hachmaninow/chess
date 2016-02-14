@@ -23,11 +23,13 @@
             (name (cr/to-sqr to)) (if ep-capture " e.p.")
             (if promote-to (str "=" (name (cr/piece-type promote-to)))))))
 
-(defn- variation->str [variation-vec]
+(defn- variation->str [variation-vec focussed-move]
   (clojure.string/join " " (map #(cond
-                                  (vector? %) (str "(" (variation->str %) ")")
-                                  (:move %) (san (:move %))
+                                  (vector? %) (str "(" (variation->str % focussed-move) ")")
+                                  (:move %) (str
+                                              (when (identical? (:move %) focussed-move) ">")
+                                              (san (:move %)))
                                   ) variation-vec)))
 
 (defn notation [game]
-  (variation->str (rest (zip/root game))))                  ; skip the first element as it's the anchor containing the start position
+  (variation->str (rest (zip/root game)) (:move (zip/node game))))                  ; skip the first element as it's the anchor containing the start position

@@ -5,12 +5,14 @@
                [chessdojo.game :as cg :refer [navigate]]
                [chessdojo.rules :as cr :refer [to-idx to-sqr]]
                [chessdojo.fen :as cf]
+               [chessdojo.notation :as cn]
                ))
   #?(:cljs (:require [cljs.test :refer-macros [deftest is testing run-tests]]
              [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node path root]]
              [chessdojo.game :as cg :refer [navigate]]
              [chessdojo.rules :as cr :refer [to-idx to-sqr]]
-             [chessdojo.fen :as cf])))
+             [chessdojo.fen :as cf]
+             [chessdojo.notation :as cn])))
 
 ;
 ; verify zipper basics
@@ -29,7 +31,7 @@
         (is (= [:a :b] (-> zipper down right right right right down up node))))))
   (testing "zip/node"
     (is (= {
-            :move {:ep-info [20 28] :from 12 :piece :P :to 28}
+            :move     {:ep-info [20 28] :from 12 :piece :P :to 28}
             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black :ply 2}
             }
            (node (cg/insert-move cg/new-game (cr/parse-simple-move :e4))))))
@@ -40,7 +42,7 @@
              }
             {
              :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :black, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}, :ep-info [20 28] :ply 2},
-             :move {:piece :P, :from 12, :to 28, :ep-info [20 28]}
+             :move     {:piece :P, :from 12, :to 28, :ep-info [20 28]}
              }
             ] (root (cg/insert-move cg/new-game (cr/parse-simple-move :e4))))))
   (testing "zip/next"
@@ -48,20 +50,7 @@
     (is (= :a (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/next zip/next zip/next node)))))
 
 (deftest test-new-game
-  (is (= cr/start-position (:position (zip/node cg/new-game))))
-  )
-
-(deftest test-move->long-str
-  (is (= "O-O" (cg/move->long-str {:piece :K :castling :O-O})))
-  (is (= "O-O-O" (cg/move->long-str {:piece :k :castling :O-O-O})))
-  (is (= "a2-a3" (cg/move->long-str {:piece :P :from (to-idx :a2) :to (to-idx :a3)})))
-  (is (= "e2-e1=N" (cg/move->long-str {:piece :p :from (to-idx :e2) :to (to-idx :e1) :promote-to :n})))
-  (is (= "d6xe6ep" (cg/move->long-str {:piece :P :from (to-idx :d6) :to (to-idx :e6) :ep-capture (to-idx :e5)})))
-  (is (= "Nf7xh8" (cg/move->long-str {:piece :N :from (to-idx :f7) :to (to-idx :h8) :capture :r}))))
-
-(deftest test-ply->move-number
-  (is (= "2..." (cg/ply->move-number 5)))
-  (is (= "3." (cg/ply->move-number 6))))
+  (is (= cr/start-position (:position (zip/node cg/new-game)))))
 
 ; can be tested using simple vector-zippers
 (deftest test-find-insert-loc
@@ -107,33 +96,32 @@
     (is (true? (-> zipper down cg/end-of-variation?)))))
 
 (defn soak-str [& moves]
-  (cg/game->str (cg/soak (map cr/parse-simple-move moves))))
+  (cn/notation (cg/soak (map cr/parse-simple-move moves))))
 
 (deftest test-soak1
-  (is (= ">e2-e4" (soak-str :e4)))
-  (is (= "e2-e4 >c7-c5" (soak-str :e4 :c5)))
-  (is (= "e2-e4 c7-c5 >Ng1-f3" (soak-str :e4 :c5 :Nf3)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (>Nb1-c3)" (soak-str :e4 :c5 :Nf3 :back :Nc3)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 >Nb8-c6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6)))
-  (is (= "e2-e4 >c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (>c2-c3)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 >Ng8-f6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
-  (is (= "e2-e4 c7-c5 >Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 Ng8-f6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward)))
-  (is (= "e2-e4 c7-c5 Ng1-f3 (Nb1-c3 Nb8-c6) (c2-c3 Ng8-f6) Nb8-c6 >d2-d4" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4)))
+  (is (= ">e4" (soak-str :e4)))
+  (is (= "e4 >c5" (soak-str :e4 :c5)))
+  (is (= "e4 c5 >Nf3" (soak-str :e4 :c5 :Nf3)))
+  (is (= "e4 c5 Nf3 (>Nc3)" (soak-str :e4 :c5 :Nf3 :back :Nc3)))
+  (is (= "e4 c5 Nf3 (Nc3 >Nc6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6)))
+  (is (= "e4 >c5 Nf3 (Nc3 Nc6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out)))
+  (is (= "e4 c5 Nf3 (Nc3 Nc6) (>c3)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3)))
+  (is (= "e4 c5 Nf3 (Nc3 Nc6) (c3 >Nf6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6)))
+  (is (= "e4 c5 >Nf3 (Nc3 Nc6) (c3 Nf6)" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward)))
+  (is (= "e4 c5 Nf3 (Nc3 Nc6) (c3 Nf6) Nc6 >d4" (soak-str :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4)))
 
   (testing "subsequent moves with variations"
-    (is (= "e2-e4 c7-c5 (e7-e5) Ng1-f3 (>Nb1-c3)" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3)))
-    (is (= "e2-e4 >c7-c5 (e7-e5) Ng1-f3 (Nb1-c3)" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out)))
-    (is (= "e2-e4 c7-c5 (e7-e5) Ng1-f3 (Nb1-c3) (c2-c3) >Nb8-c6" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out :c3 :out :forward :Nc6))))
+    (is (= "e4 c5 (e5) Nf3 (>Nc3)" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3)))
+    (is (= "e4 >c5 (e5) Nf3 (Nc3)" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out)))
+    (is (= "e4 c5 (e5) Nf3 (Nc3) (c3) >Nc6" (soak-str :e4 :c5 :back :e5 :out :forward :Nf3 :back :Nc3 :out :c3 :out :forward :Nc6))))
 
   (testing "nested variations"
-    (is (= "d2-d4 d7-d5 (Ng8-f6 c2-c4 (c2-c3 g7-g6 g2-g3 (>a2-a3))) Ng1-f3" (soak-str :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :back :a3)))
-    (is (= "e2-e4 e7-e5 (c7-c5 Nb1-c3 (g2-g3 g7-g6 Bf1-g2 (a2-a3 Bf8-g7 (>h7-h5)))) Ng1-f3" (soak-str :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5)))
-    (is (= "d2-d4 d7-d5 (Ng8-f6 c2-c4 (c2-c3 g7-g6 g2-g3) (>h2-h4)) Ng1-f3" (soak-str :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4)))
-    )
+    (is (= "d4 d5 (Nf6 c4 (c3 g6 g3 (>a3))) Nf3" (soak-str :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :back :a3)))
+    (is (= "e4 e5 (c5 Nc3 (g3 g6 Bg2 (a3 Bg7 (>h5)))) Nf3" (soak-str :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5)))
+    (is (= "d4 d5 (Nf6 c4 (c3 g6 g3) (>h4)) Nf3" (soak-str :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4))))
 
   (testing "nested variation in very first move"
-    (is (= "d2-d4 (e2-e4 e7-e5 (>c7-c5)) d7-d5" (soak-str :d4 :d5 :back :back :e4 :e5 :back :c5)))))
+    (is (= "d4 (e4 e5 (>c5)) d5" (soak-str :d4 :d5 :back :back :e4 :e5 :back :c5)))))
 
 (defn soak-fen [& moves]
   (cg/game->board-fen (cg/soak (map cr/parse-simple-move moves))))
@@ -188,11 +176,11 @@
   )
 
 (deftest test-soak-with-move-coords
-  (is (= "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
-         (cg/game->str (cg/soak [{:piece :P :to 28} {:piece :P :to 36} {:piece :N :to 21}
-                                 :back {:piece :N :to 18} :out :forward
-                                 {:piece :N :to 42} {:piece :B :to 33} {:piece :P :to 40}
-                                 {:piece :B :capture :X :to 42}])))))
+  (is (= "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 >Bxc6"
+         (cn/notation (cg/soak [{:piece :P :to 28} {:piece :P :to 36} {:piece :N :to 21}
+                                :back {:piece :N :to 18} :out :forward
+                                {:piece :N :to 42} {:piece :B :to 33} {:piece :P :to 40}
+                                {:piece :B :capture :X :to 42}])))))
 
 ;
 ; navigation
@@ -221,11 +209,11 @@
 (deftest test-jump
   (let [game (cg/soak (map cr/parse-simple-move [:e4 :e5 :Nf3 :back :Nc3 :out :g3 :g6 :Bg2 :Bg7 :back :Bh6 :start]))]
     (testing "jump to existing paths return game with this path"
-      (is (= "e2-e4" (cg/move->long-str (:move (node (cg/jump game [1 0 nil]))))))
-      (is (= "Ng1-f3" (cg/move->long-str (:move (node (cg/jump game [3 0 nil]))))))
-      (is (= "Nb1-c3" (cg/move->long-str (:move (node (cg/jump game [3 1 [2 0 nil]]))))))
-      (is (= "Bf8-g7" (cg/move->long-str (:move (node (cg/jump game [6 2 [2 0 nil]]))))))
-      (is (= "Bf8-h6" (cg/move->long-str (:move (node (cg/jump game [6 1 [5 2 [2 0 nil]]]))))))
+      (is (= "e4" (cn/san (:move (node (cg/jump game [1 0 nil]))))))
+      (is (= "Nf3" (cn/san (:move (node (cg/jump game [3 0 nil]))))))
+      (is (= "Nc3" (cn/san (:move (node (cg/jump game [3 1 [2 0 nil]]))))))
+      (is (= "Bg7" (cn/san (:move (node (cg/jump game [6 2 [2 0 nil]]))))))
+      (is (= "Bh6" (cn/san (:move (node (cg/jump game [6 1 [5 2 [2 0 nil]]]))))))
       (testing "non-existing path return original game"
         (is (= game (cg/jump game [6 3 [2 0 nil]])))))))
 

@@ -3,7 +3,6 @@
             [chessdojo.pgn :refer :all]
             [chessdojo.rules :refer :all]
             [chessdojo.pgn :as pgn]
-            [chessdojo.game :refer [game->board-fen game->str]]
             [taoensso.timbre.profiling :as profiler]))
 
 (defn game-benchmark [pgn-str]

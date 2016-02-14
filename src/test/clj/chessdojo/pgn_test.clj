@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [chessdojo.pgn :refer :all]
             [chessdojo.rules :refer :all]
-            [chessdojo.game :refer [game->board-fen game->str]]
+            [chessdojo.game :refer [game->board-fen]]
+            [chessdojo.notation :as cn]
             [chessdojo.data :as cd]
             [instaparse.core :as insta]))
 
@@ -85,10 +86,10 @@
   (are [pgn fen game-str]
     (let [game (load-pgn pgn)]
       (is (= fen (game->board-fen game)))
-      (is (= game-str (game->str game))))
-    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e2-e4 e7-e5 Ng1-f3 Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
-    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e2-e4 e7-e5 Ng1-f3 (Nb1-c3) Nb8-c6 Bf1-b5 a7-a6 >Bb5xc6"
-    "d4 d5 (Nf6 c4 (g3)) Nf3" "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R" "d2-d4 d7-d5 (Ng8-f6 c2-c4 (g2-g3)) >Ng1-f3"))
+      (is (= game-str (cn/notation game))))
+    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e4 e5 Nf3 Nc6 Bb5 a6 >Bxc6"
+    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 >Bxc6"
+    "d4 d5 (Nf6 c4 (g3)) Nf3" "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R" "d4 d5 (Nf6 c4 (g3)) >Nf3"))
 
 (deftest load-complex-pgn
   (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))
