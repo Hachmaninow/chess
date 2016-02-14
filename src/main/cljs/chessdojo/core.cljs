@@ -46,7 +46,7 @@
    (str (move-no (first path)) (cn/san move))])
 
 (defn comment-view [comment]
-  [:span comment])
+  [:span (str comment " ")])
 
 (defn variation-view [nodes current-path depth]
   [:div (when (> depth 0) {:className "variation"})

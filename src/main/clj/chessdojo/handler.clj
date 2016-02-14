@@ -32,7 +32,7 @@
         [:div {:class "eight columns"}
          [:div {:id "board"}]
          ]
-        [:div {:class "four columns"}
+        [:div {:class "four columns" :style "margin-left: 20px;"}
          [:div {:id "notation"}]
          mount-target
          ]

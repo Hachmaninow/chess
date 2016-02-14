@@ -133,8 +133,7 @@
   (soak (map cr/parse-simple-move events)))
 
 (defn game-position [game]
-  (:position (node game))
-  )
+  (:position (node game)))
 
 (defn game->board-fen [game]
   (board->fen (:board (:position (node game)))))
