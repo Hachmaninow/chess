@@ -35,6 +35,9 @@
     (reset! state new-game)
     (js/updateBoard new-fen)))
 
+(defn ^:export update-comment [comment]
+  (reset! state (cg/annotate @state {:comment comment})))
+
 (defn move-no
   "Return a move-number for white moves and first moves in variations."
   [ply is-first]
@@ -74,8 +77,17 @@
     [:div {:className "game-view"}
      [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node
 
+(def jquery (js* "$"))
+
+(defn show-edit-comment-dialog []
+  (let [text-area (jquery "#comment-textarea") current-comment (get (node @state) :comment)]
+    (.val text-area current-comment))
+  (-> (jquery "#comment-editor") (.dialog "open"))
+  nil)                                                      ; it's critical to return nil, as otherwise the result seems to get called
+
 (defn buttons []
   [:div
+   [:input {:type "button" :value "Comment" :on-click show-edit-comment-dialog}]
    [:input {:type "button" :value "Down" :on-click #(reset! state (down @state))}]
    [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]]
   )

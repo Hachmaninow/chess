@@ -22,6 +22,8 @@
       [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
       (include-css "css/normalize.css")
       (include-css "css/skeleton.css")
+      (include-css "css/jquery-ui.min.css")
+      (include-css "css/jquery-ui.theme.min.css")
       (include-css "css/chessboard-0.3.0.min.css")
       (include-css "css/chessdojo.css")
       ]
@@ -49,8 +51,17 @@
          ]
         ]
        ]
+      [:div {:id "comment-editor" :title "Edit comment"}
+       [:form
+        [:textarea {:id "comment-textarea" :style "width: 360px; height: 220px;"}
+         "huihui"
+         ]
+        ]
+       ]
+
       (include-js "js/chess.min.js")
       (include-js "js/jquery-2.1.4.min.js")
+      (include-js "js/jquery-ui-1.11.4.min.js")
       (include-js "js/chessboard-0.3.0.js")
       (include-js "js/chessdojo.js")
       (include-js "js/app.js")
