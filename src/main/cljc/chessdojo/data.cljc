@@ -1,40 +1,33 @@
 (ns chessdojo.data
   (:require [chessdojo.game :as cg]
-            [clojure.zip :as zip]))
+            [chessdojo.notation :as cn]
+            [clojure.zip :as zip]
+            [chessdojo.rules :as cr]))
+
+(defn- deflate-node [[k v]]
+  (case k
+    :move (symbol (cn/san v))
+    :comment v
+    nil))
 
 (defn- deflate-variation [variation-vec]
-  (map #(cond
-         (vector? %) (deflate-variation %)
-         (:move %) (remove nil? (vector
-                                  (get-in % [:move :from]) (get-in % [:move :to])
-                                  (when (:comment %) (:comment %))
-                                  ))
-         ) variation-vec))
+  (mapcat #(cond
+            (vector? %) (list (deflate-variation %))
+            (map? %) (remove nil? (map deflate-node %))
+            ) variation-vec))
 
 (defn deflate
-  "Transform the given game into a minimal representation that allows efficient reconstruction."
+  "Transform the given game into a minimal string representation that allows efficient reconstruction."
   [game]
-  (deflate-variation (rest (zip/root game))))               ; skip the first element as it's the anchor containing the start position
+  (pr-str (deflate-variation (rest (zip/root game)))))      ; skip the first element as it's the anchor containing the start position
 
-(defn inflate-move-node [[from to & rest]]
-  (into {:from from :to to}
-        (map
-          #(cond
-            (string? %) [:comment %]
-            ) rest)))
-
-(defn inflate [deflated]
-  (map #(cond
-         (and (sequential? %) (integer? (first %))) (inflate-move-node %)
-         :default (inflate %)
-         ) deflated))
-
-(defn- event-stream [inflated]
+(defn- event-stream [deflated]
   (flatten
     (map #(cond
-           (map? %) (remove empty? (vector (select-keys % [:from :to]) (select-keys % [:comment])))
+           (symbol? %) %
+           (string? %) {:comment %}
            (sequential? %) (vector :back (event-stream %) :out :forward)
-           ) inflated)))
+           ) deflated)))
 
-(defn load-game [deflated]
-  (-> deflated inflate event-stream cg/soak))
+(defn load-game [deflated-str]
+  (apply cg/soak (event-stream (read-string deflated-str))))

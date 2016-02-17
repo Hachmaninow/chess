@@ -1,11 +1,10 @@
 (ns chessdojo.pgn
-  (:require [chessdojo.game :refer [soak]]
+  (:require [clojure.string :as str]
+            [chessdojo.game :as cg]
             [chessdojo.rules :refer [piece-type rank-names file-names to-idx]]
             [instaparse.core :as insta]
             [instaparse.failure]
-            [taoensso.timbre.profiling :as profiler]
-
-            ))
+            [taoensso.timbre.profiling :as profiler]))
 
 (def pgn
   (insta/parser
@@ -74,12 +73,14 @@
                   (when from-rank [:from-rank (get rank-names from-rank)])
                   ))))
 
+(defn clean-comment [comment]
+  (str/trim (str/replace comment #"\s+" " ")))
 
 (defn token->event [token]
   (condp = (first token)
     :move (normalize (into {} (rest token)))                ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
     :variation [:back (tokens->events (rest token)) :out :forward]
-    :comment {:comment (second token)}
+    :comment {:comment (clean-comment (second token))}
     nil))
 
 (defn tokens->events [tokens]
@@ -92,4 +93,4 @@
       (tokens->events parse-tree))))
 
 (defn load-pgn [pgn]
-  (soak (pgn->events pgn)))
+  (apply cg/soak (pgn->events pgn)))

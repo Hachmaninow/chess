@@ -1,5 +1,6 @@
 (ns chessdojo.fen
-  (:require [chessdojo.rules :refer [to-sqr]]))
+  (:require [clojure.zip :as zip]
+            [chessdojo.rules :refer [to-sqr]]))
 
 ;
 ; board to fen
@@ -73,3 +74,6 @@
      :fifty-rule-halfmove-clock (read-string (get parts 4))
      :move-no (read-string (get parts 5))
      }))
+
+(defn fen [game]
+  (position->fen (:position (zip/node game))))

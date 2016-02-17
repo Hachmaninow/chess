@@ -115,22 +115,22 @@
   (cond
     (:comment annotation) (zip/replace game (assoc (zip/node game) :comment (:comment annotation)))))
 
-(defn soak [events]
+(defn named? [object]
+  (or (symbol? object) (keyword? object) (string? object)))
+
+(defn soak [& events]
   (reduce
     ;#(try
     #(or
       (navigate %1 %2)
       (annotate %1 %2)
-      (insert-move %1 %2)
+      (when (named? %2) (insert-move %1 (cr/parse-simple-move (name %2))))
+      (when (map? %2) (insert-move %1 %2))
+      (throw (ex-info "Cannot soak." {:item %2 :into %1}))
       )
     ;(catch Exception e (throw (ex-info (str "Trying to play: " %2 " in game") {}) e)))
     new-game
     events))
-
-(defn psoak
-  "Parse events as moves and soak into a new game."
-  [events]
-  (soak (map cr/parse-simple-move events)))
 
 (defn game-position [game]
   (:position (node game)))

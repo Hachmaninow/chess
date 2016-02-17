@@ -94,5 +94,5 @@
 (deftest load-complex-pgn
   (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))
 
-;(cd/deflate (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn")))
+;(spit "/Users/hman/Projects/labs/clojure/chess-dojo/resources/games/deflated/game1" (cd/deflate (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))
 

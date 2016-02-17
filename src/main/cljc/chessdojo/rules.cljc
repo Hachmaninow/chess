@@ -415,6 +415,7 @@
       (re-matches #"[N|B|R|Q|K][1-8][a-h][1-8]" s) {:piece (ex-piece s) :from-rank (ex-rank s 1) :to (ex-sqr s 2)}
       (re-matches #"[N|B|R|Q|K][a-h]x[a-h][1-8]" s) {:piece (ex-piece s) :from-file (ex-file s 1) :capture :X :to (ex-sqr s 3)}
       (re-matches #"[N|B|R|Q|K][1-8]x[a-h][1-8]" s) {:piece (ex-piece s) :from-rank (ex-rank s 1) :capture :X :to (ex-sqr s 3)}
+      :default (throw (ex-info (str "Could not parse move.") {:input s}))
       )))
 
 (defn disambiguate

@@ -16,9 +16,9 @@
     :else (str
             (when (not= (cr/piece-type piece) :P) (name (cr/piece-type piece)))
             (when (and (= (cr/piece-type piece) :P) (or capture ep-capture)) (file-names (cr/file from)))
-            (get file-names disambig-file)
-            (get rank-names disambig-rank)
-            (when disambig-square (name (cr/to-sqr disambig-square)))
+            (when (not= (cr/piece-type piece) :P) (get file-names disambig-file))
+            (when (not= (cr/piece-type piece) :P) (get rank-names disambig-rank))
+            (when (and disambig-square (not= (cr/piece-type piece) :P)) (name (cr/to-sqr disambig-square)))
             (when (or capture ep-capture) "x")
             (name (cr/to-sqr to)) (if ep-capture " e.p.")
             (if promote-to (str "=" (name (cr/piece-type promote-to)))))))
@@ -32,4 +32,4 @@
                                   ) variation-vec)))
 
 (defn notation [game]
-  (variation->str (rest (zip/root game)) (:move (zip/node game))))                  ; skip the first element as it's the anchor containing the start position
+  (variation->str (rest (zip/root game)) (:move (zip/node game)))) ; skip the first element as it's the anchor containing the start position
