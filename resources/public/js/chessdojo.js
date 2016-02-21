@@ -101,7 +101,7 @@ var init = function () {
     position: {at: "center", of: "#board"},
     buttons: {
       "Ok": function () {
-        chessdojo.core.update_comment($("#comment-textarea").val());
+        chessdojo.core.set_comment($("#comment-textarea").val());
         $('#comment-editor').dialog('close')
       },
       "Cancel": function () {

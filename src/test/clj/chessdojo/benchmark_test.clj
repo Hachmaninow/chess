@@ -1,7 +1,5 @@
 (ns chessdojo.benchmark-test
   (:require [clojure.test :refer :all]
-            [chessdojo.pgn :refer :all]
-            [chessdojo.rules :refer :all]
             [chessdojo.pgn :as pgn]
             [taoensso.timbre.profiling :as profiler]))
 

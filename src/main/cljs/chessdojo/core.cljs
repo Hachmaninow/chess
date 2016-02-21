@@ -15,8 +15,7 @@
 
 (defn get-data
   []
-  (let [deflated-game (cljs.reader/read-string (.getAttribute (.getElementById js/document "game-data") "dgn"))]
-    (cd/load-game deflated-game)))
+  (cd/load-game (cljs.reader/read-string (.getAttribute (.getElementById js/document "game-data") "dgn"))))
 
 (def state
   (reagent/atom
@@ -35,8 +34,8 @@
     (reset! state new-game)
     (js/updateBoard new-fen)))
 
-(defn ^:export update-comment [comment]
-  (reset! state (cg/annotate @state {:comment comment})))
+(defn ^:export set-comment [comment]
+  (reset! state (cg/set-comment @state comment)))
 
 (defn move-no
   "Return a move-number for white moves and first moves in variations."
@@ -50,10 +49,36 @@
 
 (defn move-view [move path focus is-first]
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
-   (str (move-no (first path) is-first) (cn/san move))])
+   (str (move-no (first path) is-first) (clojure.string/replace (cn/san move) "-" "‑" ))])
 
 (defn comment-view [comment]
-  [:span (str comment " ")])
+  [:span {:className "comment"} (str comment)])
+
+(def annotation-glyphs {
+                        :$1  "!"
+                        :$2  "?"
+                        :$3  "!!"
+                        :$4  "??"
+                        :$5  "!?"
+                        :$6  "?!"
+                        :$10 "="
+                        :$13 "∞"
+                        :$14 "⩲"
+                        :$15 "⩱"
+                        :$16 "±"
+                        :$17 "∓"
+                        :$18 "+-"
+                        :$19 "-+"
+                        })
+
+(defn annotation-view [{move-assessment :move-assessment positional-assessment :positional-assessment}]
+  [:span {:className "annotation"}
+   (str
+     (when move-assessment (move-assessment annotation-glyphs))
+     (when positional-assessment (positional-assessment annotation-glyphs))
+     )
+   ]
+  )
 
 (defn variation-view [nodes current-path depth]
   [:div (when (> depth 0) {:className "variation"})
@@ -61,9 +86,10 @@
    (for [node nodes]
      (if (vector? node)
        ^{:key (:path (meta node))} [variation-view node current-path (inc depth)]
-       (let [move (:move node) path (:path (meta node)) comment (:comment node)]
+       (let [move (:move node) path (:path (meta node)) comment (:comment node) annotations (:annotations node)]
          ^{:key path} [:span
                        [move-view move path (= current-path path) (identical? (first nodes) node)]
+                       (when annotations [annotation-view annotations])
                        [comment-view comment]
                        ]
          )

@@ -10,7 +10,7 @@
   (insta/parser
     "<game> = tags move-text
      <move-text> = (token space | token ε)+
-     <token> = move-number | black-move-number | move | comment | variation | annotation | game-result
+     <token> = move-number | black-move-number | move | variation | comment | annotation | game-result
      <space> = <#'\\s+'>
      move-number = #'\\d+' <#'\\.'>
      black-move-number = #'\\d+' <#'\\.\\.\\.'>
@@ -41,7 +41,7 @@
 
      variation = <'('> space? move-text <')'>
 
-     annotation = <'$'> #'[0-9]+'
+     annotation = #'\\$[0-9]+'
 
      game-result = '1-0' | '1/2-1/2' | '0-1'
     "))
@@ -57,7 +57,7 @@
 
 (declare tokens->events)
 
-(defn normalize
+(defn- normalize-move
   ""
   [{:keys [:castling :piece :from-file :from-rank :to-file :to-rank :capture]}]
   (into {}
@@ -73,14 +73,15 @@
                   (when from-rank [:from-rank (get rank-names from-rank)])
                   ))))
 
-(defn clean-comment [comment]
+(defn- cleanup-whitespace [comment]
   (str/trim (str/replace comment #"\s+" " ")))
 
-(defn token->event [token]
+(defn- token->event [token]
   (condp = (first token)
-    :move (normalize (into {} (rest token)))                ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
+    :move (normalize-move (into {} (rest token)))                ; [:move [:to-file "d"] [:to-rank "4"]] -> {:to-file "d" :to-rank "4"}
     :variation [:back (tokens->events (rest token)) :out :forward]
-    :comment {:comment (clean-comment (second token))}
+    :comment (cleanup-whitespace (second token))
+    :annotation (keyword (second token))
     nil))
 
 (defn tokens->events [tokens]
@@ -94,3 +95,8 @@
 
 (defn load-pgn [pgn]
   (apply cg/soak (pgn->events pgn)))
+
+;⁈
+;⁉
+;‼
+;⁇

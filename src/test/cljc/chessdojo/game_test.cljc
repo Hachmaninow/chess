@@ -34,7 +34,7 @@
             :move     {:ep-info [20 28] :from 12 :piece :P :to 28}
             :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black :ply 2}
             }
-           (node (cg/insert-move cg/new-game (cr/parse-simple-move :e4))))))
+           (node (cg/insert-move cg/new-game (cr/parse-move :e4))))))
   (testing "zip/root"
     (is (= [
             {
@@ -44,7 +44,7 @@
              :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r], :turn :black, :castling-availability {:white #{:O-O-O :O-O}, :black #{:O-O-O :O-O}}, :ep-info [20 28] :ply 2},
              :move     {:piece :P, :from 12, :to 28, :ep-info [20 28]}
              }
-            ] (root (cg/insert-move cg/new-game (cr/parse-simple-move :e4))))))
+            ] (root (cg/insert-move cg/new-game (cr/parse-move :e4))))))
   (testing "zip/next"
     (is (= [:a :b] (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/next zip/next node)))
     (is (= :a (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/next zip/next zip/next node)))))
@@ -97,18 +97,21 @@
 
 
 (deftest test-soak
-  (testing "supports moves as keywords, symbols and strings"
+  (testing "supports moves as keywords or symbols"
     (is (= "e4 c5 >Nf3" (cn/notation (cg/soak :e4 :c5 :Nf3))))
-    (is (= "e4 c5 >Nf3" (cn/notation (cg/soak 'e4 'c5 'Nf3))))
-    (is (= "e4 c5 >Nf3" (cn/notation (cg/soak "e4" "c5" "Nf3")))))
+    (is (= "e4 c5 >Nf3" (cn/notation (cg/soak 'e4 'c5 'Nf3)))))
   (testing "supports move criteria"
     (is (= "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 >Bxc6"
            (cn/notation (cg/soak {:piece :P :to 28} {:piece :P :to 36} {:piece :N :to 21}
                                  :back {:piece :N :to 18} :out :forward
                                  {:piece :N :to 42} {:piece :B :to 33} {:piece :P :to 40}
                                  {:piece :B :capture :X :to 42})))))
+  (testing "comments"
+    (is (= "the sicilian defence" (:comment (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} "the sicilian defence"))))))
   (testing "annotations"
-    (is (= "the sicilian defence" (:comment (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} {:comment "the sicilian defence"})))))))
+    (is (= {:move-assessment :$1} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$1)))))
+    (is (= {:move-assessment :$5 :positional-assessment :$18} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$5 :$18)))))
+    (is (= {:move-assessment :$5 :positional-assessment :$18} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$1 :$19 :$5 :$18)))))))
 
 (deftest test-soak-variations
   (testing "variations"

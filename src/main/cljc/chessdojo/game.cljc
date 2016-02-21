@@ -99,7 +99,6 @@
     :forward (if (end-of-variation? game) game (first (remove branch? (iterate right (right game)))))
     :out (second (remove branch? (iterate left (up game)))) ; variations are inserted after following move
     :start (down (last (take-while some? (iterate zip/prev game))))
-    ;:start (-> game zip/root zip/down)
     nil))
 
 (defn jump
@@ -110,30 +109,35 @@
       game
       (if (and (map? (node start)) (= (game-path start) target)) start (recur (zip/next start))))))
 
-(defn annotate
+(defn set-comment
+  [game comment]
+  (zip/replace game (assoc (zip/node game) :comment comment)))
+
+(def move-assessments #{:$1 :$2 :$3 :$4 :$5 :$6})
+(def positional-assessments #{:$10 :$13 :$:14 :$15 :$16 :$17 :$18 :$19})
+
+(defn- merge-annotations [annotations new-annotation]
+  (merge annotations
+         (cond
+           (move-assessments new-annotation) {:move-assessment new-annotation}
+           (positional-assessments new-annotation) {:positional-assessment new-annotation}
+           :default nil)))
+
+(defn set-annotation
   [game annotation]
-  (cond
-    (:comment annotation) (zip/replace game (assoc (zip/node game) :comment (:comment annotation)))))
+  (zip/replace game (assoc (zip/node game) :annotations (merge-annotations (:annotations (zip/node game)) (keyword annotation)))))
 
 (defn named? [object]
-  (or (symbol? object) (keyword? object) (string? object)))
+  (or (symbol? object) (keyword? object)))
+
+(defn- soak-event [game event]
+  (or
+    (navigate game event)
+    (when (and (named? event) (= \$ (first (name event)))) (set-annotation game event))
+    (when (named? event) (insert-move game (cr/parse-move event)))
+    (when (string? event) (set-comment game event))
+    (when (map? event) (insert-move game event))
+    (throw (ex-info "Cannot soak." {:item event :into game}))))
 
 (defn soak [& events]
-  (reduce
-    ;#(try
-    #(or
-      (navigate %1 %2)
-      (annotate %1 %2)
-      (when (named? %2) (insert-move %1 (cr/parse-simple-move (name %2))))
-      (when (map? %2) (insert-move %1 %2))
-      (throw (ex-info "Cannot soak." {:item %2 :into %1}))
-      )
-    ;(catch Exception e (throw (ex-info (str "Trying to play: " %2 " in game") {}) e)))
-    new-game
-    events))
-
-(defn game-position [game]
-  (:position (node game)))
-
-(defn game->board-fen [game]
-  (board->fen (:board (:position (node game)))))
+  (reduce soak-event new-game events))

@@ -10,11 +10,21 @@ div.variation {
 }
 
 span.move {
-    margin-right: 5px;
+    margin-left: 3px;
     font-weight: 600;
 }
 
 span.focus {
+    margin-left: 3px;
     color: firebrick;
+    font-weight: 600;
+}
+
+span.comment {
+    margin-left: 3px;
+}
+
+span.annotation {
+    margin-left: 1px;
     font-weight: 600;
 }

@@ -1,9 +1,8 @@
 (ns chessdojo.pgn-test
   (:require [clojure.test :refer :all]
             [chessdojo.pgn :refer :all]
-            [chessdojo.rules :refer :all]
-            [chessdojo.game :refer [game->board-fen]]
             [chessdojo.notation :as cn]
+            [chessdojo.fen :as cf]
             [chessdojo.data :as cd]
             [instaparse.core :as insta]))
 
@@ -41,7 +40,7 @@
   (is (= [:move-number :move :move :move-number :move :move :move-number :move :variation :black-move-number :move] (map first (pgn (slurp "src/test/cljc/test-pgns/variations.pgn"))))))
 
 (deftest test-parse-annotations
-  (is (= [[:annotation "132"] [:annotation "6"]] (filter #(= :annotation (first %)) (pgn (slurp "src/test/cljc/test-pgns/annotations.pgn"))))))
+  (is (= [[:annotation "$132"] [:annotation "$6"]] (filter #(= :annotation (first %)) (pgn (slurp "src/test/cljc/test-pgns/annotations.pgn"))))))
 
 (deftest test-complete-game
   (is (= 9160 (count (flatten (pgn (slurp "src/test/cljc/test-pgns/complete.pgn")))))))
@@ -71,8 +70,11 @@
   (is (= [{:piece :N :from-file 6 :to 21} {:piece :N :from-rank 0 :to 18}]
          (pgn->events "Ngf3 N1c3")))
   (testing "comments"
-    (is (= [{:piece :P :to 27} {:piece :P :to 35} {:comment "a closed game"}]
+    (is (= [{:piece :P :to 27} {:piece :P :to 35} "a closed game"]
            (pgn->events "d4 d5 {a closed game}"))))
+  (testing "annotations"
+    (is (= [{:piece :P :to 27} {:piece :P :to 35} :$5]
+           (pgn->events "d4 d5 $5"))))
 
   )
 
@@ -85,14 +87,14 @@
 (deftest test-load-pgn
   (are [pgn fen game-str]
     (let [game (load-pgn pgn)]
-      (is (= fen (game->board-fen game)))
+      (is (= fen (cf/fen game)))
       (is (= game-str (cn/notation game))))
-    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e4 e5 Nf3 Nc6 Bb5 a6 >Bxc6"
-    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R" "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 >Bxc6"
-    "d4 d5 (Nf6 c4 (g3)) Nf3" "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R" "d4 d5 (Nf6 c4 (g3)) >Nf3"))
+    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4" "e4 e5 Nf3 Nc6 Bb5 a6 >Bxc6"
+    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4" "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 >Bxc6"
+    "d4 d5 (Nf6 c4 (g3)) Nf3" "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq - 1 2" "d4 d5 (Nf6 c4 (g3)) >Nf3"))
 
 (deftest load-complex-pgn
-  (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3" (game->board-fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))
+  (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44" (cf/fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))
 
 ;(spit "/Users/hman/Projects/labs/clojure/chess-dojo/resources/games/deflated/game1" (cd/deflate (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))
 

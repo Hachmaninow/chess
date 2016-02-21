@@ -359,7 +359,7 @@
     (is (= {:white #{:O-O}} (:castling-availability (cr/setup-position [:K :e1 :R :a1 :R :h1] {:castling-availability {:white #{:O-O}}}))))))
 
 (defn play-move [position move-coords]
-  (let [move (cr/parse-simple-move (name move-coords))]
+  (let [move (cr/parse-move (name move-coords))]
     (cr/update-position position (cr/select-move position move))))
 
 (defn play-line [position & move-coords]
@@ -413,35 +413,35 @@
 ;
 
 (deftest parse-simple-move-test
-  (is (= {:piece :P :to 40} (cr/parse-simple-move :a6)))
-  (is (= {:piece :N :to 36} (cr/parse-simple-move :Ne5)))
-  (is (= {:piece :N :capture :X :to 36} (cr/parse-simple-move :Nxe5)))
-  (is (= {:piece :P :from-file 3 :capture :X :to 36} (cr/parse-simple-move :dxe5)))
-  (is (= {:piece :N :from-file 5 :to 36} (cr/parse-simple-move :Nfe5)))
-  (is (= {:piece :N :from-rank 2 :to 36} (cr/parse-simple-move :N3e5)))
-  (is (= {:piece :N :from-file 5 :capture :X :to 36} (cr/parse-simple-move :Nfxe5)))
-  (is (= {:piece :N :from-rank 2 :capture :X :to 36} (cr/parse-simple-move :N3xe5))))
+  (is (= {:piece :P :to 40} (cr/parse-move :a6)))
+  (is (= {:piece :N :to 36} (cr/parse-move :Ne5)))
+  (is (= {:piece :N :capture :X :to 36} (cr/parse-move :Nxe5)))
+  (is (= {:piece :P :from-file 3 :capture :X :to 36} (cr/parse-move :dxe5)))
+  (is (= {:piece :N :from-file 5 :to 36} (cr/parse-move :Nfe5)))
+  (is (= {:piece :N :from-rank 2 :to 36} (cr/parse-move :N3e5)))
+  (is (= {:piece :N :from-file 5 :capture :X :to 36} (cr/parse-move :Nfxe5)))
+  (is (= {:piece :N :from-rank 2 :capture :X :to 36} (cr/parse-move :N3xe5))))
 
 (deftest test-matches-criteria
   (testing "pawn moves"
-    (is (true? (cr/matches-criteria? {:piece :P :to (to-idx :a6)} (cr/parse-simple-move :a6))))
-    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :a6)} (cr/parse-simple-move :a5))))
-    (is (true? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :a6), :capture :P} (cr/parse-simple-move :axb5))))
-    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :a6)} (cr/parse-simple-move :axb5))), "capture missing")
-    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :c6), :capture :P} (cr/parse-simple-move :axb5))), "wrong file"))
+    (is (true? (cr/matches-criteria? {:piece :P :to (to-idx :a6)} (cr/parse-move :a6))))
+    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :a6)} (cr/parse-move :a5))))
+    (is (true? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :a6), :capture :P} (cr/parse-move :axb5))))
+    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :a6)} (cr/parse-move :axb5))), "capture missing")
+    (is (false? (cr/matches-criteria? {:piece :p, :to (to-idx :b5), :from (to-idx :c6), :capture :P} (cr/parse-move :axb5))), "wrong file"))
   (testing "piece moves"
-    (is (true? (cr/matches-criteria? {:piece :N, :to (to-idx :e7)} (cr/parse-simple-move :Ne7))))
-    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7)} (cr/parse-simple-move :Ne7))))
-    (is (false? (cr/matches-criteria? {:piece :B, :to (to-idx :e7)} (cr/parse-simple-move :Ne7))))
-    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :capture :b} (cr/parse-simple-move :Nxe7))))
-    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e7)} (cr/parse-simple-move :Nxe7))), "missing capture")
-    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B} (cr/parse-simple-move :Ngxe7))))
-    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B} (cr/parse-simple-move :N3xe5))))
-    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B} (cr/parse-simple-move :Ncxe7))), "wrong file")
-    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B} (cr/parse-simple-move :N7xe5))), "wrong rank"))
+    (is (true? (cr/matches-criteria? {:piece :N, :to (to-idx :e7)} (cr/parse-move :Ne7))))
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7)} (cr/parse-move :Ne7))))
+    (is (false? (cr/matches-criteria? {:piece :B, :to (to-idx :e7)} (cr/parse-move :Ne7))))
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :capture :b} (cr/parse-move :Nxe7))))
+    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e7)} (cr/parse-move :Nxe7))), "missing capture")
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B} (cr/parse-move :Ngxe7))))
+    (is (true? (cr/matches-criteria? {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B} (cr/parse-move :N3xe5))))
+    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e7), :from (to-idx :g6), :capture :B} (cr/parse-move :Ncxe7))), "wrong file")
+    (is (false? (cr/matches-criteria? {:piece :n, :to (to-idx :e5), :from (to-idx :d3), :capture :B} (cr/parse-move :N7xe5))), "wrong rank"))
   (testing "castlings"
-    (is (true? (cr/matches-criteria? {:piece :K :to (to-idx :g1), :from (to-idx :e1), :castling :O-O} (cr/parse-simple-move :O-O))))
-    (is (false? (cr/matches-criteria? {:piece :K :to (to-idx :g1), :from (to-idx :e1), :castling :O-O} (cr/parse-simple-move :O-O-O)))))
+    (is (true? (cr/matches-criteria? {:piece :K :to (to-idx :g1), :from (to-idx :e1), :castling :O-O} (cr/parse-move :O-O))))
+    (is (false? (cr/matches-criteria? {:piece :K :to (to-idx :g1), :from (to-idx :e1), :castling :O-O} (cr/parse-move :O-O-O)))))
   (testing "black piece"
     (is (true? (cr/matches-criteria? {:piece :n, :from 62, :to 45, :capture nil} {:piece :n :to (to-idx :f6)})))))
 

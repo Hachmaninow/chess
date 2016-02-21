@@ -16,9 +16,8 @@
 
 (deftest test-position->fen
   (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 1" (position->fen start-position)))
-  (is (= "rnbqkb1r/ppp1pp1p/5n2/3p2p1/3P4/2P5/PP1KPPPP/RNBQ1BNR w kq g6 1 4" (position->fen (game-position (load-pgn "d4 d5 c3 Nf6 Kd2 g5")))))
-  (is (= "rnbq1bnr/pppkpppp/8/3p4/3P4/2P5/PP1KPPPP/RNBQ1BNR b - - 1 3" (position->fen (game-position (load-pgn "d4 d5 Kd2 Kd7 c3")))))
-  )
+  (is (= "rnbqkb1r/ppp1pp1p/5n2/3p2p1/3P4/2P5/PP1KPPPP/RNBQ1BNR w kq g6 1 4" (fen (load-pgn "d4 d5 c3 Nf6 Kd2 g5"))))
+  (is (= "rnbq1bnr/pppkpppp/8/3p4/3P4/2P5/PP1KPPPP/RNBQ1BNR b - - 1 3" (fen (load-pgn "d4 d5 Kd2 Kd7 c3")))))
 
 ;
 ; position to fen
@@ -27,8 +26,7 @@
 (deftest test-castling-availability->fen
   (is (= "KQkq" (castling-availability->fen (:castling-availability start-position))))
   (is (= "K" (castling-availability->fen (:castling-availability (setup-position [:K :e1 :R :h1])))))
-  (is (= "-" (castling-availability->fen (:castling-availability (setup-position [])))))
-  )
+  (is (= "-" (castling-availability->fen (:castling-availability (setup-position []))))))
 
 ;
 ; fen to board

@@ -8,12 +8,13 @@
   (case k
     :move (symbol (cn/san v))
     :comment v
+    :annotations (map (comp symbol name) (vals v))
     nil))
 
 (defn- deflate-variation [variation-vec]
   (mapcat #(cond
             (vector? %) (list (deflate-variation %))
-            (map? %) (remove nil? (map deflate-node %))
+            (map? %) (remove nil? (flatten (map deflate-node %)))
             ) variation-vec))
 
 (defn deflate
@@ -24,10 +25,9 @@
 (defn- event-stream [deflated]
   (flatten
     (map #(cond
-           (symbol? %) %
-           (string? %) {:comment %}
            (sequential? %) (vector :back (event-stream %) :out :forward)
+           :default %
            ) deflated)))
 
-(defn load-game [deflated-str]
-  (apply cg/soak (event-stream (read-string deflated-str))))
+(defn load-game [deflated]
+  (apply cg/soak (event-stream deflated)))

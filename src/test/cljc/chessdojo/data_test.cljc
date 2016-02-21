@@ -17,21 +17,28 @@
   (is (= "(e4 e5 (c5 Nc3 (g3 g6 Bg2 (a3 Bg7 (h5)))) Nf3)"
          (cd/deflate (cg/soak :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7 :back :h5))))
   (is (= "(e4 c5 \"the sicilian defence\")"
-         (cd/deflate (cg/soak {:piece :P :to 28} {:piece :P :to 34} {:comment "the sicilian defence"}))))
+         (cd/deflate (cg/soak {:piece :P :to 28} {:piece :P :to 34} "the sicilian defence"))))
   (is (= "(e4 c5 (d5 \"the scandinavian defence\"))"
-         (cd/deflate (cg/soak {:piece :P :to 28} {:piece :P :to 34} :back {:piece :P :to 35} {:comment "the scandinavian defence"})))))
+         (cd/deflate (cg/soak {:piece :P :to 28} {:piece :P :to 34} :back {:piece :P :to 35} "the scandinavian defence"))))
+  (is (= "(e4 $2 c5 (d5 $1 $13))"
+         (cd/deflate (cg/soak {:piece :P :to 28} :$2 {:piece :P :to 34} :back {:piece :P :to 35} :$1 :$13)))))
 
-(deftest test-load-game
-  (is (= "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
-         (-> (cd/load-game "(e4 e5 (c5 Nc3 (g3 g6 Bg2 (a3 Bg7 (h5)))) Nf3)") cf/fen)))
-  (is (= "the sicilian defence"
-         (-> (cd/load-game "(e4 c5 \"the sicilian defence\")") zip/node :comment))))
-
-#?(:clj                                                     ; io/resource not available in cljs
-   (deftest test-complete-game
-     (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44" (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp cd/load-game cf/fen)))
-     ))
+; read-string
+; io/resource not available in cljs
+; todo: fix
+#?(:clj
+   (deftest test-load-game
+     (is (= "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
+            (-> (cd/load-game (read-string "(e4 e5 (c5 Nc3 (g3 g6 Bg2 (a3 Bg7 (h5)))) Nf3)")) cf/fen)))
+     (is (= "the sicilian defence"
+            (-> (cd/load-game (read-string "(e4 c5 \"the sicilian defence\")")) zip/node :comment)))
+     (is (= {:move-assessment :$1, :positional-assessment :$13}
+            (-> (cd/load-game (read-string "(e4 c5 $1 $13)")) zip/node :annotations)))
+     (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44"
+            (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game cf/fen)))
+     )
+   )
 
 ;(time
-;  (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp cd/load-game cf/fen))
+;  (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game cf/fen))
 ;260ms

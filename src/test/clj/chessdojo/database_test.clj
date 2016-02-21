@@ -3,4 +3,4 @@
             [chessdojo.database :refer :all]))
 
 (deftest test-load-dgn
-  (is (= 158 (count (load-dgn "complete-with-annotations")))))
+  (is (= 175 (count (load-dgn "complete-with-annotations")))))
