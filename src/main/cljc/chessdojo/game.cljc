@@ -114,7 +114,7 @@
   (zip/replace game (assoc (zip/node game) :comment comment)))
 
 (def move-assessments #{:$1 :$2 :$3 :$4 :$5 :$6})
-(def positional-assessments #{:$10 :$13 :$:14 :$15 :$16 :$17 :$18 :$19})
+(def positional-assessments #{:$10 :$13 :$:14 :$15 :$16 :$17 :$18 :$19 :$32 :$33 :$36 :$37 :$40 :$41 :$132 :$133})
 
 (defn- merge-annotations [annotations new-annotation]
   (merge annotations
@@ -125,7 +125,11 @@
 
 (defn set-annotation
   [game annotation]
-  (zip/replace game (assoc (zip/node game) :annotations (merge-annotations (:annotations (zip/node game)) (keyword annotation)))))
+  (if-let [merged-annotations (merge-annotations (:annotations (zip/node game)) (keyword annotation))]
+    (zip/replace game (assoc (zip/node game) :annotations merged-annotations))
+    game
+    )
+  )
 
 (defn named? [object]
   (or (symbol? object) (keyword? object)))

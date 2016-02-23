@@ -110,8 +110,11 @@
     (is (= "the sicilian defence" (:comment (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} "the sicilian defence"))))))
   (testing "annotations"
     (is (= {:move-assessment :$1} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$1)))))
+    (is (= {:move-assessment :$1} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$1)))))
     (is (= {:move-assessment :$5 :positional-assessment :$18} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$5 :$18)))))
-    (is (= {:move-assessment :$5 :positional-assessment :$18} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$1 :$19 :$5 :$18)))))))
+    (is (= {:move-assessment :$5 :positional-assessment :$18} (:annotations (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$1 :$19 :$5 :$18))))))
+  (testing "unknown annotations are ignored"
+    (is (false? (contains? (zip/node (cg/soak {:piece :P :to 28} {:piece :P :to 34} :$0)) :annotations)))))
 
 (deftest test-soak-variations
   (testing "variations"

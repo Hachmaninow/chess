@@ -69,6 +69,14 @@
                         :$17 "∓"
                         :$18 "+-"
                         :$19 "-+"
+                        :$32 "⟳"
+                        :$33 "⟳"
+                        :$36 "→"
+                        :$37 "→"
+                        :$40 "↑"
+                        :$41 "↑"
+                        :$132 "⇆"
+                        :$133 "⇆"
                         })
 
 (defn annotation-view [{move-assessment :move-assessment positional-assessment :positional-assessment}]

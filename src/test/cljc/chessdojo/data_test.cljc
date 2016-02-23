@@ -32,8 +32,11 @@
             (-> (cd/load-game (read-string "(e4 e5 (c5 Nc3 (g3 g6 Bg2 (a3 Bg7 (h5)))) Nf3)")) cf/fen)))
      (is (= "the sicilian defence"
             (-> (cd/load-game (read-string "(e4 c5 \"the sicilian defence\")")) zip/node :comment)))
+     (is (= {:positional-assessment :$36}
+            (-> (cd/load-game (read-string "(e4 c5 $36)")) zip/node :annotations)))
      (is (= {:move-assessment :$1, :positional-assessment :$13}
             (-> (cd/load-game (read-string "(e4 c5 $1 $13)")) zip/node :annotations)))
+     (is (nil? (-> (cd/load-game (read-string "(e4 c5 $0)")) zip/node :annotations)))
      (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44"
             (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game cf/fen)))
      )
