@@ -1,13 +1,13 @@
 (ns chessdojo.database-test
   (:require [clojure.test :refer :all]
+            [clojure.string :as str]
             [chessdojo.database :refer :all]
             [monger.collection :as mc]))
 
 (defn reset-database [f]
-  ;(assert (clojure.string/includes? database "test"))
+  (assert (str/includes? database "test"))
   (mc/remove @db collection {})
-  (f)
-  )
+  (f))
 
 (use-fixtures :once reset-database)
 
