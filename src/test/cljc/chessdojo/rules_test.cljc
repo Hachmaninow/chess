@@ -1,12 +1,7 @@
 (ns chessdojo.rules-test
-  #?(:clj
-     (:require [clojure.test :refer :all]
-               [chessdojo.rules :as cr :refer [to-idx to-sqr]]
-               [chessdojo.fen :as cf]))
-  #?(:cljs
-     (:require [cljs.test :refer-macros [deftest is testing run-tests]]
-       [chessdojo.rules :as cr :refer [to-idx to-sqr]]
-       [chessdojo.fen :as cf])))
+  (:require #?(:clj [clojure.test :refer :all] :cljs [cljs.test :refer-macros [deftest is testing run-tests]])
+                    [chessdojo.rules :as cr :refer [to-idx to-sqr]]
+                    [chessdojo.fen :as cf]))
 
 (deftest test-piece-color
   (is (= :white (cr/piece-color :P) (cr/piece-color :B) (cr/piece-color :N) (cr/piece-color :R) (cr/piece-color :Q) (cr/piece-color :K)))

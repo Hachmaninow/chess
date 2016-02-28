@@ -1,5 +1,5 @@
 (ns chessdojo.fen-test
-  (:require [clojure.test :refer :all]
+  (:require #?(:clj [clojure.test :refer :all] :cljs [cljs.test :refer-macros [deftest is testing run-tests]])
             [chessdojo.pgn :refer [load-pgn]]
             [chessdojo.rules :refer :all]
             [chessdojo.game :refer :all]

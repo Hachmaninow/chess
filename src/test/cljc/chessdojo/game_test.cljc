@@ -1,18 +1,10 @@
 (ns chessdojo.game-test
-  #?(:clj
-     (:require [clojure.test :refer :all]
-               [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node path root]]
-               [chessdojo.game :as cg :refer [navigate]]
-               [chessdojo.rules :as cr :refer [to-idx to-sqr]]
-               [chessdojo.fen :as cf]
-               [chessdojo.notation :as cn]
-               ))
-  #?(:cljs (:require [cljs.test :refer-macros [deftest is testing run-tests]]
-             [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node path root]]
-             [chessdojo.game :as cg :refer [navigate]]
-             [chessdojo.rules :as cr :refer [to-idx to-sqr]]
-             [chessdojo.fen :as cf]
-             [chessdojo.notation :as cn])))
+  (:require #?(:clj [clojure.test :refer :all] :cljs [cljs.test :refer-macros [deftest is testing run-tests]])
+                    [clojure.zip :as zip :refer [vector-zip up down left lefts right rights rightmost insert-right branch? node path root]]
+                    [chessdojo.game :as cg :refer [navigate]]
+                    [chessdojo.rules :as cr]
+                    [chessdojo.fen :as cf]
+                    [chessdojo.notation :as cn]))
 
 ;
 ; verify zipper basics

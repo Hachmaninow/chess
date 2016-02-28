@@ -49,32 +49,32 @@
 
 (defn move-view [move path focus is-first]
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
-   (str (move-no (first path) is-first) (clojure.string/replace (cn/san move) "-" "‑" ))])
+   (str (move-no (first path) is-first) (clojure.string/replace (cn/san move) "-" "‑"))])
 
 (defn comment-view [comment]
   [:span {:className "comment"} (str comment)])
 
 (def annotation-glyphs {
-                        :$1  "!"
-                        :$2  "?"
-                        :$3  "!!"
-                        :$4  "??"
-                        :$5  "!?"
-                        :$6  "?!"
-                        :$10 "="
-                        :$13 "∞"
-                        :$14 "⩲"
-                        :$15 "⩱"
-                        :$16 "±"
-                        :$17 "∓"
-                        :$18 "+-"
-                        :$19 "-+"
-                        :$32 "⟳"
-                        :$33 "⟳"
-                        :$36 "→"
-                        :$37 "→"
-                        :$40 "↑"
-                        :$41 "↑"
+                        :$1   "!"
+                        :$2   "?"
+                        :$3   "!!"
+                        :$4   "??"
+                        :$5   "!?"
+                        :$6   "?!"
+                        :$10  "="
+                        :$13  "∞"
+                        :$14  "⩲"
+                        :$15  "⩱"
+                        :$16  "±"
+                        :$17  "∓"
+                        :$18  "+-"
+                        :$19  "-+"
+                        :$32  "⟳"
+                        :$33  "⟳"
+                        :$36  "→"
+                        :$37  "→"
+                        :$40  "↑"
+                        :$41  "↑"
                         :$132 "⇆"
                         :$133 "⇆"
                         })
@@ -143,11 +143,9 @@
 ;; -------------------------
 ;; Routes
 
-(secretary/defroute "/" []
-                    (session/put! :current-page #'home-page))
+(secretary/defroute "/" [] (session/put! :current-page #'home-page))
 
-(secretary/defroute "/about" []
-                    (session/put! :current-page #'about-page))
+(secretary/defroute "/about" [] (session/put! :current-page #'about-page))
 
 ;; -------------------------
 ;; Initialize app

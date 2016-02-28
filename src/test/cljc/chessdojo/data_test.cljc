@@ -1,17 +1,10 @@
 (ns chessdojo.data-test
-  #?(:clj
-     (:require [clojure.java.io :as io]
-               [clojure.zip :as zip]
-               [clojure.test :refer :all]
-               [chessdojo.game :as cg]
-               [chessdojo.data :as cd]
-               [chessdojo.fen :as cf]))
-  #?(:cljs
-     (:require [cljs.test :refer-macros [deftest is testing run-tests]]
-       [chessdojo.data :as cd]
-       [chessdojo.game :as cg]
-       [chessdojo.fen :as cf]
-       [clojure.zip :as zip])))
+  (:require #?(:clj [clojure.test :refer :all] :cljs [cljs.test :refer-macros [deftest is testing run-tests]])
+                    [clojure.java.io :as io]
+                    [clojure.zip :as zip]
+                    [chessdojo.game :as cg]
+                    [chessdojo.data :as cd]
+                    [chessdojo.fen :as cf]))
 
 (deftest test-deflate
   (is (= "(e4 e5 (c5 Nc3 (g3 g6 Bg2 (a3 Bg7 (h5)))) Nf3)"

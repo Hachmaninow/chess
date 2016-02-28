@@ -1,12 +1,7 @@
 (ns chessdojo.notation-test
-  #?(:clj
-     (:require [clojure.test :refer :all]
-               [chessdojo.notation :as cn]
-               [chessdojo.game :as cg]))
-  #?(:cljs
-     (:require [cljs.test :refer-macros [deftest is testing run-tests]]
-       [chessdojo.notation :as cn]
-       [chessdojo.game :as cg])))
+  (:require #?(:clj [clojure.test :refer :all] :cljs [cljs.test :refer-macros [deftest is testing run-tests]])
+                    [chessdojo.notation :as cn]
+                    [chessdojo.game :as cg]))
 
 (deftest test-san
   (is (= "Nf3 Nc6 g3 d6 Bg2 Bf5 O-O Qd7 a3 >O-O-O" (cn/notation (cg/soak :Nf3 :Nc6 :g3 :d6 :Bg2 :Bf5 :O-O :Qd7 :a3 :O-O-O))) "castlings")
