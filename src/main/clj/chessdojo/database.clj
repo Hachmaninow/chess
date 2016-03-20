@@ -1,19 +1,11 @@
 (ns chessdojo.database
   (:require [clojure.java.io :as io]
+            [clojure.set :refer [rename-keys]]
             [chessdojo.data :as cd]
             [monger.core :as mg]
             [monger.collection :as mc]
-            [monger.result :as mr]
             [environ.core :refer [env]])
-  (:import [org.bson.types ObjectId])
-
-  )
-
-(def base-path "games/deflated/")
-
-
-(defn load-dgn [name]
-  (read-string (slurp (io/resource (str base-path name ".dgn")))))
+  (:import (java.util UUID)))
 
 (def database (env :mongo-database-name))
 
@@ -23,22 +15,29 @@
   (let [conn (mg/connect) db (mg/get-db conn database)]
     (atom db)))
 
-(def complex-game
-  (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game)
-  )
+(defn- uuid [] (str (UUID/randomUUID)))
 
-(defn store-game [game]
-  (let [oid (ObjectId.)
-        doc {:_id oid :dgn (cd/deflate game)}
-        write-result (mc/insert @db collection doc)]
-    (when (mr/acknowledged? write-result) (str oid))))
+(defn new-game-data [game]
+  (hash-map
+    :dgn (str (cd/deflate game))
+    :id (uuid)))
 
-(defn restore-game [id]
-  (let [doc (mc/find-one-as-map @db collection {:_id (ObjectId. id)})]
-    (cd/load-game (read-string (:dgn doc)))))
+(defn- rename-internal-id [game-data]
+  (rename-keys game-data {:_id :id}))
+
+(defn- rename-external-id [game-data]
+  (rename-keys game-data {:id :_id}))
+
+(defn store-game-data [game-data]
+  (rename-internal-id (mc/insert-and-return @db collection (rename-external-id game-data))))
 
 (defn list-games []
-  (mc/find-maps @db collection {} ["_id"]))
+  (map rename-internal-id (mc/find-maps @db collection {} ["_id"])))
+
+(defn restore-game-data [id]
+  (rename-internal-id (mc/find-one-as-map @db collection {:_id id})))
+
+;(list-games)
 
 ;
 ; db.games.find({}, {_id:1})

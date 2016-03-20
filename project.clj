@@ -17,12 +17,14 @@
                  [ring "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
                  [compojure "1.4.0"]
+                 [metosin/compojure-api "1.0.1"]
                  [hiccup "1.0.5"]
                  [secretary "1.2.3"]
                  [venantius/accountant "0.1.6" :exclusions [org.clojure/tools.reader]]
 
                  [environ "1.0.2"]
                  [com.novemberain/monger "3.0.2"]
+                 [cheshire "5.5.0"]
                  ]
 
   :plugins [[lein-environ "1.0.2"]
@@ -31,11 +33,11 @@
             [lein-doo "0.1.6"]
             ]
 
-  :ring {:handler chessdojo.handler/app :uberwar-name "chess-dojo.war"}
+  :ring {:handler chessdojo.app/api-and-site :uberwar-name "chessdojo.war"}
 
   :min-lein-version "2.5.0"
 
-  :uberjar-name "chess-dojo.jar"
+  :uberjar-name "chessdojo.jar"
 
   :main chessdojo.server
 
@@ -106,10 +108,10 @@
                                       :nrepl-port       7002
                                       :nrepl-middleware ["cemerick.piggieback/wrap-cljs-repl"]
                                       :css-dirs         ["resources/public/css"]
-                                      :ring-handler     chessdojo.handler/app}
+                                      :ring-handler     chessdojo.app/api-and-site}
 
                        :env          {
-                                      :mongo-database-name   "chessdojo_dev"
+                                      :mongo-database-name   "chessdojo_test"
                                       :mongo-collection-name "games"
                                       }
 
@@ -125,7 +127,7 @@
 
              :prod    {
                        :env {
-                             :mongo-database-name   "chessdojo_prod"
+                             :mongo-database-name   "chessdojo_test"
                              :mongo-collection-name "games"
                              }
                        }

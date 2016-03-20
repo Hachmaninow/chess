@@ -1,4 +1,4 @@
-(ns chessdojo.handler
+(ns chessdojo.site
   (:require [chessdojo.database :as cdb]
             [compojure.core :refer [GET defroutes]]
             [compojure.route :refer [not-found resources]]
@@ -28,7 +28,7 @@
       (include-css "css/chessdojo.css")
       ]
      [:body
-      [:div {:style {:display "hidden"} :id "game-data" :dgn (pr-str (cdb/load-dgn "complete-with-annotations"))}]
+      [:div {:style {:display "hidden"} :id "game-data" :dgn "(d4 d5 c4 c6 Nc3)"}]
       [:div {:class "container"}
        [:div {:class "row"}
         [:div {:class "eight columns"}
@@ -74,4 +74,4 @@
            (resources "/")
            (not-found "Not Found"))
 
-(def app (wrap-middleware #'routes))
+;(def app (wrap-middleware #'routes))

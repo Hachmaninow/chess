@@ -3,6 +3,7 @@
             [chessdojo.rules-test]
             [chessdojo.game-test]
             [chessdojo.data-test]
-            ))
+            [chessdojo.fen-test]
+            [chessdojo.notation-test]))
 
-(doo-tests 'chessdojo.rules-test 'chessdojo.game-test 'chessdojo.data-test)
+(doo-tests 'chessdojo.rules-test 'chessdojo.game-test 'chessdojo.data-test 'chessdojo.fen-test 'chessdojo.notation-test)
