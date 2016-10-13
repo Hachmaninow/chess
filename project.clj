@@ -4,27 +4,28 @@
   :license {:name "Eclipse Public License" :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.7.228" :scope "provided"]
+                 [org.clojure/clojurescript "1.9.22" :scope "provided"]
 
-                 [instaparse "1.4.1"]
+                 [instaparse "1.4.3"]
                  [spyscope "0.1.5"]
-                 [com.taoensso/timbre "4.1.4"]
+                 [com.taoensso/timbre "4.7.4"]
 
                  [ring-server "0.4.0"]
-                 [reagent "0.5.1" :exclusions [org.clojure/tools.reader]]
-                 [reagent-forms "0.5.13"]
-                 [reagent-utils "0.1.7"]
+                 [reagent "0.6.0" :exclusions [org.clojure/tools.reader]]
+                 [reagent-forms "0.5.26"]
+                 [reagent-utils "0.2.0"]
                  [ring "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
-                 [compojure "1.4.0"]
-                 [metosin/compojure-api "1.0.1"]
+                 [compojure "1.5.1"]
+                 [metosin/compojure-api "1.1.8"]
+                 [clj-time "0.12.0"]
                  [hiccup "1.0.5"]
                  [secretary "1.2.3"]
                  [venantius/accountant "0.1.6" :exclusions [org.clojure/tools.reader]]
 
                  [environ "1.0.2"]
                  [com.novemberain/monger "3.0.2"]
-                 [cheshire "5.5.0"]
+                 [cheshire "5.6.3"]
                  ]
 
   :plugins [[lein-environ "1.0.2"]
@@ -60,19 +61,22 @@
                        :browser-test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]
                                       :compiler     {:output-dir    "target/doo"
                                                      :output-to     "target/browser_tests.js"
-                                                     :main          'chessdojo.browser-test
+                                                     :main          "chessdojo.browser-test"
                                                      :optimizations :none}}}}
 
   :doo {
         :paths {:karma "/Users/hman/Tools/node_modules/karma/bin/karma"}
         }
 
+  :test-selectors {:default    (complement :functional)
+                   :functional :functional
+                   :all        (constantly true)}
 
   :profiles {:dev     {:repl-options {:init-ns chessdojo.repl}
                        :dependencies [[ring/ring-mock "0.3.0"]
                                       [ring/ring-devel "1.4.0"]
                                       [prone "0.8.3"]
-                                      [lein-figwheel "0.5.0-2" :exclusions [org.clojure/core.memoize
+                                      [lein-figwheel "0.5.8" :exclusions [org.clojure/core.memoize
                                                                             ring/ring-core
                                                                             org.clojure/clojure
                                                                             org.ow2.asm/asm-all
@@ -81,14 +85,14 @@
                                                                             org.clojure/clojurescript
                                                                             org.clojure/core.async
                                                                             org.clojure/tools.analyzer.jvm]]
-                                      [org.clojure/clojurescript "1.7.228" :exclusions [org.clojure/clojure org.clojure/tools.reader]]
+                                      [org.clojure/clojurescript "1.9.229" :exclusions [org.clojure/clojure org.clojure/tools.reader]]
                                       [org.clojure/tools.nrepl "0.2.12"]
                                       [com.cemerick/piggieback "0.2.1"]
                                       [pjstadig/humane-test-output "0.7.1"]
                                       ]
 
                        :source-paths ["env/dev/clj"]
-                       :plugins      [[lein-figwheel "0.5.0-6" :exclusions [org.clojure/core.memoize
+                       :plugins      [[lein-figwheel "0.5.8" :exclusions [org.clojure/core.memoize
                                                                             ring/ring-core
                                                                             org.clojure/clojure
                                                                             org.ow2.asm/asm-all
@@ -97,7 +101,7 @@
                                                                             org.clojure/clojurescript
                                                                             org.clojure/core.async
                                                                             org.clojure/tools.analyzer.jvm]]
-                                      [org.clojure/clojurescript "1.7.228"]
+                                      [org.clojure/clojurescript "1.9.229"]
                                       ]
 
                        :injections   [(require 'pjstadig.humane-test-output)

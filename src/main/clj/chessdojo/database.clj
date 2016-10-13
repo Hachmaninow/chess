@@ -7,6 +7,8 @@
             [environ.core :refer [env]])
   (:import (java.util UUID)))
 
+; to start mongo-db locally: docker run --name mongo -d -p 27017:27017 mongo
+
 (def database (env :mongo-database-name))
 
 (def collection (env :mongo-collection-name))

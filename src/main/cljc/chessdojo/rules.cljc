@@ -1,8 +1,6 @@
 (ns chessdojo.rules
   (:require [clojure.set :refer [intersection]]
-            ;[taoensso.timbre :as [t]]
-
-            ))
+            [taoensso.timbre :as t]))
 
 ;
 ; basics
@@ -430,9 +428,10 @@
     :else (assoc move :disambig-square from)))
 
 (defn select-move [position criteria]
-  (let [valid-moves (valid-moves position criteria)
-        matching-moves (filter #(matches-criteria? % criteria) valid-moves)]
-    (condp = (count matching-moves)
-      1 (disambiguate (first matching-moves) valid-moves)
-      0 (throw (ex-info "No matching moves" {:for criteria :valid-moves (seq valid-moves)}))
-      (throw (ex-info "Multiple matching moves" {:for criteria :valid-moves (seq valid-moves) :matching-moves matching-moves})))))
+   (let [valid-moves (valid-moves position criteria)
+         matching-moves (filter #(matches-criteria? % criteria) valid-moves)]
+     (condp = (count matching-moves)
+       1 (disambiguate (first matching-moves) valid-moves)
+       0 (throw (ex-info "No matching moves" {:for criteria :valid-moves (seq valid-moves)}))
+       (throw (ex-info "Multiple matching moves" {:for criteria :valid-moves (seq valid-moves) :matching-moves matching-moves})))))
+

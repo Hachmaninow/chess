@@ -6,31 +6,32 @@
             [chessdojo.data :as cd]
             [clojure.java.io :as io]))
 
-(defn reset-database [f]
+(defn reset-database []
   (assert (str/includes? database "test"))
-  (mc/remove @db collection {})
-  (f))
-
-(use-fixtures :once reset-database)
+  (mc/remove @db collection {}))
 
 (def sample-game
   (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game))
 
-(deftest test-game-data
+(deftest ^:functional test-game-data
+  (reset-database)
   (let [game-data (new-game-data sample-game)]
     (is (string? (:dgn game-data)))
     (is (= 36 (count (:id game-data))))))
 
-(deftest test-store-game
+(deftest ^:functional test-store-game
+  (reset-database)
   (let [stored-game (store-game-data (new-game-data sample-game))]
     (is (map? stored-game))
     (is (string? (:id stored-game)))))
 
-(deftest test-store-restore-game-data
+(deftest ^:functional test-store-restore-game-data
+  (reset-database)
   (let [id (:id (store-game-data (new-game-data sample-game)))]
     (is (= sample-game (cd/load-game (read-string (:dgn (restore-game-data id))))))))
 
-(deftest test-game-list
+(deftest ^:functional test-game-list
+  (reset-database)
   (let [id (:id (store-game-data (new-game-data sample-game)))
         list-of-oids (set (map :id (list-games)))]
     (is (true? (contains? list-of-oids id)))))

@@ -7,7 +7,7 @@
   (pgn/load-pgn pgn-str))
 ; 3.3s
 
-(deftest run
+(deftest ^:functional run
   (profiler/profile :info :Arithmetic
                     (dotimes [_ 3]
                       (game-benchmark (slurp "src/test/cljc/test-pgns/complete.pgn")))))
