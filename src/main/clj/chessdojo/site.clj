@@ -18,7 +18,8 @@
      (include-css "css/bootstrap.min.css")
      (include-css "css/jquery-ui.min.css")
      (include-css "css/jquery-ui.theme.min.css")
-     (include-css "css/chessboard-0.3.0.min.css")]
+     (include-css "css/chessboard-0.3.0.min.css")
+     (include-css "css/chessdojo.css")]
 
     [:body
      [:div#game-data {:style {:display "hidden"} :dgn "(d4 d5 c4 c6 Nc3)"}]
@@ -32,9 +33,9 @@
         [:div#browser "Loading browser..."]]
 
        [:div#editor-pane {:class "tab-pane active"}
-        [:div {}
+        [:div {:class "col-md-8"}
          [:div#board "test"]]
-        [:div {}
+        [:div {:class "col-md-4"}
          [:div#editor "Loading editor..."]]]]]
 
      (include-js "js/chess.min.js")
