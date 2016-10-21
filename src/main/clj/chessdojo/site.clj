@@ -7,71 +7,48 @@
             [chessdojo.middleware :refer [wrap-middleware]]
             [environ.core :refer [env]]))
 
-(def mount-target
-  [:div#app
-   [:h3 "ClojureScript has not been compiled!"]
-   [:p "please run "
-    [:b "lein figwheel"]
-    " in order to start the compiler"]])
-
-(def loading-page
+(def dojo-page
   (html
-    [:html
-     [:head
-      [:meta {:charset "utf-8"}]
-      [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-      (include-css "css/normalize.css")
-      (include-css "css/skeleton.css")
-      (include-css "css/jquery-ui.min.css")
-      (include-css "css/jquery-ui.theme.min.css")
-      (include-css "css/chessboard-0.3.0.min.css")
-      (include-css "css/chessdojo.css")
-      ]
-     [:body
-      [:div {:style {:display "hidden"} :id "game-data" :dgn "(d4 d5 c4 c6 Nc3)"}]
-      [:div {:class "container"}
-       [:div {:class "row"}
-        [:div {:class "eight columns"}
-         [:div {:id "board"}]
-         ]
-        [:div {:class "four columns" :style "margin-left: 20px;"}
-         [:div {:id "notation"}]
-         mount-target
-         ]
-        ]
-       [:div {:class "row"}
-        [:div {:class "four columns"}
-         [:span {:id "status"}]
-         ]
-        [:div {:class "four columns"}
-         [:span {:id "fen"}]
-         ]
-        [:div {:class "four columns"}
-         [:span {:id "pgn"}]
-         ]
-        ]
-       ]
-      [:div {:id "comment-editor" :title "Edit comment"}
-       [:form
-        [:textarea {:id "comment-textarea" :style "width: 360px; height: 220px;"}
-         "huihui"
-         ]
-        ]
-       ]
+   [:html
+    [:head
+     [:meta ]
+     [:meta {:charset "utf-8"}]
+     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"} ]
+     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+     (include-css "css/bootstrap.min.css")
+     (include-css "css/jquery-ui.min.css")
+     (include-css "css/jquery-ui.theme.min.css")
+     (include-css "css/chessboard-0.3.0.min.css")]
 
-      (include-js "js/chess.min.js")
-      (include-js "js/jquery-2.1.4.min.js")
-      (include-js "js/jquery-ui-1.11.4.min.js")
-      (include-js "js/chessboard-0.3.0.js")
-      (include-js "js/chessdojo.js")
-      (include-js "js/app.js")
-      ]]))
+    [:body
+     [:div#game-data {:style {:display "hidden"} :dgn "(d4 d5 c4 c6 Nc3)"}]
+     [:div {:class "container"}
+      [:ul {:class "nav nav-tabs" :role "tablist"}
+       [:li {:role "presentation" } [:a {:href "#browser-pane" :aria-controls "browser-pane" :role "tab" :data-toggle "tab"} "Browser"]]
+       [:li {:role "presentation" :class "active"} [:a {:href "#editor-pane" :aria-controls "editor-pane" :role "tab" :data-toggle "tab"} "Editor"]]]
+
+      [:div {:class "tab-content"}
+       [:div#browser-pane {:class "tab-pane"}
+        [:div#browser "Loading browser..."]]
+
+       [:div#editor-pane {:class "tab-pane active"}
+        [:div {}
+         [:div#board "test"]]
+        [:div {}
+         [:div#editor "Loading editor..."]]]]]
+
+     (include-js "js/chess.min.js")
+     (include-js "js/jquery-2.1.4.min.js")
+     (include-js "js/jquery-ui-1.11.4.min.js")
+     (include-js "js/bootstrap.min.js")
+     (include-js "js/chessboard-0.3.0.js")
+     (include-js "js/chessdojo.js")
+     (include-js "js/app.js")]]))
 
 (defroutes routes
-           (GET "/" [] loading-page)
-           (GET "/about" [] loading-page)
+  (GET "/" [] dojo-page)
 
-           (resources "/")
-           (not-found "Not Found"))
+  (resources "/")
+  (not-found "Not Found"))
 
-;(def app (wrap-middleware #'routes))
+;;(def app (wrap-middleware #'routes))

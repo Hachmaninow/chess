@@ -106,10 +106,21 @@
    ]
   )
 
-(defn game-view []
+(defn buttons []
+  [:div
+   [:input {:type "button" :value "Comment" :on-click show-edit-comment-dialog}]
+   [:input {:type "button" :value "Down" :on-click #(reset! state (down @state))}]
+   [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]]
+  )
+
+(defn editor-view[]
   (let [game @state current-path (cg/game-path game)]
-    [:div {:className "game-view"}
+    [:div {:className "editor-view"}
+     [buttons]
      [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node
+
+(defn browser-view []
+  [:div "this will be the database browser"])
 
 (def jquery (js* "$"))
 
@@ -119,41 +130,23 @@
   (-> (jquery "#comment-editor") (.dialog "open"))
   nil)                                                      ; it's critical to return nil, as otherwise the result seems to get called
 
-(defn buttons []
-  [:div
-   [:input {:type "button" :value "Comment" :on-click show-edit-comment-dialog}]
-   [:input {:type "button" :value "Down" :on-click #(reset! state (down @state))}]
-   [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]]
-  )
-
-(defn home-page []
-  [:div
-   [game-view]
-   [buttons]
-   [:div [:a {:href "/about"} "go to about page"]]
-   ])
-
-(defn about-page []
-  [:div [:h2 "About chesslib"]
-   [:div [:a {:href "/"} "go to the home page"]]])
-
-(defn current-page []
-  [:div [(session/get :current-page)]])
+;; (defn current-page []
+  ;; [:div [(session/get :current-page)]])
 
 ;; -------------------------
 ;; Routes
 
-(secretary/defroute "/" [] (session/put! :current-page #'home-page))
-
-(secretary/defroute "/about" [] (session/put! :current-page #'about-page))
+;; (secretary/defroute "/" [] (session/put! :current-page #'dojo-page))
+;; (secretary/defroute "/database-browser" [] (session/put! :current-page #'database-browser))
 
 ;; -------------------------
 ;; Initialize app
 
-(defn mount-root []
-  (reagent/render [current-page] (.getElementById js/document "app")))
+(defn mount-roots []
+  (reagent/render [browser-view] (.getElementById js/document "browser"))
+  (reagent/render [editor-view] (.getElementById js/document "editor")))
 
 (defn init! []
-  (accountant/configure-navigation!)
-  (accountant/dispatch-current!)
-  (mount-root))
+  ;;(accountant/configure-navigation!)
+  ;; (accountant/dispatch-current!)
+  (mount-roots))
