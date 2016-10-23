@@ -26,6 +26,8 @@
                  [environ "1.0.2"]
                  [com.novemberain/monger "3.0.2"]
                  [cheshire "5.6.3"]
+
+                 [cljs-http "0.1.42"]
                  ]
 
   :plugins [[lein-environ "1.0.2"]

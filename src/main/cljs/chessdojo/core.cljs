@@ -1,15 +1,19 @@
 (ns chessdojo.core
-  (:require
-    [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch? node]]
-    [reagent.core :as reagent :refer [atom]]
-    [reagent.session :as session]
-    [secretary.core :as secretary :include-macros true]
-    [accountant.core :as accountant]
-    [chessdojo.game :as cg]
-    [chessdojo.fen :as cf]
-    [chessdojo.rules :as cr]
-    [chessdojo.data :as cd]
-    [chessdojo.notation :as cn]))
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [clojure.zip :as zip :refer [up down left lefts right rights
+                                         rightmost insert-right
+                                         branch? node]]
+            [reagent.core :as reagent :refer [atom]]
+            [reagent.session :as session]
+            [secretary.core :as secretary :include-macros true]
+            [accountant.core :as accountant]
+            [chessdojo.game :as cg]
+            [chessdojo.fen :as cf]
+            [chessdojo.rules :as cr]
+            [chessdojo.data :as cd]
+            [chessdojo.notation :as cn]
+            [cljs-http.client :as http]
+            [cljs.core.async :refer [<!]]))
 
 (enable-console-print!)
 
@@ -19,7 +23,15 @@
 
 (def state
   (reagent/atom
-    (get-data)))
+   (get-data)))
+
+(defn fetch-game-list []
+  (go
+    (let [response (<! (http/get "http://localhost:3449/api/games"))]
+      (reset! game-list (js->clj (:body response))))))
+
+(def game-list
+  (reagent/atom nil))
 
 (defn update-board [path]
   (let [game @state new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
@@ -54,8 +66,7 @@
 (defn comment-view [comment]
   [:span {:className "comment"} (str comment)])
 
-(def annotation-glyphs {
-                        :$1   "!"
+(def annotation-glyphs {:$1   "!"
                         :$2   "?"
                         :$3   "!!"
                         :$4   "??"
@@ -76,17 +87,13 @@
                         :$40  "↑"
                         :$41  "↑"
                         :$132 "⇆"
-                        :$133 "⇆"
-                        })
+                        :$133 "⇆"})
 
 (defn annotation-view [{move-assessment :move-assessment positional-assessment :positional-assessment}]
   [:span {:className "annotation"}
    (str
-     (when move-assessment (move-assessment annotation-glyphs))
-     (when positional-assessment (positional-assessment annotation-glyphs))
-     )
-   ]
-  )
+    (when move-assessment (move-assessment annotation-glyphs))
+    (when positional-assessment (positional-assessment annotation-glyphs)))])
 
 (defn variation-view [nodes current-path depth]
   [:div (when (> depth 0) {:className "variation"})
@@ -98,29 +105,25 @@
          ^{:key path} [:span
                        [move-view move path (= current-path path) (identical? (first nodes) node)]
                        (when annotations [annotation-view annotations])
-                       [comment-view comment]
-                       ]
-         )
-       )
-     )
-   ]
-  )
+                       [comment-view comment]])))])
 
 (defn buttons []
   [:div
    [:input {:type "button" :value "Comment" :on-click show-edit-comment-dialog}]
    [:input {:type "button" :value "Down" :on-click #(reset! state (down @state))}]
-   [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]]
-  )
+   [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]])
 
-(defn editor-view[]
+(defn editor-view []
   (let [game @state current-path (cg/game-path game)]
     [:div {:className "editor-view"}
      [buttons]
      [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node
 
 (defn browser-view []
-  [:div "this will be the database browser"])
+  [:ul
+   (for [game @game-list]
+     (let [id (:id game)]
+       ^{:key id} [:li [:a {:href id} id]]))])
 
 (def jquery (js* "$"))
 
@@ -130,23 +133,10 @@
   (-> (jquery "#comment-editor") (.dialog "open"))
   nil)                                                      ; it's critical to return nil, as otherwise the result seems to get called
 
-;; (defn current-page []
-  ;; [:div [(session/get :current-page)]])
-
-;; -------------------------
-;; Routes
-
-;; (secretary/defroute "/" [] (session/put! :current-page #'dojo-page))
-;; (secretary/defroute "/database-browser" [] (session/put! :current-page #'database-browser))
-
-;; -------------------------
-;; Initialize app
-
 (defn mount-roots []
   (reagent/render [browser-view] (.getElementById js/document "browser"))
   (reagent/render [editor-view] (.getElementById js/document "editor")))
 
 (defn init! []
-  ;;(accountant/configure-navigation!)
-  ;; (accountant/dispatch-current!)
-  (mount-roots))
+  (mount-roots)
+  (fetch-game-list))

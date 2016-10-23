@@ -34,7 +34,7 @@
   (rename-internal-id (mc/insert-and-return @db collection (rename-external-id game-data))))
 
 (defn list-games []
-  (map rename-internal-id (mc/find-maps @db collection {} ["_id"])))
+  (map rename-internal-id (mc/find-maps @db collection {})))
 
 (defn restore-game-data [id]
   (rename-internal-id (mc/find-one-as-map @db collection {:_id id})))
@@ -45,8 +45,3 @@
 ; db.games.find({}, {_id:1})
 ; db.games.remove({})
 ;
-
-
-
-
-
