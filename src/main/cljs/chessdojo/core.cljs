@@ -49,6 +49,11 @@
 (defn ^:export set-comment [comment]
   (reset! state (cg/set-comment @state comment)))
 
+(defn ^:export load-game [id]
+  (go
+    (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))]
+      (reset! state (cd/load-game (cljs.reader/read-string (:dgn (js->clj (:body response)))))))))
+
 (defn move-no
   "Return a move-number for white moves and first moves in variations."
   [ply is-first]
@@ -123,7 +128,7 @@
   [:ul
    (for [game @game-list]
      (let [id (:id game)]
-       ^{:key id} [:li [:a {:href id} id]]))])
+       ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
 
 (def jquery (js* "$"))
 

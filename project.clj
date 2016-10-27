@@ -16,8 +16,10 @@
                  [reagent-utils "0.2.0"]
                  [ring "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
+                 [ring/ring-json "0.4.0"]
+                 [ring-middleware-format "0.7.0"]
+                 
                  [compojure "1.5.1"]
-                 [metosin/compojure-api "1.1.8"]
                  [clj-time "0.12.0"]
                  [hiccup "1.0.5"]
                  [secretary "1.2.3"]

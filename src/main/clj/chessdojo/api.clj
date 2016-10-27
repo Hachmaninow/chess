@@ -1,40 +1,25 @@
 (ns chessdojo.api
-  (:require [compojure.api.sweet :refer [defapi api context GET POST]]
-            [schema.core :as s]
-            [chessdojo.database :as cdb]
-            [ring.util.http-response :refer :all]
-            [compojure.core :refer [wrap-routes]]
-            ))
+  (:require [chessdojo.database :as cdb]
+            [chessdojo.pgn :as pgn]
+            [chessdojo.data :as cd]
+            [compojure.core :refer :all]
+            [compojure.route :as route]
+            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
+            [ring.middleware.format :refer [wrap-restful-format]]
+            [ring.util.response :refer [response]]))
 
-(s/defschema GameData
-  {:id String
-   (s/optional-key :dgn) String
-   }
-  )
+(defroutes rest-api
+  (GET "/api/games" []
+    (response (cdb/list-games)))
+  (GET "/api/games/:id" [id]
+    (response (cdb/restore-game-data id)))
+  (POST "/api/games" [req]
+    (response (cdb/store-game-data (:body req))))
 
-(def rest-api
-  (api
-    (ring.swagger.ui/swagger-ui "/swagger-ui" :swagger-docs "/swagger-docs")
-    (compojure.api.swagger/swagger-docs "/swagger-docs" :title "Chessdojo Api")
-    (context "/api" [] :tags ["game"]
-             (GET "/games" []
-                  ;:return [GameData]
-                  :summary "returns the list of games"
-                  (ok (cdb/list-games)))
-
-             (GET "/games/:id" []
-                  ;:return GameData
-                  :path-params [id :- String]
-                  :summary "returns a specific game identified by the given id"
-                  (ok (cdb/restore-game-data id)))
-
-             (POST "/games" []
-                   ;:return GameData
-                   :body [game GameData]
-                   :summary "store a game"
-                   (ok (cdb/store-game-data game))
-                   )
-             )))
+  (POST "api/inbox" [body]
+    (response (cd/deflate (pgn/load-pgn (:pgn-str (:body body)))))))
 
 (def api-routes
-  (wrap-routes rest-api compojure.api.middleware/api-middleware))
+  (-> rest-api
+      (wrap-defaults api-defaults)
+      (wrap-restful-format)))
