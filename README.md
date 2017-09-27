@@ -1,36 +1,15 @@
-# chess
+# Chessdojo
 
-FIXME: description
-
-## Installation
-
-Download from http://example.com/FIXME.
+Manage chess games and positions.
 
 ## Usage
 
-FIXME: explanation
+- docker-compose up
+- lein figwheel
+- open http://localhost:3449/ in your browser
 
-    $ java -jar chess-0.1.0-standalone.jar [args]
+## Development
 
-## Options
+I personally use "lein-test-refresh" to automatically rerun tests.
 
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
-## License
-
-Copyright © 2015 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+`lein test-refresh :changes-only`
