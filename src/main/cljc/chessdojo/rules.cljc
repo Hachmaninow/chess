@@ -36,7 +36,7 @@
 
 
 ;
-; board arithmetics
+; board arithmetic
 ;
 
 (defn rank [idx] (int (/ idx 8)))

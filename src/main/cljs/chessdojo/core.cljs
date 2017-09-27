@@ -4,9 +4,6 @@
                                          rightmost insert-right
                                          branch? node]]
             [reagent.core :as reagent :refer [atom]]
-            [reagent.session :as session]
-            [secretary.core :as secretary :include-macros true]
-            [accountant.core :as accountant]
             [chessdojo.game :as cg]
             [chessdojo.fen :as cf]
             [chessdojo.rules :as cr]
@@ -17,6 +14,8 @@
 
 (enable-console-print!)
 
+(def jquery (js* "$"))
+
 (defn get-data
   []
   (cd/load-game (cljs.reader/read-string (.getAttribute (.getElementById js/document "game-data") "dgn"))))
@@ -25,13 +24,13 @@
   (reagent/atom
    (get-data)))
 
+(def game-list
+  (reagent/atom nil))
+
 (defn fetch-game-list []
   (go
     (let [response (<! (http/get "http://localhost:3449/api/games"))]
       (reset! game-list (js->clj (:body response))))))
-
-(def game-list
-  (reagent/atom nil))
 
 (defn update-board [path]
   (let [game @state new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
@@ -53,6 +52,14 @@
   (go
     (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))]
       (reset! state (cd/load-game (cljs.reader/read-string (:dgn (js->clj (:body response)))))))))
+
+(defn ^:export import-game [pgn]
+  (go
+    (let [response (<! (http/post (str "http://localhost:3449/api/inbox") {:body pgn :content-type "text/plain"}))]
+      ;(println pgn)
+      ;(println "---")
+      ;(println response)
+      (fetch-game-list))))
 
 (defn move-no
   "Return a move-number for white moves and first moves in variations."
@@ -112,9 +119,21 @@
                        (when annotations [annotation-view annotations])
                        [comment-view comment]])))])
 
+(defn show-comment-editor []
+  (let [text-area (jquery "#comment-editor")
+        current-comment (get (node @state) :comment)]
+    (.val text-area current-comment))
+  (-> (jquery "#comment-editor") (.dialog "open"))
+  nil)  ; it's critical to return nil, as otherwise the result seems to get called
+
+(defn show-import-dialog []
+  (-> (jquery "#import-dialog") (.dialog "open"))
+  nil)  ; it's critical to return nil, as otherwise the result seems to get called
+
 (defn buttons []
   [:div
-   [:input {:type "button" :value "Comment" :on-click show-edit-comment-dialog}]
+   [:input {:type "button" :value "Comment" :on-click show-comment-editor}]
+   [:input {:type "button" :value "Import" :on-click show-import-dialog}]
    [:input {:type "button" :value "Down" :on-click #(reset! state (down @state))}]
    [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]])
 
@@ -129,14 +148,6 @@
    (for [game @game-list]
      (let [id (:id game)]
        ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
-
-(def jquery (js* "$"))
-
-(defn show-edit-comment-dialog []
-  (let [text-area (jquery "#comment-textarea") current-comment (get (node @state) :comment)]
-    (.val text-area current-comment))
-  (-> (jquery "#comment-editor") (.dialog "open"))
-  nil)                                                      ; it's critical to return nil, as otherwise the result seems to get called
 
 (defn mount-roots []
   (reagent/render [browser-view] (.getElementById js/document "browser"))

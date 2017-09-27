@@ -20,7 +20,7 @@
 (defn deflate
   "Transform the given game into a minimal string representation that allows efficient reconstruction."
   [game]
-  (pr-str (deflate-variation (rest (zip/root game)))))      ; skip the first element as it's the anchor containing the start position
+  (deflate-variation (rest (zip/root game))))      ; skip the first element as it's the anchor containing the start position
 
 (defn- event-stream [deflated]
   (flatten

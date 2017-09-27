@@ -36,7 +36,15 @@
         [:div {:class "col-md-8"}
          [:div#board "test"]]
         [:div {:class "col-md-4"}
-         [:div#editor "Loading editor..."]]]]]
+         [:div#editor "Loading editor..."]]]]
+
+      [:div#comment-editor {:title "Edit comment"}
+       [:form
+        [:textarea#comment {:style "width: 360px; height: 220px;"} "huihui"]]]
+
+      [:div#import-dialog {:title "Import game"}
+       [:form
+        [:textarea#source-pgn {:style "width: 360px; height: 220px;"} "huihui"]]]]
 
      (include-js "js/chess.min.js")
      (include-js "js/jquery-2.1.4.min.js")
@@ -45,6 +53,7 @@
      (include-js "js/chessboard-0.3.0.js")
      (include-js "js/chessdojo.js")
      (include-js "js/app.js")]]))
+
 
 (defroutes routes
   (GET "/" [] dojo-page)

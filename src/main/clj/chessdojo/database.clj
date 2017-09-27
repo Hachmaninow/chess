@@ -17,12 +17,12 @@
   (let [conn (mg/connect) db (mg/get-db conn database)]
     (atom db)))
 
-(defn- uuid [] (str (UUID/randomUUID)))
+(defn create-id [] (str (UUID/randomUUID)))
 
-(defn new-game-data [game]
+(defn init-game-record [game]
   (hash-map
-    :dgn (str (cd/deflate game))
-    :id (uuid)))
+    :dgn (pr-str (cd/deflate game))
+    :id (create-id)))
 
 (defn- rename-internal-id [game-data]
   (rename-keys game-data {:_id :id}))
@@ -30,13 +30,13 @@
 (defn- rename-external-id [game-data]
   (rename-keys game-data {:id :_id}))
 
-(defn store-game-data [game-data]
+(defn store-game-record [game-data]
   (rename-internal-id (mc/insert-and-return @db collection (rename-external-id game-data))))
 
 (defn list-games []
   (map rename-internal-id (mc/find-maps @db collection {})))
 
-(defn restore-game-data [id]
+(defn restore-game-record [id]
   (rename-internal-id (mc/find-one-as-map @db collection {:_id id})))
 
 ;(list-games)
