@@ -13,3 +13,7 @@ Manage chess games and positions.
 I personally use "lein-test-refresh" to automatically rerun tests.
 
 `lein test-refresh :changes-only`
+
+To run the whole application using figwheel.
+
+`lein figwheel`

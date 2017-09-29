@@ -56,9 +56,6 @@
 (defn ^:export import-game [pgn]
   (go
     (let [response (<! (http/post (str "http://localhost:3449/api/inbox") {:body pgn :content-type "text/plain"}))]
-      ;(println pgn)
-      ;(println "---")
-      ;(println response)
       (fetch-game-list))))
 
 (defn move-no
@@ -126,22 +123,17 @@
   (-> (jquery "#comment-editor") (.dialog "open"))
   nil)  ; it's critical to return nil, as otherwise the result seems to get called
 
-(defn show-import-dialog []
-  (-> (jquery "#import-dialog") (.dialog "open"))
-  nil)  ; it's critical to return nil, as otherwise the result seems to get called
-
 (defn buttons []
   [:div
    [:input {:type "button" :value "Comment" :on-click show-comment-editor}]
-   [:input {:type "button" :value "Import" :on-click show-import-dialog}]
    [:input {:type "button" :value "Down" :on-click #(reset! state (down @state))}]
    [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]])
 
-(defn editor-view []
-  (let [game @state current-path (cg/game-path game)]
-    [:div {:className "editor-view"}
-     [buttons]
-     [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node
+(defn inbox-view []
+  [:ul
+   (for [game @game-list]
+     (let [id (:id game)]
+       ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
 
 (defn browser-view []
   [:ul
@@ -149,7 +141,14 @@
      (let [id (:id game)]
        ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
 
+(defn editor-view []
+  (let [game @state current-path (cg/game-path game)]
+    [:div {:className "editor-view"}
+     [buttons]
+     [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node
+
 (defn mount-roots []
+  (reagent/render [inbox-view] (.getElementById js/document "inbox"))
   (reagent/render [browser-view] (.getElementById js/document "browser"))
   (reagent/render [editor-view] (.getElementById js/document "editor")))
 

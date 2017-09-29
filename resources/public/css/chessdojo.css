@@ -1,8 +1,15 @@
+@media (min-width: 1600px) {
+    .container {
+        width: 1600px;
+    }
+}
 
-div.editor-view {
-    height: 1000px;
-    overflow-y: scroll;
-    margin-top: 20px;
+.top-margin {
+    margin-top:20px;
+}
+
+.full-width {
+    width: 100%;
 }
 
 div.variation {

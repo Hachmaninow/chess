@@ -92,28 +92,47 @@ var init = function () {
   //  console.log("validate: " + game.validate_fen(fen).error)
   //});
 
-  $("#comment-editor").dialog({
-    dialogClass: "no-close",
-    autoOpen: false,
-    width: 400,
-    height: 400,
-    modal: true,
-    position: {at: "center", of: "#board"},
-    buttons: {
-      "Ok": function () {
-        chessdojo.core.set_comment($("#comment-textarea").val());
-        $('#comment-editor').dialog('close')
-      },
-      "Cancel": function () {
-        $('#comment-editor').dialog('close')
-      }
-    },
-    //close: function () {
-    //  form[0].reset();
-    //}
-  });
+    $("#comment-editor").dialog({
+        dialogClass: "no-close",
+        autoOpen: false,
+        width: 400,
+        height: 400,
+        modal: true,
+        position: {at: "center", of: "#board"},
+        buttons: {
+            "Ok": function () {
+                chessdojo.core.set_comment($("#comment").val());
+                $("#comment-editor").dialog('close')
+            },
+            "Cancel": function () {
+                $("#comment-editor").dialog('close')
+            }
+        }
+    });
 
+    // $("#import-dialog").dialog({
+    //     dialogClass: "no-close",
+    //     autoOpen: false,
+    //     width: 400,
+    //     height: 400,
+    //     modal: true,
+    //     position: {at: "center", of: "#board"},
+    //     buttons: {
+    //         "Ok": function () {
+    //             chessdojo.core.import_game($("#source-pgn").val());
+    //             $("#import-dialog").dialog('close')
+    //         },
+    //         "Cancel": function () {
+    //             $("#import-dialog").dialog('close')
+    //         }
+    //     }
+    // });
 };
+
+function importPGN() {
+    console.log("Importing game.")
+    chessdojo.core.import_game($("#source-pgn").val());
+}
 
 function updateBoard(fen) {
   board.position(fen, false);

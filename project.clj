@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.22" :scope "provided"]
 
-                 [instaparse "1.4.3"]
+                 [instaparse "1.4.8"]
                  [spyscope "0.1.5"]
                  [com.taoensso/timbre "4.7.4"]
 
@@ -36,6 +36,7 @@
             [lein-cljsbuild "1.1.2"]
             [lein-asset-minifier "0.2.4" :exclusions [org.clojure/clojure]]
             [lein-doo "0.1.6"]
+            [lein-ring "0.10.0"]
             ]
 
   :ring {:handler chessdojo.app/api-and-site :uberwar-name "chessdojo.war"}
@@ -80,7 +81,7 @@
                        :dependencies [[ring/ring-mock "0.3.0"]
                                       [ring/ring-devel "1.4.0"]
                                       [prone "0.8.3"]
-                                      [lein-figwheel "0.5.8" :exclusions [org.clojure/core.memoize
+                                      [lein-figwheel "0.5.13" :exclusions [org.clojure/core.memoize
                                                                             ring/ring-core
                                                                             org.clojure/clojure
                                                                             org.ow2.asm/asm-all
@@ -116,6 +117,7 @@
                                       :nrepl-port       7002
                                       :nrepl-middleware ["cemerick.piggieback/wrap-cljs-repl"]
                                       :css-dirs         ["resources/public/css"]
+                                      :server-logfile   false
                                       :ring-handler     chessdojo.app/api-and-site}
 
                        :env          {
