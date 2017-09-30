@@ -1,5 +1,4 @@
-(ns chessdojo.middleware
-  (:require [ring.middleware.defaults :refer [site-defaults wrap-defaults]]))
+(ns chessdojo.middleware)
 
 (defn wrap-middleware [handler]
-  (wrap-defaults handler site-defaults))
+  handler)                                                  ; nothing to add here

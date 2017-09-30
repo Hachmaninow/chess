@@ -1,11 +1,11 @@
 (ns chessdojo.app
-  (:require [chessdojo.site :as site]
-            [chessdojo.api :as api]
+  (:require [chessdojo.api :as api]
+            [chessdojo.middleware :refer [wrap-middleware]] ; pick different middleware dependent on environment
+            [chessdojo.site :as site]
             [compojure.core :refer [routes]]))
 
 (def api-and-site
-  (routes
-   api/api-routes
-   site/routes
-   ;;(route/not-found "<h1>Page not found</h1>"))
-   ))
+  (wrap-middleware
+    (routes
+      api/api-routes
+      site/site-routes)))

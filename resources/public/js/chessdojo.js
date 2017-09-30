@@ -109,24 +109,6 @@ var init = function () {
             }
         }
     });
-
-    // $("#import-dialog").dialog({
-    //     dialogClass: "no-close",
-    //     autoOpen: false,
-    //     width: 400,
-    //     height: 400,
-    //     modal: true,
-    //     position: {at: "center", of: "#board"},
-    //     buttons: {
-    //         "Ok": function () {
-    //             chessdojo.core.import_game($("#source-pgn").val());
-    //             $("#import-dialog").dialog('close')
-    //         },
-    //         "Cancel": function () {
-    //             $("#import-dialog").dialog('close')
-    //         }
-    //     }
-    // });
 };
 
 function importPGN() {

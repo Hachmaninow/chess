@@ -4,8 +4,8 @@
             [compojure.route :refer [not-found resources]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-js include-css]]
-            [chessdojo.middleware :refer [wrap-middleware]]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
 
 (def dojo-page
   (html
@@ -22,6 +22,7 @@
       (include-css "css/chessdojo.css")]
 
      [:body
+
       [:div#game-data {:style {:display "hidden"} :dgn "()"}]
 
       [:div {:class "container"}
@@ -73,11 +74,12 @@
       (include-js "js/chessdojo.js")
       (include-js "js/app.js")]]))
 
-
-(defroutes routes
+(defroutes site-api
   (GET "/" [] dojo-page)
 
   (resources "/")
   (not-found "Not Found"))
 
-;;(def app (wrap-middleware #'routes))
+(def site-routes
+  (-> site-api
+    (wrap-defaults (assoc site-defaults :session {:flash false}))))

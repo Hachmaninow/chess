@@ -1,7 +1,6 @@
 (ns chessdojo.api
   (:require [chessdojo.database :as cdb]
             [chessdojo.pgn :as pgn]
-            [chessdojo.data :as cd]
             [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
