@@ -32,4 +32,4 @@
                                   ) variation-vec)))
 
 (defn notation [game]
-  (variation->str (rest (zip/root game)) (:move (zip/node game)))) ; skip the first element as it's the anchor containing the start position
+  (variation->str (rest (zip/root game)) (:move (zip/node game)))) ; skip the first element which is the start position

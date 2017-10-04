@@ -51,13 +51,10 @@
 
   :uberjar-name "chessdojo.jar"
 
-  ;; Use `lein run` if you just want to start a HTTP server, without figwheel
-  :main chessdojo.server
-
-  ;; nREPL by default starts in the :main namespace, we want to start in `user`
-  ;; because that's where our development helper functions like (go) and
-  ;; (browser-repl) live.
-  :repl-options {:init-ns user}
+  ;;; nREPL by default starts in the :main namespace, we want to start in `user`
+  ;;; because that's where our development helper functions like (go) and
+  ;;; (browser-repl) live.
+  ;:repl-options {:init-ns user}
 
   :ring {:handler chessdojo.app/api-and-site :uberwar-name "chessdojo.war"}
 

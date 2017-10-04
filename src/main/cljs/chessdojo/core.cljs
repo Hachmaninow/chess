@@ -142,7 +142,7 @@
        ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
 
 (defn editor-view []
-  (let [game @state current-path (cg/game-path game)]
+  (let [game @state current-path (cg/current-path game)]
     [:div {:className "editor-view"}
      [buttons]
      [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node

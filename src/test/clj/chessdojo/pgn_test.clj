@@ -56,25 +56,25 @@
 (deftest test-pgn->events
   (is (= [{:piece :P :to 27} {:piece :P :to 35}] (pgn->events "d4 d5")))
   (is (= [{:piece :P :to 27} {:piece :P :to 35} :back {:piece :N :to 45} :out :forward {:piece :N :to 21}]
-         (pgn->events "d4 d5 (Nf6) Nf3")))
+        (pgn->events "d4 d5 (Nf6) Nf3")))
   (is (= [{:piece :P :to 27} {:piece :P :to 35} :back
           {:piece :N :to 45} {:piece :P :to 26} :back
           {:piece :P :to 22} :out :forward :out :forward
           {:piece :N :to 21}]
-         (pgn->events "d4 d5 (Nf6 c4 (g3)) Nf3")))
+        (pgn->events "d4 d5 (Nf6 c4 (g3)) Nf3")))
   (is (= [{:piece :P :to 28} {:piece :P :to 36} {:piece :N :to 21}
           :back {:piece :N :to 18} :out :forward
           {:piece :N :to 42} {:piece :B :to 33} {:piece :P :to 40}
           {:piece :B :to 42 :capture :X}]
-         (pgn->events "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6")))
+        (pgn->events "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6")))
   (is (= [{:piece :N :from-file 6 :to 21} {:piece :N :from-rank 0 :to 18}]
-         (pgn->events "Ngf3 N1c3")))
+        (pgn->events "Ngf3 N1c3")))
   (testing "comments"
     (is (= [{:piece :P :to 27} {:piece :P :to 35} "a closed game"]
-           (pgn->events "d4 d5 {a closed game}"))))
+          (pgn->events "d4 d5 {a closed game}"))))
   (testing "annotations"
     (is (= [{:piece :P :to 27} {:piece :P :to 35} :$5]
-           (pgn->events "d4 d5 $5"))))
+          (pgn->events "d4 d5 $5"))))
 
   )
 
@@ -95,6 +95,10 @@
 
 (deftest load-complex-pgn
   (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44" (cf/fen (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))))
+
+(deftest load-tags
+
+  )
 
 ;(spit "/Users/hman/Projects/labs/clojure/chess-dojo/resources/games/deflated/game1" (cd/deflate (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))))
 
