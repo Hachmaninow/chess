@@ -82,6 +82,7 @@
     :variation [:back (tokens->events (rest token)) :out :forward]
     :comment (cleanup-whitespace (second token))
     :annotation (keyword (second token))
+    :tag {:tag (second token) :value (nth token 2)}
     nil))
 
 (defn tokens->events [tokens]

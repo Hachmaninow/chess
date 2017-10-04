@@ -117,6 +117,31 @@
 (def move-assessments #{:$1 :$2 :$3 :$4 :$5 :$6})
 (def positional-assessments #{:$10 :$13 :$:14 :$15 :$16 :$17 :$18 :$19 :$32 :$33 :$36 :$37 :$40 :$41 :$132 :$133})
 
+
+;
+; game info
+;
+
+(defn game-info
+  [game]
+  (-> game (navigate :start) zip/node meta :game-info))
+
+(defn with-game-info
+  [game game-info]
+  (let [cur-path (current-path game)
+        at-start (navigate game :start)
+        with-info (zip/replace at-start (vary-meta (zip/node at-start) assoc :game-info game-info))]
+    (jump with-info cur-path)))
+
+(defn assoc-game-info
+  [game key val]
+  (with-game-info game (assoc (game-info game) key val)))
+
+
+;
+; annotations
+;
+
 (defn- merge-annotations [annotations new-annotation]
   (merge annotations
     (cond
@@ -137,6 +162,7 @@
 
 (defn soak-into [game event]
   (or
+    (when (and (map? event) (contains? event :tag)) (assoc-game-info game (:tag event) (:value event)))
     (navigate game event)
     (when (and (named? event) (= \$ (first (name event)))) (set-annotation game event))
     (when (named? event) (insert-move game (cr/parse-move event)))
@@ -148,21 +174,3 @@
   (reduce soak-into new-game events))
 
 
-;
-; game info
-;
-
-(defn game-info
-  [game]
-  (-> game (navigate :start) zip/node meta :game-info))
-
-(defn with-game-info
-  [game game-info]
-  (let [cur-path (current-path game)
-        at-start (navigate game :start)
-        with-info (zip/replace at-start (vary-meta (zip/node at-start) assoc :game-info game-info))]
-    (jump with-info cur-path)))
-
-(defn assoc-game-info
-  [game key val]
-  (with-game-info game (assoc (game-info game) key val)))
