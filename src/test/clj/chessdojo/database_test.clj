@@ -27,13 +27,12 @@
 
 (deftest ^:functional test-store-restore-game-data
   (reset-database)
-  (let [id (:id (store-game-record (init-game-record sample-game)))]
-    (is (= sample-game (cd/load-game (read-string (:dgn (restore-game-record id))))))))
+  (let [id (:id (store-game-record (init-game-record sample-game)))
+        restored-game (cd/load-game (read-string (:dgn (restore-game-record id))))]
+    (is (= sample-game restored-game))))
 
 (deftest ^:functional test-game-list
   (reset-database)
   (let [id (:id (store-game-record (init-game-record sample-game)))
         list-of-oids (set (map :id (list-games)))]
     (is (true? (contains? list-of-oids id)))))
-
-

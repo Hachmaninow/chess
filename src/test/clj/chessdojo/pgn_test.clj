@@ -43,9 +43,6 @@
 (deftest test-parse-annotations
   (is (= [[:annotation "$132"] [:annotation "$6"]] (filter #(= :annotation (first %)) (pgn (slurp "src/test/cljc/test-pgns/annotations.pgn"))))))
 
-(deftest test-complete-game
-  (is (= 9160 (count (flatten (pgn (slurp "src/test/cljc/test-pgns/complete.pgn")))))))
-
 (deftest test-parse-error
   (is (true? (insta/failure? (pgn (slurp "src/test/cljc/test-pgns/invalid.pgn"))))))
 

@@ -4,7 +4,8 @@
             [chessdojo.data :as cd]
             [monger.core :as mg]
             [monger.collection :as mc]
-            [environ.core :refer [env]])
+            [environ.core :refer [env]]
+            [chessdojo.game :as cg])
   (:import (java.util UUID)))
 
 ; to start mongo-db locally: docker run --name mongo -d -p 27017:27017 mongo
@@ -22,22 +23,24 @@
 (defn init-game-record [game]
   (hash-map
     :dgn (pr-str (cd/deflate game))
-    :id (create-id)))
+    :game-info (cg/game-info game)
+    :_id (create-id)))
 
-(defn- rename-internal-id [game-data]
-  (rename-keys game-data {:_id :id}))
 
-(defn- rename-external-id [game-data]
-  (rename-keys game-data {:id :_id}))
-
-(defn store-game-record [game-data]
-  (rename-internal-id (mc/insert-and-return @db collection (rename-external-id game-data))))
+(defn store-game-record [game-record]
+  (mc/insert-and-return @db collection game-record))
 
 (defn list-games []
-  (map rename-internal-id (mc/find-maps @db collection {})))
+  (mc/find-maps @db collection {}))
 
 (defn restore-game-record [id]
-  (rename-internal-id (mc/find-one-as-map @db collection {:_id id})))
+  (let [game-record (mc/find-one-as-map @db collection {:_id id})]
+    (->
+      (:dgn game-record)
+      read-string
+      cd/load-game
+      (cg/with-game-info (:game-info game-record))
+      (cg/assoc-game-info :_id (:_id game-record)))))
 
 ;(list-games)
 

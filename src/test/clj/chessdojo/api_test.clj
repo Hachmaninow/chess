@@ -95,8 +95,8 @@
     (with-redefs [cdb/store-game-record dummy-store-game-data
                   cdb/create-id (fn [] "x")]
       (is (= {:status  200
-              :headers {"Content-Type" "application/edn; charset=utf-8" "Content-Length" "39"}
-              :body    "{:dgn \"(d4 d5 c4 e6 Nc3 Nf6)\", :id \"x\"}"}
+              :headers {"Content-Type" "application/edn; charset=utf-8" "Content-Length" "55"}
+              :body    "{:_id \"x\", :game-info {}, :dgn \"(d4 d5 c4 e6 Nc3 Nf6)\"}"}
             (make-request (->
                             (request :post "/api/inbox")
                             (body "1. d4 d5 2. c4 e6 3. Nc3 Nf6")
