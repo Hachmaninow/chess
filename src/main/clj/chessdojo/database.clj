@@ -34,13 +34,7 @@
   (mc/find-maps @db collection {}))
 
 (defn restore-game-record [id]
-  (let [game-record (mc/find-one-as-map @db collection {:_id id})]
-    (->
-      (:dgn game-record)
-      read-string
-      cd/load-game
-      (cg/with-game-info (:game-info game-record))
-      (cg/assoc-game-info :_id (:_id game-record)))))
+  (mc/find-one-as-map @db collection {:_id id}))
 
 ;(list-games)
 

@@ -20,9 +20,8 @@
   []
   (cd/load-game (cljs.reader/read-string (.getAttribute (.getElementById js/document "game-data") "dgn"))))
 
-(def state
-  (reagent/atom
-   (get-data)))
+(def current-game
+  (reagent/atom cg/new-game))
 
 (def game-list
   (reagent/atom nil))
@@ -33,25 +32,29 @@
       (reset! game-list (js->clj (:body response))))))
 
 (defn update-board [path]
-  (let [game @state new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
-    (reset! state new-game)
+  (let [game @current-game new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
+    (reset! current-game new-game)
     (js/updateBoard new-fen)))
 
 (defn ^:export insert-move [move]
   (let [move-info (js->clj move)
         move-coords {:from (cr/to-idx (keyword (get move-info "from"))) :to (cr/to-idx (keyword (get move-info "to"))) :piece (keyword (clojure.string/upper-case (get move-info "piece")))}
-        new-game (cg/insert-move @state move-coords)
+        new-game (cg/insert-move @current-game move-coords)
         new-fen (cf/position->fen (:position (node new-game)))]
-    (reset! state new-game)
+    (reset! current-game new-game)
     (js/updateBoard new-fen)))
 
 (defn ^:export set-comment [comment]
-  (reset! state (cg/set-comment @state comment)))
+  (reset! current-game (cg/set-comment @current-game comment)))
 
 (defn ^:export load-game [id]
   (go
-    (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))]
-      (reset! state (cd/load-game (cljs.reader/read-string (:dgn (js->clj (:body response)))))))))
+    (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))
+          game-record (js->clj (:body response))
+          game (cd/load-game (cljs.reader/read-string (:dgn game-record)))
+          ]
+
+      (reset! current-game game))))
 
 (defn ^:export import-game [pgn]
   (go
@@ -101,8 +104,8 @@
 (defn annotation-view [{move-assessment :move-assessment positional-assessment :positional-assessment}]
   [:span {:className "annotation"}
    (str
-    (when move-assessment (move-assessment annotation-glyphs))
-    (when positional-assessment (positional-assessment annotation-glyphs)))])
+     (when move-assessment (move-assessment annotation-glyphs))
+     (when positional-assessment (positional-assessment annotation-glyphs)))])
 
 (defn variation-view [nodes current-path depth]
   [:div (when (> depth 0) {:className "variation"})
@@ -118,31 +121,43 @@
 
 (defn show-comment-editor []
   (let [text-area (jquery "#comment-editor")
-        current-comment (get (node @state) :comment)]
+        current-comment (get (node @current-game) :comment)]
     (.val text-area current-comment))
   (-> (jquery "#comment-editor") (.dialog "open"))
-  nil)  ; it's critical to return nil, as otherwise the result seems to get called
+  nil)                                                      ; it's critical to return nil, as otherwise the result seems to get called
 
 (defn buttons []
   [:div
    [:input {:type "button" :value "Comment" :on-click show-comment-editor}]
-   [:input {:type "button" :value "Down" :on-click #(reset! state (down @state))}]
-   [:input {:type "button" :value "Right" :on-click #(reset! state (right @state))}]])
+   [:input {:type "button" :value "Down" :on-click #(reset! current-game (down @current-game))}]
+   [:input {:type "button" :value "Right" :on-click #(reset! current-game (right @current-game))}]])
+
+(defn listed-game-view [game]
+  (let [id (:_id game)
+        {white :White black :Black result :Result opening :Opening} (:game-info game)]
+    ^{:key id} [:tr {:on-click #(load-game id)}
+                [:td white]
+                [:td black]
+                [:td result]
+                [:td opening]]))
 
 (defn inbox-view []
-  [:ul
-   (for [game @game-list]
-     (let [id (:id game)]
-       ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
+  [:table {:className "table table-striped table-hover"}
+   [:thead
+    [:tr [:th "White"] [:th "Black"] [:th "Result"] [:th "Opening"]]
+    ]
+   [:tbody
+    (for [game @game-list]
+      (listed-game-view game))]])
 
 (defn browser-view []
   [:ul
    (for [game @game-list]
-     (let [id (:id game)]
+     (let [id (:_id game)]
        ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
 
 (defn editor-view []
-  (let [game @state current-path (cg/current-path game)]
+  (let [game @current-game current-path (cg/current-path game)]
     [:div {:className "editor-view"}
      [buttons]
      [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node
