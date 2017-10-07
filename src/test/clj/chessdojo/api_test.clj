@@ -1,10 +1,11 @@
 (ns chessdojo.api-test
   (:require [clojure.test :refer :all]
-            [ring.mock.request :refer [header request body]]
+            [cheshire.core :refer :all]
             [chessdojo.api :refer :all]
-            [chessdojo.database :as cdb]
             [chessdojo.app :refer :all]
-            [cheshire.core :refer :all]))
+            [chessdojo.database :as cdb]
+            [chessdojo.taxonomy :as ct]
+            [ring.mock.request :refer [header request body]]))
 
 (defn- read-response [rsp]
   (assoc rsp :body (slurp (:body rsp))))
@@ -20,6 +21,20 @@
 
 (defn- content-type-plain-text [request]
   (header request "Content-Type" "plain/text"))
+
+(defn- read-taxonomy-stub []
+  [{:name  "Openings", :text "Openings",
+    :nodes [{:name "Sicilian", :line "1.e4 c5", :text "Sicilian", :nodes []}]
+    }])
+
+(deftest get-taxonomy
+  (with-redefs [ct/read-taxonomy read-taxonomy-stub]
+    (is (= {:body    (str "[{\"name\":\"Openings\",\"text\":\"Openings\","
+                       "\"nodes\":[{\"name\":\"Sicilian\",\"line\":\"1.e4 c5\",\"text\":\"Sicilian\","
+                       "\"nodes\":[]}]}]")
+            :headers {"Content-Length" "115" "Content-Type" "application/json; charset=utf-8"}
+            :status  200}
+          (read-response (api-routes (request :get "/api/taxonomy")))))))
 
 (defn- game-list-stub []
   [{:_id "1"}

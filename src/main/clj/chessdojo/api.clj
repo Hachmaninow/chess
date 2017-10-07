@@ -1,6 +1,7 @@
 (ns chessdojo.api
   (:require [chessdojo.database :as cdb]
             [chessdojo.pgn :as pgn]
+            [chessdojo.taxonomy :as ct]
             [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
@@ -9,6 +10,9 @@
                                         response]]))
 
 (defroutes rest-api
+  (GET "/api/taxonomy" []
+    (response (ct/read-taxonomy)))
+  
   (GET "/api/games" []
     (response (cdb/list-games)))
   (GET "/api/games/:id" [id]
