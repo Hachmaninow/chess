@@ -19,7 +19,8 @@
       (include-css "css/jquery-ui.min.css")
       (include-css "css/jquery-ui.theme.min.css")
       (include-css "css/chessboard-0.3.0.min.css")
-      (include-css "css/chessdojo.css")]
+      (include-css "css/chessdojo.css")
+      (include-css "css/react-bootstrap-treeview.css")]
 
      [:body
 
@@ -48,7 +49,7 @@
         ;; browser
         ;;
         [:div#browser-pane {:class "tab-pane"}
-         [:div#browser "Loading browser..."]]
+         [:div#browser]]
 
         ;;
         ;; editor
@@ -72,7 +73,8 @@
       (include-js "js/bootstrap.min.js")
       (include-js "js/chessboard-0.3.0.js")
       (include-js "js/chessdojo.js")
-      (include-js "js/app.js")]]))
+      (include-js "js/app.js")
+      ]]))
 
 (defroutes site-api
   (GET "/" [] dojo-page)

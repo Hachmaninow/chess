@@ -67,6 +67,8 @@
                                       :compiler     {:output-to     "target/cljsbuild/public/js/app.js"
                                                      :output-dir    "target/cljsbuild/public/js/out"
                                                      :asset-path    "js/out"
+                                                     :foreign-libs  [{:file     "resources/public/js/react-bootstrap-treeview.js"
+                                                                      :provides ["chessdojo.treeview"]}]
                                                      :optimizations :none
                                                      :pretty-print  true}}
                        :browser-test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]

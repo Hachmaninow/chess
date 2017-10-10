@@ -9,6 +9,7 @@
             [chessdojo.rules :as cr]
             [chessdojo.data :as cd]
             [chessdojo.notation :as cn]
+            [chessdojo.treeview]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]))
 
@@ -26,10 +27,22 @@
 (def game-list
   (reagent/atom nil))
 
+(def taxonomy
+  (reagent/atom [{:text  "France" :path "F"
+                  :nodes [{:text "Paris" :path "FP" :nodes []} {:text "Lyon" :path "FL" :nodes []}]
+                  },
+                 {:text "Germany" :path "G"
+                  :nodes [{:text "Berlin" :path "GB" :nodes []} {:text "Kiel" :path "GK" :nodes []}]}]))
+
 (defn fetch-game-list []
   (go
     (let [response (<! (http/get "http://localhost:3449/api/games"))]
       (reset! game-list (js->clj (:body response))))))
+
+(defn fetch-taxonomy []
+  (go
+    (let [response (<! (http/get "http://localhost:3449/api/taxonomy"))]
+      (reset! taxonomy (js->clj (:body response))))))
 
 (defn update-board [path]
   (let [game @current-game new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
@@ -150,11 +163,12 @@
     (for [game @game-list]
       (listed-game-view game))]])
 
+(def taxonomy-tree (reagent/adapt-react-class js/TreeView))
+
 (defn browser-view []
-  [:ul
-   (for [game @game-list]
-     (let [id (:_id game)]
-       ^{:key id} [:li [:a {:href (str "#" id) :on-click #(load-game id)} id]]))])
+  (let [taxonomy @taxonomy]
+    [:div
+     [taxonomy-tree {:data taxonomy}]]))
 
 (defn editor-view []
   (let [game @current-game current-path (cg/current-path game)]
@@ -169,4 +183,6 @@
 
 (defn init! []
   (mount-roots)
-  (fetch-game-list))
+  (fetch-game-list)
+  ;(fetch-taxonomy)
+  )

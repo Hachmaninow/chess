@@ -109,10 +109,44 @@ var init = function () {
             }
         }
     });
+
+    var tree = [
+        {
+            text: "Parent 1",
+            nodes: [
+                {
+                    text: "Child 1",
+                    nodes: [
+                        {
+                            text: "Grandchild 1"
+                        },
+                        {
+                            text: "Grandchild 2"
+                        }
+                    ]
+                },
+                {
+                    text: "Child 2"
+                }
+            ]
+        },
+        {
+            text: "Parent 2"
+        },
+        {
+            text: "Parent 3"
+        },
+        {
+            text: "Parent 4"
+        },
+        {
+            text: "Parent 5"
+        }
+    ];
 };
 
 function importPGN() {
-    console.log("Importing game.")
+    console.log("Importing game.");
     chessdojo.core.import_game($("#source-pgn").val());
 }
 
