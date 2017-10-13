@@ -58,30 +58,28 @@ var TreeView = React.createClass(
         nodesSelected: {},
 
         getInitialState: function () {
-            this.setNodeId({nodes: this.props.data});
+            // this.setNodeId({nodes: this.props.data});
 
             return {nodesSelected: this.nodesSelected};
         },
 
         setNodeId: function (node) {
+            console.log("node id");
+            console.log(node);
 
-            if (!node.nodes) {
-                return;
-            }
+            // if (!node.nodes) {
+            //     return;
+            // }
 
-            node.nodes.forEach(function checkStates(node) {
-                node.nodeId = this.nodes.length;
-                this.nodesSelected[node.nodeId] = false;
-                this.nodes.push(node);
-                this.setNodeId(node);
-            }, this);
+            // node.nodes.forEach(function checkStates(node) {
+            //     node.nodeId = node.path;
+            //
+            //     this.nodesSelected[node.nodeId] = false;
+            //     this.nodes.push(node);
+            //     this.setNodeId(node);
+            // }, this);
         },
 
-        /**
-         * Find a node by nodeId
-         * @param nodeId: node ID
-         * @returns {{}} node object or {}
-         */
         findNode: function (nodeId) {
             var find = {};
             this.nodes.forEach(function (node) {
@@ -147,9 +145,7 @@ var TreeView = React.createClass(
             if (this.props.data) {
                 this.props.data.forEach(function (node, index) {
 
-                    // SELECTION
-                    node.selected =
-                        (this.state.nodesSelected[node.nodeId]);
+                    node.selected = (this.state.nodesSelected[node.nodeId]);
 
                     children.push(
                         React.createElement(TreeNode, {
@@ -192,12 +188,13 @@ var TreeNode = React.createClass(
 
         getInitialState: function () {
             var node = this.props.node;
+            console.log(node);
             return {
-                expanded: (node.state && node.state.hasOwnProperty(
-                    'expanded')) ? node.state.expanded
-                    : (this.props.level < this.props.options.levels),
-                selected: (node.state && node.state.hasOwnProperty(
-                    'selected')) ? node.state.selected : false
+                expanded: (node.state && node.state.hasOwnProperty('expanded'))
+                    ? node.state.expanded : (this.props.level < this.props.options.levels),
+                selected: (node.state && node.state.hasOwnProperty('selected'))
+                    ? node.state.selected : false,
+                key: node.path
             }
         },
 
@@ -400,7 +397,7 @@ var TreeNode = React.createClass(
                             level: this.props.level + 1,
                             visible: this.state.expanded && this.props.visible,
                             options: options,
-                            key: node.path,
+                            key: this.state.key,
                             onLineClicked: this.props.onLineClicked,
                             nodesSelected: this.props.nodesSelected
                         }));

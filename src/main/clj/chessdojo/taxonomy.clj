@@ -13,6 +13,7 @@
         path (str parent-path (fs/base-name dir) "/")]
     (assoc meta
       :text (:name meta)
+      :id path
       :path path
       :nodes (process-directory dir path))))
 

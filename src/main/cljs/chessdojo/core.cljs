@@ -28,11 +28,7 @@
   (reagent/atom nil))
 
 (def taxonomy
-  (reagent/atom [{:text  "France" :path "F"
-                  :nodes [{:text "Paris" :path "FP" :nodes []} {:text "Lyon" :path "FL" :nodes []}]
-                  },
-                 {:text "Germany" :path "G"
-                  :nodes [{:text "Berlin" :path "GB" :nodes []} {:text "Kiel" :path "GK" :nodes []}]}]))
+  (reagent/atom nil))
 
 (defn fetch-game-list []
   (go
@@ -184,5 +180,4 @@
 (defn init! []
   (mount-roots)
   (fetch-game-list)
-  ;(fetch-taxonomy)
-  )
+  (fetch-taxonomy))
