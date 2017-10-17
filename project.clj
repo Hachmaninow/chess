@@ -2,42 +2,44 @@
   :description "Training place for chess"
   :license {:name "Eclipse Public License" :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.671" :scope "provided"]
+  :plugins
+  [[lein-environ "1.1.0"]
+   [lein-cljsbuild "1.1.7"]
+   [lein-doo "0.1.6"]]
 
-                 [ring "1.6.2"]
-                 [ring-server "0.5.0"]
-                 [ring/ring-defaults "0.3.1"]
-                 [ring/ring-json "0.4.0"]
-                 [ring-middleware-format "0.7.2"]           ; Ring middleware for parsing parameters and emitting responses in JSON or other formats
+  :dependencies
+  [[org.clojure/clojure "1.8.0"]
+   [org.clojure/clojurescript "1.9.854"]
 
-                 [reagent "0.6.0" :exclusions [org.clojure/tools.reader]]
-                 [reagent-utils "0.2.1"]
-                 [reagent-forms "0.5.3"]
+   [ring "1.6.2"]
+   [ring-server "0.5.0"]
+   [ring/ring-defaults "0.3.1"]
+   [ring/ring-json "0.4.0"]
+   [ring-middleware-format "0.7.2"]                         ; Ring middleware for parsing parameters and emitting responses in JSON or other formats
 
-                 [compojure "1.6.0"]                        ; A concise routing library for Ring/Clojure
+   [cljsjs/react "15.6.1-1"]
+   [reagent "0.8.0-alpha1"]
+   [cljsjs/react-bootstrap "0.31.0-0"]
 
-                 [hiccup "1.0.5"]                           ; Fast library for rendering HTML in Clojure
+   [compojure "1.6.0"]                                      ; A concise routing library for Ring/Clojure
 
-                 [instaparse "1.4.8"]
+   [hiccup "1.0.5"]                                         ; Fast library for rendering HTML in Clojure
 
-                 [cheshire "5.8.0"]                         ; Clojure JSON and JSON SMILE (binary json format) encoding/decoding
-                 [clj-time "0.12.0"]
-                 [environ "1.1.0"]                          ; Library for managing environment variables in Clojure
+   [instaparse "1.4.8"]
 
-                 [com.novemberain/monger "3.0.2"]
-                 [me.raynes/fs "1.4.6"]                     ; File system utilities for Clojure
-                 [io.forward/yaml "1.0.6"]                  ; A fast, idiomatic and easy to use Clojure YAML library. Based on Snake YAML
+   [cheshire "5.8.0"]                                       ; Clojure JSON and JSON SMILE (binary json format) encoding/decoding
+   [clj-time "0.12.0"]
+   [environ "1.1.0"]                                        ; Library for managing environment variables in Clojure
 
-                 [cljs-http "0.1.42"]                       ; A ClojureScript HTTP library.
+   [com.novemberain/monger "3.0.2"]
+   [me.raynes/fs "1.4.6"]                                   ; File system utilities for Clojure
+   [io.forward/yaml "1.0.6"]                                ; A fast, idiomatic and easy to use Clojure YAML library. Based on Snake YAML
 
-                 [spyscope "0.1.5"]
-                 [com.taoensso/timbre "4.7.4"]
-                 ]
+   [cljs-http "0.1.42"]                                     ; A ClojureScript HTTP library.
 
-  :plugins [[lein-environ "1.1.0"]
-            [lein-cljsbuild "1.1.6"]
-            [lein-doo "0.1.6"]]
+   [spyscope "0.1.5"]
+   [com.taoensso/timbre "4.7.4"]]
+
 
   :min-lein-version "2.6.1"
 
@@ -67,8 +69,6 @@
                                       :compiler     {:output-to     "target/cljsbuild/public/js/app.js"
                                                      :output-dir    "target/cljsbuild/public/js/out"
                                                      :asset-path    "js/out"
-                                                     :foreign-libs  [{:file     "resources/public/js/react-bootstrap-treeview.js"
-                                                                      :provides ["chessdojo.treeview"]}]
                                                      :optimizations :none
                                                      :pretty-print  true}}
                        :browser-test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]
@@ -88,7 +88,7 @@
   :profiles {:dev
              {:dependencies [[ring/ring-mock "0.3.0"]
                              [ring/ring-devel "1.4.0"]
-                             [lein-figwheel "0.5.13" :exclusions [org.clojure/core.memoize
+                             [lein-figwheel "0.5.14" :exclusions [org.clojure/core.memoize
                                                                   ring/ring-core
                                                                   org.clojure/clojure
                                                                   org.ow2.asm/asm-all
@@ -111,7 +111,7 @@
                                                                  org.clojure/clojurescript
                                                                  org.clojure/core.async
                                                                  org.clojure/tools.analyzer.jvm]]
-                             [org.clojure/clojurescript "1.9.229"]
+                             [org.clojure/clojurescript "1.9.854"]
                              ]
 
               ; figwheel server settings
