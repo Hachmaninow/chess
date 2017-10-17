@@ -121,12 +121,12 @@
 //   game.load(fen);
 // }
 
-(function () {
-    // var Chessground = require("chessground").Chessground;
-
-    var options = {
-        orientation: 'white'
-    };
-
-    var ground = Chessground(document.getElementById("chessground"), options);
-})();
+// (function () {
+//     // var Chessground = require("chessground").Chessground;
+//
+//     var options = {
+//         orientation: 'white'
+//     };
+//
+//     var ground = Chessground(document.getElementById("chessground"), options);
+// })();

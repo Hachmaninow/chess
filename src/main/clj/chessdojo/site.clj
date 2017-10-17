@@ -17,19 +17,12 @@
       [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
       (include-css "css/bootstrap.min.css")
       (include-css "css/chessground.css")
-      (include-css "css/chessground-theme.css")
-      ]
-
-     [:body.blue
-      [:p "Mountpoint"]
+      (include-css "css/chessground-theme.css")]
+     [:body
       [:div#mount]
-      [:hr]
-      [:div#chessground.chessground.merida.blue]
-
       (include-js "js/chessground.js")
       (include-js "js/chessdojo.js")
-      (include-js "js/app.js")
-      ]]))
+      (include-js "js/app.js")]]))
 
 (defroutes site-api
   (GET "/" [] dojo-page)
