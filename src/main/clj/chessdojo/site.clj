@@ -16,6 +16,7 @@
       [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
       [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
       (include-css "css/bootstrap.min.css")
+      (include-css "css/chessdojo.css")
       (include-css "css/chessground.css")
       (include-css "css/chessground-theme.css")]
      [:body
