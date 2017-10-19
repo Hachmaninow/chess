@@ -1,25 +1,38 @@
 (ns chessdojo.views.browser
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
     [cljsjs.react-bootstrap]
-    [reagent.core :refer [atom]]))
+    [reagent.core :refer [atom]]
+    [chessdojo.data :as cd]
+    [chessdojo.state :as cst]
+    [cljs.core.async :refer [<!]]
+    [cljs-http.client :as http]))
+
+(defn ^:export load-game [id]
+  (go
+    (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))
+          game-record (js->clj (:body response))
+          game (cd/load-game (cljs.reader/read-string (:dgn game-record)))]
+      (swap! cst/buffers conj game))))
 
 (defn listed-game-view [game]
   (let [id (:_id game)
-        {white :White black :Black result :Result opening :Opening} (:game-info game)]
-    ^{:key id} [:tr                                         ;{:on-click #(load-game id)}
+        {white :White black :Black result :Result} (:game-info game)]
+    ^{:key id} [:tr {:on-click #(load-game id)}
                 [:td white]
                 [:td black]
-                [:td result]
-                [:td opening]]))
+                [:td result]]))
 
-(defn inbox-view [game-list]
-  [:table.table.table-striped.table-hover.small
-
+(defn inbox-view []
+  [:table.table.table-striped.table-hover.table-condensed.small
    [:tbody
-    (for [game @game-list]
+    (for [game @cst/game-list]
       (listed-game-view game))]])
 
-(defn browser [game-list]
-  [:div
-   [inbox-view game-list]])
+(defn browser []
+  [:div.panel.panel-default
+   [:div.panel-heading "Inbox"]
+   [inbox-view]])
+
+
 

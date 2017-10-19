@@ -9,6 +9,7 @@
             [chessdojo.rules :as cr]
             [chessdojo.data :as cd]
             [chessdojo.notation :as cn]
+            [chessdojo.state :as cst]
             [chessdojo.views.layout :as layout]
             [cljsjs.react-bootstrap]
             [cljs-http.client :as http]
@@ -16,19 +17,13 @@
 
 (enable-console-print!)
 
-(def game-list
-  (reagent/atom nil))
-
 (defn fetch-game-list []
   (go
     (let [response (<! (http/get "http://localhost:3449/api/games"))]
-      (reset! game-list (js->clj (:body response))))))
-
-(def application-state
-  {:game-list game-list})
+      (reset! cst/game-list (js->clj (:body response))))))
 
 (defn init! []
-  (layout/mount-grid application-state)
+  (layout/mount-grid)
   (fetch-game-list)
   ;(fetch-taxonomy)
   )
