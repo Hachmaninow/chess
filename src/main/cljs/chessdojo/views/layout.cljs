@@ -3,6 +3,7 @@
     [chessdojo.views.board :refer [board]]
     [chessdojo.views.browser :refer [browser]]
     [chessdojo.views.buffers :refer [buffers]]
+    [chessdojo.views.editor :refer [editor]]
     [chessdojo.state :as cst]
     [cljsjs.react-bootstrap]
     [reagent.core :as reagent :refer [atom]]))
@@ -20,7 +21,7 @@
     [Col {:md 6}
      [board]]
     [Col {:md 3}
-     [:p "right"]]]])
+     [editor]]]])
 
 (defn mount-grid []
   (reagent/render [grid-layout] (.getElementById js/document "mount"))
