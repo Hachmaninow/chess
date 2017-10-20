@@ -12,8 +12,9 @@
   (go
     (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))
           game-record (js->clj (:body response))
+          id (:_id game-record)
           game (cd/load-game (cljs.reader/read-string (:dgn game-record)))]
-      (swap! cst/buffers conj game))))
+      (swap! cst/buffers conj {:id id :game game}))))
 
 (defn listed-game-view [game]
   (let [id (:_id game)
