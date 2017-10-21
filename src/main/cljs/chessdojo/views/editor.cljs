@@ -48,12 +48,7 @@
     (odd? ply) (str (inc (quot ply 2)) ".")
     (and is-first (even? ply)) (str (quot ply 2) "...")))
 
-
-; new-fen (cf/position->fen (:position (zip/node new-game)))
-; (js/updateBoard new-fen)
-
 (defn update-board [path]
-  (println path)
   (let [game (:game @cst/main-buffer)
         new-game (cg/jump game path)]
     (swap! cst/main-buffer assoc :game new-game)))

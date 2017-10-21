@@ -9,8 +9,8 @@
 
 (defn listed-buffer-view [buffer]
   (let [id (:id buffer)]
-    [:tr {:on-click #(set-main-buffer id)}
-     [:td id]]))
+    ^{:key id} [:tr {:on-click #(set-main-buffer id)}
+                [:td id]]))
 
 (defn buffers-view []
   [:table.table.table-striped.table-hover.table-condensed.small
