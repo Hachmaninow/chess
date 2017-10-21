@@ -75,6 +75,6 @@
 
 (defn editor []
   (let [game (:game @cst/main-buffer) current-path (cg/current-path game)]
-    [:div.editor
+    [:div
      [buttons]
      [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node

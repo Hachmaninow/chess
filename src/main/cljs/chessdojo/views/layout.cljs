@@ -4,30 +4,20 @@
     [chessdojo.views.browser :refer [browser]]
     [chessdojo.views.buffers :refer [buffers]]
     [chessdojo.views.editor :refer [editor]]
-    [chessdojo.state :as cst]
-    [cljsjs.react-bootstrap]
-    [reagent.core :as reagent :refer [atom]]))
-
-(def Grid (reagent/adapt-react-class (aget js/ReactBootstrap "Grid")))
-(def Row (reagent/adapt-react-class (aget js/ReactBootstrap "Row")))
-(def Col (reagent/adapt-react-class (aget js/ReactBootstrap "Col")))
+    [reagent.core :as reagent]))
 
 (defn grid-layout []
-  [Grid
-   [Row
-    [Col {:md 3}
+  [:div.container-fluid
+   [:div.row
+    [:div.col-lg-12]]
+   [:div.row
+    [:div.col-lg-3
      [browser]
      [buffers]]
-    [Col {:md 6}
+    [:div.col-lg-5
      [board]]
-    [Col {:md 3}
+    [:div.col-lg-4
      [editor]]]])
 
 (defn mount-grid []
-  (reagent/render [grid-layout] (.getElementById js/document "mount"))
-
-  ;(reagent/render [inbox-view] (.getElementById js/document "inbox"))
-  ;(reagent/render [browser-view] (.getElementById js/document "browser"))
-  ;(reagent/render [editor-view] (.getElementById js/document "editor"))
-  )
-
+  (reagent/render [grid-layout] (.getElementById js/document "mount")))

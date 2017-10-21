@@ -8,30 +8,28 @@
     margin-top: 20px;
 }
 
-.full-width {
-    width: 100%;
-}
-
 div.variation {
     margin-left: 20px;
 }
 
 span.move {
     margin-left: 3px;
-    font-weight: 600;
+    font-weight: 500;
+    float:left;
 }
 
 span.focus {
     margin-left: 3px;
     color: firebrick;
-    font-weight: 600;
+    font-weight: 500;
+    float:left;
 }
 
 span.comment {
-    margin-left: 3px;
+    margin-left: 5px;
 }
 
 span.annotation {
     margin-left: 1px;
-    font-weight: 600;
+    font-weight: 500;
 }
