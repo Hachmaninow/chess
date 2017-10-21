@@ -3,7 +3,7 @@
             [chessdojo.notation :as cn]
             [chessdojo.state :as cst]
             [clojure.zip :as zip]
-            ))
+            [chessdojo.fen :as cf]))
 
 (defn buttons []
   [:div
@@ -47,15 +47,16 @@
   (cond
     (odd? ply) (str (inc (quot ply 2)) ".")
     (and is-first (even? ply)) (str (quot ply 2) "...")))
-;
-;(defn update-board [path]
-;  (let [game @current-game new-game (cg/jump game path) new-fen (cf/position->fen (:position (node new-game)))]
-;    (reset! current-game new-game)
-;    (js/updateBoard new-fen)))
+
+
+; new-fen (cf/position->fen (:position (zip/node new-game)))
+; (js/updateBoard new-fen)
 
 (defn update-board [path]
-
-  )
+  (println path)
+  (let [game (:game @cst/main-buffer)
+        new-game (cg/jump game path)]
+    (swap! cst/main-buffer assoc :game new-game)))
 
 (defn move-view [move path focus is-first]
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
