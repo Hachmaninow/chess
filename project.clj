@@ -65,16 +65,20 @@
   :minify-assets {:assets {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
 
   :cljsbuild {
-              :builds {:app  {:source-paths ["src/main/cljs" "src/main/cljc"]
+              :builds {:app  {:source-paths ["src/main/cljs"
+                                             "src/main/cljc"]
                               :compiler     {:output-to     "target/cljsbuild/public/js/app.js"
                                              :output-dir    "target/cljsbuild/public/js/out"
                                              :asset-path    "js/out"
                                              :optimizations :none
                                              :pretty-print  true}}
-                       :test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]
+                       :test {:source-paths ["src/main/cljs"
+                                             "src/main/cljc"
+                                             "src/test/cljs"
+                                             "src/test/cljc"]
                               :compiler     {:output-dir    "target/doo"
                                              :output-to     "target/browser_tests.js"
-                                             :main          "chessdojo.browser-test"
+                                             :main          "chessdojo.test-suite"
                                              :optimizations :none}}}}
 
   :doo {

@@ -153,9 +153,7 @@
   [game annotation]
   (if-let [merged-annotations (merge-annotations (:annotations (zip/node game)) (keyword annotation))]
     (zip/replace game (assoc (zip/node game) :annotations merged-annotations))
-    game
-    )
-  )
+    game))
 
 (defn named? [object]
   (or (symbol? object) (keyword? object)))
