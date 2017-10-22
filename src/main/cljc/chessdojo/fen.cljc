@@ -1,5 +1,7 @@
 (ns chessdojo.fen
-  (:require [clojure.zip :as zip]
+  (:require
+    #?(:cljs [cljs.reader :refer [read-string]])
+    [clojure.zip :as zip]
             [chessdojo.rules :refer [to-sqr]]))
 
 ;
