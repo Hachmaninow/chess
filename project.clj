@@ -5,7 +5,7 @@
   :plugins
   [[lein-environ "1.1.0"]
    [lein-cljsbuild "1.1.7"]
-   [lein-doo "0.1.6"]]
+   [lein-doo "0.1.8"]]
 
   :dependencies
   [[org.clojure/clojure "1.8.0"]
@@ -65,20 +65,20 @@
   :minify-assets {:assets {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
 
   :cljsbuild {
-              :builds {:app          {:source-paths ["src/main/cljs" "src/main/cljc"]
-                                      :compiler     {:output-to     "target/cljsbuild/public/js/app.js"
-                                                     :output-dir    "target/cljsbuild/public/js/out"
-                                                     :asset-path    "js/out"
-                                                     :optimizations :none
-                                                     :pretty-print  true}}
-                       :browser-test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]
-                                      :compiler     {:output-dir    "target/doo"
-                                                     :output-to     "target/browser_tests.js"
-                                                     :main          "chessdojo.browser-test"
-                                                     :optimizations :none}}}}
+              :builds {:app  {:source-paths ["src/main/cljs" "src/main/cljc"]
+                              :compiler     {:output-to     "target/cljsbuild/public/js/app.js"
+                                             :output-dir    "target/cljsbuild/public/js/out"
+                                             :asset-path    "js/out"
+                                             :optimizations :none
+                                             :pretty-print  true}}
+                       :test {:source-paths ["src/main/cljs" "src/main/cljc" "src/test/cljs" "src/test/cljc"]
+                              :compiler     {:output-dir    "target/doo"
+                                             :output-to     "target/browser_tests.js"
+                                             :main          "chessdojo.browser-test"
+                                             :optimizations :none}}}}
 
   :doo {
-        :paths {:karma "/Users/hman/Tools/node_modules/karma/bin/karma"}
+        :paths {:karma "./node_modules/karma/bin/karma"}
         }
 
   :test-selectors {:default    (complement :functional)

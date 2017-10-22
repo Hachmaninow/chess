@@ -1,0 +1,29 @@
+{
+  "name": "chessdojo",
+  "version": "1.0.0",
+  "description": "Training place for chess",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hachmaninow/chess-dojo.git"
+  },
+  "keywords": [
+    "chess"
+  ],
+  "author": "Hachmaninow",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Hachmaninow/chess-dojo/issues"
+  },
+  "homepage": "https://github.com/Hachmaninow/chess-dojo#readme",
+  "devDependencies": {
+    "jasmine-core": "^2.8.0",
+    "karma": "^1.7.1",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-cljs-test": "^0.1.0",
+    "karma-jasmine": "^1.1.0"
+  }
+}

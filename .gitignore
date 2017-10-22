@@ -17,3 +17,4 @@ pom.xml.asc
 .#*
 /data
 /vendor
+/node_modules
