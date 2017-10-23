@@ -61,8 +61,8 @@
   [:span {:className "comment"} (str comment)])
 
 (defn variation-view [nodes current-path depth]
-  [:div (when (> depth 0) {:className "variation"})
-   (when (> depth 0) [:span (str (first (:path (meta nodes))) "] ")])
+  [:div (if (> depth 0) {:className "variation"} {:class "main-line"})
+   (when (> depth 0) [:span.variation-no (str (first (:path (meta nodes))) "] ")])
    (for [node nodes]
      (if (vector? node)
        ^{:key (:path (meta node))} [variation-view node current-path (inc depth)]

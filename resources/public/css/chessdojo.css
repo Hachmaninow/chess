@@ -4,32 +4,38 @@
     }
 }
 
-.top-margin {
-    margin-top: 20px;
+div.main-line {
+    font-weight: 600;
 }
 
 div.variation {
-    margin-left: 20px;
+    font-weight: 500;
+    margin-left: 10px;
+}
+
+span.variation-no {
+    font-weight: 500;
 }
 
 span.move {
-    margin-left: 3px;
-    font-weight: 500;
-    float:left;
+    margin-left: 5px;
 }
 
 span.focus {
-    margin-left: 3px;
+    margin-left: 5px;
     color: firebrick;
-    font-weight: 500;
-    float:left;
 }
 
 span.comment {
     margin-left: 5px;
+    font-weight: 500;
 }
 
 span.annotation {
     margin-left: 1px;
     font-weight: 500;
 }
+
+/*.top-margin {*/
+    /*margin-top: 20px;*/
+/*}*/
