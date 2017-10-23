@@ -4,7 +4,8 @@
     [chessdojo.state :as cst]
     [chessdojo.fen :as cf]
     [chessdojo.rules :as cr]
-    [clojure.zip :as zip]))
+    [clojure.zip :as zip]
+    [chessdojo.game :as cg]))
 
 (enable-console-print!)
 
@@ -12,12 +13,20 @@
   (let [position (:position (zip/node game))
         valid-moves (cr/valid-moves position)
         from-to (map #(select-keys % [:from :to]) valid-moves)
-        grouped-by-from (group-by :from from-to)
-        ]
-    (reduce-kv #(assoc %1 (cr/to-sqr %2) (map cr/to-sqr (map :to %3))) {} grouped-by-from)
+        grouped-by-from (group-by :from from-to)]
+    (reduce-kv #(assoc %1 (cr/to-sqr %2) (map cr/to-sqr (map :to %3))) {} grouped-by-from)))
 
-    )
-  )
+(defn insert-move [from to meta]
+  (do
+    (println (str "insert move: " from " " to " " (js->clj meta)))
+    (let [buffer @cst/main-buffer
+          game (:game buffer)
+          move-coords {:from (cr/to-idx (keyword from)) :to (cr/to-idx (keyword to))}
+          new-game (cg/insert-move game move-coords)]
+      (swap! cst/main-buffer assoc :game new-game))))
+
+;(defn ^:export set-comment [comment]
+;  (reset! current-game (cg/set-comment @current-game comment)))
 
 (defn create-chessground-options []
   (let [buffer @cst/main-buffer
@@ -28,6 +37,9 @@
                    :free       false
                    :dests      (move-destinations game)
                    :show-dests true
+                   :events     {
+                                :after insert-move
+                                }
                    }
      }
     )
