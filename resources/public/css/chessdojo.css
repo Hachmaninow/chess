@@ -36,6 +36,6 @@ span.annotation {
     font-weight: 500;
 }
 
-/*.top-margin {*/
-    /*margin-top: 20px;*/
-/*}*/
+div.navbar {
+    margin-top: 20px;
+}

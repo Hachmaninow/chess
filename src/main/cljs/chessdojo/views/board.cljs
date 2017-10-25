@@ -46,7 +46,7 @@
   )
 
 (defn render-chessground []
-  [:div#chessground.chessground.merida])
+  [:div#chessground.chessground.merida.center-block])
 
 (def chessground-board
   (reagent/atom nil))

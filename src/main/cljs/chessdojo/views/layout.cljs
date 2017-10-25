@@ -4,6 +4,7 @@
     [chessdojo.views.browser :refer [browser]]
     [chessdojo.views.buffers :refer [buffers]]
     [chessdojo.views.editor :refer [editor]]
+    [chessdojo.views.navbar :refer [navbar]]
     [reagent.core :as reagent]))
 
 (defn grid-layout []
@@ -15,7 +16,8 @@
      [browser]
      [buffers]]
     [:div.col-lg-5
-     [board]]
+     [board]
+     [navbar]]
     [:div.col-lg-4
      [editor]]]])
 

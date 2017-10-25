@@ -22,11 +22,17 @@
         (is (= :a (-> zipper down right right right right down node)))
         (is (= [:a :b] (-> zipper down right right right right down up node))))
       (testing "zip/root"
+        (is (= 1 (-> zipper root node)))
         (is (= 1 (-> zipper down right right right right down root node)))
+        (is (= 1 (-> zipper zip/rightmost root node)))
         (is (= 1 (-> zipper down right right right right down up root node))))))
   (testing "zip/next"
     (is (= [:a :b] (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/next zip/next node)))
     (is (= :a (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/next zip/next zip/next node))))
+  (testing "zip/rightmost"
+    (is (= 3 (-> (vector-zip [1 2 [:a :b] [:c :d] 3]) down zip/rightmost node)))
+    (is (= [:e] (-> (vector-zip [1 2 [:a :b] [:c :d] 3 [:e]]) down zip/rightmost node)))
+    (is (= :b (-> (vector-zip [[:a :b] [:c :d] 3 [:e]]) down down zip/rightmost node))))
   (testing "given vector-zipper, then replace-node changes equality semantics, even when there are no structural changes"
     (let [zipper (vector-zip [1 2])]
       (is (not= zipper (-> zipper (zip/replace [1 2]))))
@@ -204,12 +210,17 @@
       (let [zipper (down (vector-zip [1 2 [:a :b] [:c [:c1 :c2 :c3 [:c3a]] :d] 3]))]
         (is (= 1 (-> zipper (navigate :start) node)))
         (is (= 2 (-> zipper (navigate :start) (navigate :forward) node)))))
-    (testing "within a game, then loc is moved to the anchor node"
+    (testing "within a game, then loc is moved to the start mark node"
       (let [game (cg/soak :e4 :e5 :Nf3 :back :back :c5 :Nc3 :back :g3 :g6 :Bg2 :back :a3 :Bg7)]
-        (is (= :start (-> game (navigate :start) node :mark)))
-        )
-      )
-    ))
+        (is (= :start (-> game (navigate :start) node :mark))))))
+  (testing "when navigate to :end"
+    (testing "within a vector-zipper, then loc is moved to top-most, right-most node"
+      (let [zipper (down (vector-zip [1 2 [:a :b] [:c [:c1 :c2 :c3 [:c3a]] :d] 3]))]
+        (is (= 3 (-> zipper (navigate :start) zip/rightmost node)))
+        (is (= 3 (-> zipper (navigate :end) node)))
+        (is (= 3 (-> zipper zip/next zip/next zip/down (navigate :end) node)))
+
+        ))))
 
 (deftest test-jump
   (let [game (cg/soak :e4 :e5 :Nf3 :back :Nc3 :out :g3 :g6 :Bg2 :Bg7 :back :Bh6)]
@@ -250,10 +261,10 @@
 (deftest test-assoc-game-info
   (testing "when game-info is set incrementally, then entire collection is available afterwards"
     (is (= {:white "Anand" :black "Carlsen" :year 2015} (->
-                cg/new-game
-                (cg/assoc-game-info :white "Anand")
-                (cg/soak-into :d4)
-                (cg/assoc-game-info :black "Carlsen")
-                (cg/soak-into :d5)
-                (cg/assoc-game-info :year 2015)
-                (cg/game-info))))))
+                                                          cg/new-game
+                                                          (cg/assoc-game-info :white "Anand")
+                                                          (cg/soak-into :d4)
+                                                          (cg/assoc-game-info :black "Carlsen")
+                                                          (cg/soak-into :d5)
+                                                          (cg/assoc-game-info :year 2015)
+                                                          (cg/game-info))))))

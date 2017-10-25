@@ -100,6 +100,7 @@
     :forward (if (end-of-variation? game) game (first (remove branch? (iterate right (right game)))))
     :out (second (remove branch? (iterate left (up game)))) ; variations are inserted after following move
     :start (down (last (take-while some? (iterate zip/prev game))))
+    :end (zip/rightmost (navigate game :start))
     nil))
 
 (defn jump
