@@ -24,6 +24,7 @@
 
 (defn init! []
   (layout/mount-grid)
+  (layout/mount-dialogs)
   (fetch-game-list)
   ;(fetch-taxonomy)
   )

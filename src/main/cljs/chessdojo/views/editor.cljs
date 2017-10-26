@@ -3,14 +3,16 @@
             [chessdojo.notation :as cn]
             [chessdojo.state :as cst]
             [clojure.zip :as zip]
-            [chessdojo.fen :as cf]))
+            [chessdojo.fen :as cf]
+            [chessdojo.dialogs.move-comment-editor :refer [edit-move-comment-button]]))
 
 (defn buttons []
-  [:div
-   ;[:input {:type "button" :value "Comment" :on-click show-comment-editor}]
-   ;[:input {:type "button" :value "Down" :on-click #(reset! current-game (down @current-game))}]
-   ;[:input {:type "button" :value "Right" :on-click #(reset! current-game (right @current-game))}]
+  [:div.btn-group
+   [edit-move-comment-button]
    ])
+;[:input {:type "button" :value "Down" :on-click #(reset! current-game (down @current-game))}]
+;[:input {:type "button" :value "Right" :on-click #(reset! current-game (right @current-game))}]
+
 
 (def annotation-glyphs {:$1   "!"
                         :$2   "?"

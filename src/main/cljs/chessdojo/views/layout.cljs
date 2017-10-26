@@ -5,6 +5,7 @@
     [chessdojo.views.buffers :refer [buffers]]
     [chessdojo.views.editor :refer [editor]]
     [chessdojo.views.navbar :refer [navbar]]
+    [chessdojo.dialogs.move-comment-editor]
     [reagent.core :as reagent]))
 
 (defn grid-layout []
@@ -19,7 +20,16 @@
      [board]
      [navbar]]
     [:div.col-lg-4
-     [editor]]]])
+     [editor]]]]
+  )
 
 (defn mount-grid []
   (reagent/render [grid-layout] (.getElementById js/document "mount")))
+
+
+(defn dialogs []
+  [chessdojo.dialogs.move-comment-editor/render]
+  )
+
+(defn mount-dialogs []
+  (reagent/render [dialogs] (.getElementById js/document "dialogs")))
