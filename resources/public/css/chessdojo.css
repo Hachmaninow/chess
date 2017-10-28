@@ -1,5 +1,5 @@
 @media (min-width: 2400px) {
-    .container {
+    div.container {
         width: 2400px;
     }
 }
@@ -38,4 +38,8 @@ span.annotation {
 
 div.navbar {
     margin-top: 20px;
+}
+
+textarea.full-width {
+    width: 100%;
 }

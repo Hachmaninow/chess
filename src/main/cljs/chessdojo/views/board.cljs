@@ -23,10 +23,7 @@
           game (:game buffer)
           move-coords {:from (cr/to-idx (keyword from)) :to (cr/to-idx (keyword to))}
           new-game (cg/insert-move game move-coords)]
-      (swap! cst/main-buffer assoc :game new-game))))
-
-;(defn ^:export set-comment [comment]
-;  (reset! current-game (cg/set-comment @current-game comment)))
+      (cst/update-game new-game))))
 
 (defn create-chessground-options []
   (let [buffer @cst/main-buffer
