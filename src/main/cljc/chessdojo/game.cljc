@@ -1,7 +1,8 @@
 (ns chessdojo.game
   (:require [chessdojo.rules :as cr :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
-            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch?]]))
+            [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch?]]
+            [clojure.walk :as walk]))
 
 (def new-game
   (-> {:position (setup-position) :mark :start}
@@ -131,7 +132,9 @@
   [game game-info]
   (let [cur-path (current-path game)
         at-start (navigate game :start)
-        with-info (zip/replace at-start (vary-meta (zip/node at-start) assoc :game-info game-info))]
+        keywordized-game-info (walk/keywordize-keys game-info)
+        with-info (zip/replace at-start
+                    (vary-meta (zip/node at-start) assoc :game-info keywordized-game-info))]
     (jump with-info cur-path)))
 
 (defn assoc-game-info

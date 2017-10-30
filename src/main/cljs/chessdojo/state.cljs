@@ -7,7 +7,7 @@
 (def game-list
   (reagent/atom nil))
 
-(def scratch-buffer {:id "scratch" :game cg/new-game})
+(def scratch-buffer {:id "_scratch" :game (cg/with-game-info cg/new-game {"Title" "Scratch"})})
 
 (def buffers
   (reagent/atom [scratch-buffer]))

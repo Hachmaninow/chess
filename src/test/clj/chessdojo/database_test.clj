@@ -11,7 +11,7 @@
   (mc/remove @db collection {}))
 
 (def sample-game
-  (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/load-game))
+  (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/inflate-game))
 
 (deftest ^:functional test-game-data
   (reset-database)
@@ -28,7 +28,7 @@
 (deftest ^:functional test-store-restore-game-data
   (reset-database)
   (let [id (:id (store-game-record (init-game-record sample-game)))
-        restored-game (cd/load-game (read-string (:dgn (restore-game-record id))))]
+        restored-game (cd/inflate-game (read-string (:dgn (restore-game-record id))))]
     (is (= sample-game restored-game))))
 
 (deftest ^:functional test-game-list

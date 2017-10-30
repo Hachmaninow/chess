@@ -19,7 +19,6 @@
 
    [cljsjs/react "15.6.1-1"]
    [reagent "0.8.0-alpha1"]
-   [cljsjs/react-bootstrap "0.31.0-0"]
 
    [compojure "1.6.0"]                                      ; A concise routing library for Ring/Clojure
 
@@ -106,15 +105,15 @@
                              [prone "0.8.3"]]
 
               :source-paths ["env/dev/clj"]
-              :plugins      [[lein-figwheel "0.5.8" :exclusions [org.clojure/core.memoize
-                                                                 ring/ring-core
-                                                                 org.clojure/clojure
-                                                                 org.ow2.asm/asm-all
-                                                                 org.clojure/data.priority-map
-                                                                 org.clojure/tools.reader
-                                                                 org.clojure/clojurescript
-                                                                 org.clojure/core.async
-                                                                 org.clojure/tools.analyzer.jvm]]
+              :plugins      [[lein-figwheel "0.5.14" :exclusions [org.clojure/core.memoize
+                                                                  ring/ring-core
+                                                                  org.clojure/clojure
+                                                                  org.ow2.asm/asm-all
+                                                                  org.clojure/data.priority-map
+                                                                  org.clojure/tools.reader
+                                                                  org.clojure/clojurescript
+                                                                  org.clojure/core.async
+                                                                  org.clojure/tools.analyzer.jvm]]
                              [org.clojure/clojurescript "1.9.854"]
                              ]
 

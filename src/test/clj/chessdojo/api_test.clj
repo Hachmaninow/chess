@@ -54,7 +54,11 @@
               :body    "[{:_id \"1\"} {:_id \"2\"}]"}
             (read-response (api-routes (-> (request :get "/api/games") (accept-edn)))))))))
 
-(def dummy-game-data {:_id "3" :dgn (str (list 'd4 'd5 'c4 'c6 'Nc3))})
+(def dummy-game-data
+  {:_id       "3"
+   :dgn       (str (list 'd4 'd5 'c4 'c6 'Nc3))
+   :game-info {"White" "Anand" "Black" "Karpow"}
+   })
 
 (defn restore-game-data-stub [_]
   dummy-game-data)
@@ -63,14 +67,14 @@
   (testing "json"
     (with-redefs [cdb/restore-game-record restore-game-data-stub]
       (is (= {:status  200
-              :headers {"Content-Type" "application/json; charset=utf-8" "Content-Length" "37"}
-              :body    "{\"_id\":\"3\",\"dgn\":\"(d4 d5 c4 c6 Nc3)\"}"}
+              :headers {"Content-Type" "application/json; charset=utf-8" "Content-Length" "84"}
+              :body    "{\"_id\":\"3\",\"dgn\":\"(d4 d5 c4 c6 Nc3)\",\"game-info\":{\"White\":\"Anand\",\"Black\":\"Karpow\"}}"}
             (make-request (request :get "/api/games/3"))))))
   (testing "edn"
     (with-redefs [cdb/restore-game-record restore-game-data-stub]
       (is (= {:status  200
-              :headers {"Content-Type" "application/edn; charset=utf-8" "Content-Length" "36"}
-              :body    "{:_id \"3\", :dgn \"(d4 d5 c4 c6 Nc3)\"}"}
+              :headers {"Content-Type" "application/edn; charset=utf-8" "Content-Length" "84"}
+              :body    "{:_id \"3\", :dgn \"(d4 d5 c4 c6 Nc3)\", :game-info {\"White\" \"Anand\", \"Black\" \"Karpow\"}}"}
             (make-request (->
                             (request :get "/api/games/3")
                             (accept-edn))))))))
@@ -84,26 +88,25 @@
 
 
 (deftest post-game
+  (testing "json for edn"
+    (with-redefs [cdb/store-game-record dummy-store-game-data]
+      (is (= {:status  200
+              :headers {"Content-Type" "application/json; charset=utf-8" "Content-Length" "84"}
+              :body    "{\"_id\":\"3\",\"dgn\":\"(d4 d5 c4 c6 Nc3)\",\"game-info\":{\"White\":\"Anand\",\"Black\":\"Karpow\"}}"}
+            (make-request (->
+                            (request :post "/api/games")
+                            (body (str dummy-game-data))
+                            (content-type-edn)))))))
   (testing "edn for edn"
     (with-redefs [cdb/store-game-record dummy-store-game-data]
       (is (= {:status  200
-              :headers {"Content-Type" "application/edn; charset=utf-8" "Content-Length" "36"}
-              :body    "{:_id \"3\", :dgn \"(d4 d5 c4 c6 Nc3)\"}"}
+              :headers {"Content-Type" "application/edn; charset=utf-8" "Content-Length" "84"}
+              :body    "{:_id \"3\", :dgn \"(d4 d5 c4 c6 Nc3)\", :game-info {\"White\" \"Anand\", \"Black\" \"Karpow\"}}"}
             (make-request (->
                             (request :post "/api/games")
                             (body (str dummy-game-data))
                             (content-type-edn)
-                            (accept-edn)))))))
-
-  (testing "json for edn"
-    (with-redefs [cdb/store-game-record dummy-store-game-data]
-      (is (= {:status  200
-              :headers {"Content-Type" "application/json; charset=utf-8" "Content-Length" "37"}
-              :body    "{\"_id\":\"3\",\"dgn\":\"(d4 d5 c4 c6 Nc3)\"}"}
-            (make-request (->
-                            (request :post "/api/games")
-                            (body (str dummy-game-data))
-                            (content-type-edn))))))))
+                            (accept-edn))))))))
 
 (deftest post-inbox
   (testing "inbox"

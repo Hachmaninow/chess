@@ -29,5 +29,5 @@
            :default %
            ) deflated)))
 
-(defn load-game [deflated]
+(defn inflate-game [deflated]
   (apply cg/soak (event-stream deflated)))

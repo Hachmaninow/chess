@@ -1,19 +1,24 @@
 (ns chessdojo.views.browser
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
-    [cljsjs.react-bootstrap]
     [reagent.core :refer [atom]]
     [chessdojo.data :as cd]
     [chessdojo.state :as cst]
     [cljs.core.async :refer [<!]]
-    [cljs-http.client :as http]))
+    [cljs-http.client :as http]
+    [chessdojo.game :as cg]))
 
-(defn ^:export load-game [id]
+(defn load-game-list []
+  (go
+    (let [response (<! (http/get "http://localhost:3449/api/games"))]
+      (reset! cst/game-list (js->clj (:body response))))))
+
+(defn load-game [id]
   (go
     (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))
-          game-record (js->clj (:body response))
-          id (:_id game-record)
-          game (cd/load-game (cljs.reader/read-string (:dgn game-record)))]
+          {id :_id dgn :dgn game-info :game-info} (js->clj (:body response))
+          game (cg/with-game-info (cd/inflate-game (cljs.reader/read-string dgn)) game-info)
+          game (-> dgn cljs.reader/read-string cd/inflate-game (cg/with-game-info game-info))]
       (swap! cst/buffers conj {:id id :game game}))))
 
 (defn listed-game-view [game]

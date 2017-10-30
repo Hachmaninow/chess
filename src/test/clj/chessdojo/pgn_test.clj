@@ -93,12 +93,12 @@
     (testing "when game has been loaded, then the position reflects the end of the game"
       (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44" (cf/fen game))))
     (testing "when game has been loaded, then game-info contains the tags from the PGN"
-      (is (= {"Event" "Hoogovens",
-              "Site" "Wijk aan Zee",
-              "White" "Kasparov, Garry",
-              "Black" "Topalov, Veselin",
-              "Date" "1999.01.20",
-              "Result" "1-0"} (cg/game-info game))))))
+      (is (= {:Event "Hoogovens",
+              :Site "Wijk aan Zee",
+              :White "Kasparov, Garry",
+              :Black "Topalov, Veselin",
+              :Date "1999.01.20",
+              :Result "1-0"} (cg/game-info game))))))
 
 
 ;(time
