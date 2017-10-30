@@ -6,6 +6,7 @@
     [chessdojo.views.editor :refer [editor]]
     [chessdojo.views.navbar :refer [navbar]]
     [chessdojo.dialogs.move-comment-editor]
+    [chessdojo.dialogs.game-info-editor]
     [reagent.core :as reagent]))
 
 (defn grid-layout []
@@ -28,7 +29,9 @@
 
 
 (defn dialogs []
-  [chessdojo.dialogs.move-comment-editor/render]
+  [:div
+   [chessdojo.dialogs.move-comment-editor/render]
+   [chessdojo.dialogs.game-info-editor/render]]
   )
 
 (defn mount-dialogs []

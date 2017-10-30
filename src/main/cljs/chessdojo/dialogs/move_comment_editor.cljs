@@ -32,4 +32,4 @@
 (defn edit-move-comment-button []
   [:button.btn.btn-default
    {:type "button" :data-toggle "modal" :data-target "#move-comment-editor" :on-click init-current-value}
-   [:span.glyphicon.glyphicon-pencil]])
+   [:span.glyphicon.glyphicon-comment]])
