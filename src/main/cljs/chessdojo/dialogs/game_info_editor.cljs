@@ -19,8 +19,8 @@
 
 (defn update-game-info []
   (do
-    (cst/update-game (cg/with-game-info (cst/current-game) (str->game-info @current-value)))
-    (println (cg/game-info (cst/current-game)))))
+    (cst/update-game (cg/with-game-info (cst/active-game) (str->game-info @current-value)))
+    (println (cg/game-info (cst/active-game)))))
 
 (defn update-current-value [control]
   (reset! current-value (-> control .-target .-value)))
@@ -41,7 +41,7 @@
         "Ok"]]]]]])
 
 (defn init-current-value []
-  (let [game-info (cg/game-info (cst/current-game))]
+  (let [game-info (cg/game-info (cst/active-game))]
     (reset! current-value (game-info->str game-info))))
 
 (defn edit-game-info-button []

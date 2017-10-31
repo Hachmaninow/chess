@@ -8,7 +8,7 @@
   (reagent/atom ""))
 
 (defn update-comment []
-  (cst/update-game (cg/set-comment (cst/current-game) @current-value)))
+  (cst/update-game (cg/set-comment (cst/active-game) @current-value)))
 
 (defn update-current-value [control]
   (reset! current-value (-> control .-target .-value)))
@@ -27,7 +27,7 @@
        [:button.btn.btn-primary {:type "button" :data-dismiss "modal" :on-click update-comment} "Ok"]]]]]])
 
 (defn init-current-value []
-  (reset! current-value (:comment (cst/current-node))))
+  (reset! current-value (:comment (cst/active-node))))
 
 (defn edit-move-comment-button []
   [:button.btn.btn-default

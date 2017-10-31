@@ -19,15 +19,13 @@
 (defn insert-move [from to meta]
   (do
     (println (str "insert move: " from " " to " " (js->clj meta)))
-    (let [buffer @cst/main-buffer
-          game (:game buffer)
+    (let [game (cst/active-game)
           move-coords {:from (cr/to-idx (keyword from)) :to (cr/to-idx (keyword to))}
           new-game (cg/insert-move game move-coords)]
       (cst/update-game new-game))))
 
 (defn create-chessground-options []
-  (let [buffer @cst/main-buffer
-        game (:game buffer)]
+  (let [game (cst/active-game)]
     {:fen         (cf/fen game)
      :orientation "white"
      :movable     {

@@ -7,20 +7,36 @@
 (def game-list
   (reagent/atom nil))
 
-(def scratch-buffer {:id "_scratch" :game (cg/with-game-info cg/new-game {"Title" "Scratch"})})
+
+; buffer handling
+
+; start with a single scratch buffer to begin with
+(def active-buffer-id
+  (reagent/atom (str "scratch-" (random-uuid))))
 
 (def buffers
-  (reagent/atom [scratch-buffer]))
+  (reagent/atom {@active-buffer-id {:game cg/new-game}}))
 
-(def main-buffer
-  (reagent/atom scratch-buffer))
+(defn switch-active-buffer [id]
+  (reset! active-buffer-id id))
 
-(defn current-game []
-  (:game @main-buffer))
+(defn open-buffer [id game]
+  (do
+    (println (str "opening buffer: " id))
+    (swap! buffers assoc id {:game game})))
 
-(defn update-game [new-game]
-  (swap! main-buffer assoc :game new-game))
+(defn active-buffer []
+  (get @buffers @active-buffer-id))
 
-(defn current-node []
-  (zip/node (:game @main-buffer)))
+
+; handling of current game
+
+(defn active-game []
+  (:game (active-buffer)))
+
+(defn update-game [updated-game]
+  (swap! buffers assoc @active-buffer-id {:game updated-game}))
+
+(defn active-node []
+  (zip/node (:game (active-buffer))))
 

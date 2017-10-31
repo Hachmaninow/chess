@@ -19,7 +19,7 @@
           {id :_id dgn :dgn game-info :game-info} (js->clj (:body response))
           game (cg/with-game-info (cd/inflate-game (cljs.reader/read-string dgn)) game-info)
           game (-> dgn cljs.reader/read-string cd/inflate-game (cg/with-game-info game-info))]
-      (swap! cst/buffers conj {:id id :game game}))))
+      (cst/open-buffer id game))))
 
 (defn listed-game-view [game]
   (let [id (:_id game)
@@ -39,6 +39,3 @@
   [:div.panel.panel-default
    [:div.panel-heading "Inbox"]
    [inbox-view]])
-
-
-

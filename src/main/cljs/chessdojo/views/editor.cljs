@@ -52,9 +52,9 @@
     (and is-first (even? ply)) (str (quot ply 2) "...")))
 
 (defn update-board [path]
-  (let [game (:game @cst/main-buffer)
-        new-game (cg/jump game path)]
-    (swap! cst/main-buffer assoc :game new-game)))
+  (let [game (cst/active-game)
+        update-game (cg/jump game path)]
+    (cst/update-game update-game)))
 
 (defn move-view [move path focus is-first]
   [:span {:className (str "move" (when focus " focus")) :on-click #(update-board path)}
@@ -77,7 +77,7 @@
                        ])))])
 
 (defn editor []
-  (let [game (:game @cst/main-buffer) current-path (cg/current-path game)]
+  (let [game (cst/active-game) current-path (cg/current-path game)]
     [:div
      [buttons]
      [variation-view (rest (zip/root game)) current-path 0]])) ; skip the start-node

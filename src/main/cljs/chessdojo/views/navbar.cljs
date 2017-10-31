@@ -3,9 +3,7 @@
             [chessdojo.state :as cst]))
 
 (defn move [direction]
-  (let [current-game (:game @cst/main-buffer)]
-    (swap! cst/main-buffer assoc :game (cg/navigate current-game direction)))
-  )
+  (cst/update-game (cg/navigate (cst/active-game) direction)))
 
 (defn navbar []
   [:div.button-group.navbar.text-center

@@ -5,26 +5,23 @@
 
 (enable-console-print!)
 
-(defn set-main-buffer [id]
-  (let [buffer (first (filter #(= id (:id %)) @cst/buffers))]
-    (reset! cst/main-buffer buffer)))
-
 (defn- buffer-name [{title :Title white :White black :Black}]
   (cond
     (some? title) title
     (or white black) (str white " - " black)
     :default "???"))
 
-(defn listed-buffer-view [buffer]
-  (let [id (:id buffer) game-info (cg/game-info (:game buffer))]
-    ^{:key id} [:tr {:on-click #(set-main-buffer id)}
+(defn listed-buffer-view [id]
+  (let [game (:game (get @cst/buffers id))
+        game-info (cg/game-info game)]
+    ^{:key id} [:tr {:on-click #(cst/switch-active-buffer id)}
                 [:td (buffer-name game-info)]]))
 
 (defn buffers-view []
   [:table.table.table-striped.table-hover.table-condensed.small
    [:tbody
-    (for [buffer @cst/buffers]
-      (listed-buffer-view buffer))]])
+    (doall
+      (map listed-buffer-view (keys @cst/buffers)))]])
 
 (defn buffers []
   [:div.panel.panel-default
