@@ -64,5 +64,5 @@
 (defonce board-updater (reagent/track! update-board))
 
 (defn board []
-  [:div.blue
+  [:div.blue.board
    [chessground]])

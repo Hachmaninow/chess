@@ -15,9 +15,9 @@
     [:div.col-lg-12]]
    [:div.row
     [:div.col-lg-3
-     [browser]
-     [buffers]]
+     [browser]]
     [:div.col-lg-5
+     [buffers]
      [board]
      [navbar]]
     [:div.col-lg-4

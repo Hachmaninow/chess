@@ -14,16 +14,16 @@
 (defn listed-buffer-view [id]
   (let [game (:game (get @cst/buffers id))
         game-info (cg/game-info game)]
-    ^{:key id} [:tr {:on-click #(cst/switch-active-buffer id)}
-                [:td (buffer-name game-info)]]))
+    ^{:key id} [:li.nav-item {:class-name (when (= id @cst/active-buffer-id) "active")}
+                [:a {:on-click #(cst/switch-active-buffer id)
+                     :style    {:padding "10px 5px"}} (buffer-name game-info)]]))
+
 
 (defn buffers-view []
-  [:table.table.table-striped.table-hover.table-condensed.small
-   [:tbody
-    (doall
-      (map listed-buffer-view (keys @cst/buffers)))]])
+  [:ul.nav.nav-tabs.small
+   (doall
+     (map listed-buffer-view (keys @cst/buffers)))])
 
 (defn buffers []
-  [:div.panel.panel-default
-   [:div.panel-heading "Buffers"]
+  [:div
    [buffers-view]])

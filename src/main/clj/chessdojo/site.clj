@@ -1,6 +1,5 @@
 (ns chessdojo.site
-  (:require [chessdojo.database :as cdb]
-            [compojure.core :refer [GET defroutes]]
+  (:require [compojure.core :refer [GET defroutes]]
             [compojure.route :refer [not-found resources]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-js include-css]]

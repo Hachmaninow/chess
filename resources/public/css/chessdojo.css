@@ -40,6 +40,10 @@ div.navbar {
     margin-top: 20px;
 }
 
+div.board {
+    margin-top: 1px;
+}
+
 textarea.full-width {
     width: 100%;
 }
