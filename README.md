@@ -26,3 +26,15 @@ To run tests I use:
 To run the whole application using figwheel.
 
 `lein figwheel`
+
+
+### MongoDB
+
+For simple maintenance/debugging tasks the Mongo shell can be used:
+`docker exec -it chessdojo_mongo-db_1 mongo`
+
+Some sample commands:
+`show dbs`
+`use <db>`
+`db.games.find({_id : "b1a22603-2828-4835-bbcc-408a22f28008"});`
+`db.games.deleteOne({_id : "74860980-4c1c-4e5a-a6b4-da5d4e1726f2"});`
