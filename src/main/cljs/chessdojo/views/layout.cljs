@@ -21,18 +21,16 @@
      [board]
      [navbar]]
     [:div.col-lg-4
-     [editor]]]]
-  )
+     [editor]]]])
 
 (defn mount-grid []
   (reagent/render [grid-layout] (.getElementById js/document "mount")))
 
-
 (defn dialogs []
   [:div
    [chessdojo.dialogs.move-comment-editor/render]
-   [chessdojo.dialogs.game-info-editor/render]]
-  )
+   [chessdojo.dialogs.game-info-editor/render]
+   [chessdojo.dialogs.import-inbox-editor/render]])
 
 (defn mount-dialogs []
   (reagent/render [dialogs] (.getElementById js/document "dialogs")))

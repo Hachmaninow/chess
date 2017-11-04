@@ -9,7 +9,7 @@
 
 (defn save-game-button []
   [:button.btn.btn-default
-   {:type "button" :on-click gateway/save-game} [:span.glyphicon.glyphicon-hdd]])
+   {:type "button" :on-click gateway/save-game} [:span.glyphicon.glyphicon-save]])
 
 (defn buttons []
   [:div.btn-group

@@ -1,7 +1,8 @@
 (ns chessdojo.views.browser
   (:require
     [chessdojo.gateway :as gateway]
-    [chessdojo.state :as cst]))
+    [chessdojo.state :as cst]
+    [chessdojo.dialogs.import-inbox-editor :as import-inbox-editor]))
 
 (defn listed-game-view [game]
   (let [id (:_id game)
@@ -19,5 +20,8 @@
 
 (defn browser []
   [:div.panel.panel-default
-   [:div.panel-heading "Inbox"]
+   [:div.panel-heading
+    [:span "Inbox"]
+    [:span.button-group.pull-right
+     [import-inbox-editor/open-import-inbox-editor-button]]]
    [inbox-view]])

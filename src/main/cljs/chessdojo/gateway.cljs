@@ -8,11 +8,6 @@
 
 (enable-console-print!)
 
-;(defn ^:export import-game [pgn]
-;  (go
-;    (let [response (<! (http/post (str "http://localhost:3449/api/inbox") {:body pgn :content-type "text/plain"}))]
-;      (fetch-game-list))))
-
 (defn save-game []
   (go
     (let [id @cst/active-buffer-id
@@ -34,3 +29,8 @@
           game (cg/with-game-info (cd/inflate-game (cljs.reader/read-string dgn)) game-info)
           game (-> dgn cljs.reader/read-string cd/inflate-game (cg/with-game-info game-info))]
       (cst/open-buffer id game))))
+
+(defn import-to-inbox [pgn]
+  (go
+    (let [response (<! (http/post (str "http://localhost:3449/api/inbox") {:body pgn :content-type "text/plain"}))]
+      (load-game-list))))
