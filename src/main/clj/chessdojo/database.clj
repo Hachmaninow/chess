@@ -28,7 +28,7 @@
 
 
 (defn store-game-record [game-record]
-  (mc/insert-and-return @db collection game-record))
+  (mc/save-and-return @db collection game-record))
 
 (defn list-games []
   (mc/find-maps @db collection {}))

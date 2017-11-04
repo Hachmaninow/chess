@@ -12,7 +12,7 @@
 
 ; start with a single scratch buffer to begin with
 (def active-buffer-id
-  (reagent/atom (str "scratch-" (random-uuid))))
+  (reagent/atom (str (random-uuid))))
 
 (def buffers
   (reagent/atom {@active-buffer-id {:game cg/new-game}}))

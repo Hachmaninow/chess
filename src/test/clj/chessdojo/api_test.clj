@@ -108,6 +108,29 @@
                             (content-type-edn)
                             (accept-edn))))))))
 
+
+(deftest put-game
+  (testing "json for edn"
+    (with-redefs [cdb/store-game-record dummy-store-game-data]
+      (is (= {:status  200
+              :headers {"Content-Type" "application/json; charset=utf-8" "Content-Length" "119"}
+              :body    "{\"_id\":\"f846f656-028f-4fa2-a36b-36dbbd18f00d\",\"dgn\":\"(d4 d5 c4 c6 Nc3)\",\"game-info\":{\"White\":\"Anand\",\"Black\":\"Karpow\"}}"}
+            (make-request (->
+                            (request :put "/api/games/f846f656-028f-4fa2-a36b-36dbbd18f00d")
+                            (body (str dummy-game-data))
+                            (content-type-edn)))))))
+  (testing "edn for edn"
+    (with-redefs [cdb/store-game-record dummy-store-game-data]
+      (is (= {:status  200
+              :headers {"Content-Type" "application/edn; charset=utf-8" "Content-Length" "119"}
+              :body    "{:_id \"f846f656-028f-4fa2-a36b-36dbbd18f00d\", :dgn \"(d4 d5 c4 c6 Nc3)\", :game-info {\"White\" \"Anand\", \"Black\" \"Karpow\"}}"}
+            (make-request (->
+                            (request :put "/api/games/f846f656-028f-4fa2-a36b-36dbbd18f00d")
+                            (body (str dummy-game-data))
+                            (content-type-edn)
+                            (accept-edn))))))))
+
+
 (deftest post-inbox
   (testing "inbox"
     (with-redefs [cdb/store-game-record dummy-store-game-data

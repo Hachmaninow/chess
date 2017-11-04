@@ -36,9 +36,7 @@
                                 :after insert-move
                                 }
                    }
-     }
-    )
-  )
+     }))
 
 (defn render-chessground []
   [:div#chessground.chessground.merida.center-block])

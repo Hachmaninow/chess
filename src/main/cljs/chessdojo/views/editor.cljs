@@ -1,19 +1,21 @@
 (ns chessdojo.views.editor
   (:require [chessdojo.game :as cg]
             [chessdojo.notation :as cn]
+            [chessdojo.gateway :as gateway]
             [chessdojo.state :as cst]
             [clojure.zip :as zip]
-            [chessdojo.fen :as cf]
             [chessdojo.dialogs.move-comment-editor :refer [edit-move-comment-button]]
             [chessdojo.dialogs.game-info-editor :refer [edit-game-info-button]]))
 
+(defn save-game-button []
+  [:button.btn.btn-default
+   {:type "button" :on-click gateway/save-game} [:span.glyphicon.glyphicon-hdd]])
+
 (defn buttons []
   [:div.btn-group
+   [save-game-button]
    [edit-game-info-button]
    [edit-move-comment-button]])
-;[:input {:type "button" :value "Down" :on-click #(reset! current-game (down @current-game))}]
-;[:input {:type "button" :value "Right" :on-click #(reset! current-game (right @current-game))}]
-
 
 (def annotation-glyphs {:$1   "!"
                         :$2   "?"
@@ -69,12 +71,14 @@
    (for [node nodes]
      (if (vector? node)
        ^{:key (:path (meta node))} [variation-view node current-path (inc depth)]
-       (let [move (:move node) path (:path (meta node)) comment (:comment node) annotations (:annotations node)]
+       (let [move (:move node)
+             path (:path (meta node))
+             comment (:comment node)
+             annotations (:annotations node)]
          ^{:key path} [:span
                        [move-view move path (= current-path path) (identical? (first nodes) node)]
                        (when annotations [annotation-view annotations])
-                       (when comment [comment-view comment])
-                       ])))])
+                       (when comment [comment-view comment])])))])
 
 (defn editor []
   (let [game (cst/active-game) current-path (cg/current-path game)]

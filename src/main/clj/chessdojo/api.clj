@@ -12,11 +12,13 @@
 (defroutes rest-api
   (GET "/api/taxonomy" []
     (response (ct/read-taxonomy)))
-  
+
   (GET "/api/games" []
     (response (cdb/list-games)))
   (GET "/api/games/:id" [id]
     (response (cdb/restore-game-record id)))
+  (PUT "/api/games/:id" [id :as request]
+    (response (cdb/store-game-record (assoc (:body-params request) :_id id))))
   (POST "/api/games" request
     (response (cdb/store-game-record (:body-params request))))
 
