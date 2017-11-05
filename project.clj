@@ -31,8 +31,6 @@
    [environ "1.1.0"]                                        ; Library for managing environment variables in Clojure
 
    [com.novemberain/monger "3.0.2"]
-   [me.raynes/fs "1.4.6"]                                   ; File system utilities for Clojure
-   [io.forward/yaml "1.0.6"]                                ; A fast, idiomatic and easy to use Clojure YAML library. Based on Snake YAML
 
    [cljs-http "0.1.42"]                                     ; A ClojureScript HTTP library.
 
