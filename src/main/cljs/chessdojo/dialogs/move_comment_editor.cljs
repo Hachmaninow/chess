@@ -1,6 +1,5 @@
 (ns chessdojo.dialogs.move-comment-editor
-  (:require [goog.string :as gstring]
-            [chessdojo.state :as cst]
+  (:require [chessdojo.state :as cst]
             [chessdojo.game :as cg]
             [reagent.core :as reagent]))
 
@@ -19,7 +18,7 @@
     [:div.modal-content
      [:div.modal-header
       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-       [:span {:aria-hidden true} (gstring/unescapeEntities "&times;")]]
+       [:span {:aria-hidden true} "×"]]
       [:h4.modal-title "Edit move comment"]
       [:textarea.full-width {:rows 10 :value (str @current-value) :on-change update-current-value}]
       [:div.modal-footer

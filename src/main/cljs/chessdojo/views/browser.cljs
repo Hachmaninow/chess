@@ -2,7 +2,8 @@
   (:require
     [chessdojo.gateway :as gateway]
     [chessdojo.state :as cst]
-    [chessdojo.dialogs.import-inbox-editor :as import-inbox-editor]))
+    [chessdojo.dialogs.import-inbox-editor :as import-inbox-editor]
+    [chessdojo.dialogs.taxonomy-editor :as taxonomy-editor]))
 
 (defn listed-game-view [game]
   (let [id (:_id game)
@@ -23,5 +24,6 @@
    [:div.panel-heading
     [:span "Inbox"]
     [:span.button-group.pull-right
-     [import-inbox-editor/open-import-inbox-editor-button]]]
+     [import-inbox-editor/open-import-inbox-editor-button]
+     [taxonomy-editor/open-taxonomy-editor-button]]]
    [inbox-view]])

@@ -1,6 +1,5 @@
 (ns chessdojo.dialogs.game-info-editor
-  (:require [goog.string :as gstring]
-            [chessdojo.state :as cst]
+  (:require [chessdojo.state :as cst]
             [chessdojo.game :as cg]
             [clojure.string :as string]
             [reagent.core :as reagent]))
@@ -31,7 +30,7 @@
     [:div.modal-content
      [:div.modal-header
       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-       [:span {:aria-hidden true} (gstring/unescapeEntities "&times;")]]
+       [:span {:aria-hidden true} "×"]]
       [:h4.modal-title "Edit game info"]
       [:textarea.full-width {:rows 10 :value (str @current-value) :on-change update-current-value}]
       [:div.modal-footer

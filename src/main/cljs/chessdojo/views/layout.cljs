@@ -7,6 +7,7 @@
     [chessdojo.views.navbar :refer [navbar]]
     [chessdojo.dialogs.move-comment-editor]
     [chessdojo.dialogs.game-info-editor]
+    [chessdojo.dialogs.taxonomy-editor :as taxonomy-editor]
     [reagent.core :as reagent]))
 
 (defn grid-layout []
@@ -30,7 +31,9 @@
   [:div
    [chessdojo.dialogs.move-comment-editor/render]
    [chessdojo.dialogs.game-info-editor/render]
-   [chessdojo.dialogs.import-inbox-editor/render]])
+   [chessdojo.dialogs.import-inbox-editor/render]
+   [taxonomy-editor/render-main]
+   [taxonomy-editor/render-edit-taxon]])
 
 (defn mount-dialogs []
   (reagent/render [dialogs] (.getElementById js/document "dialogs")))

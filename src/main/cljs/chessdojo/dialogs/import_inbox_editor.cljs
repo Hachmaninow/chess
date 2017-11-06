@@ -1,8 +1,5 @@
 (ns chessdojo.dialogs.import-inbox-editor
-  (:require [goog.string :as gstring]
-            [chessdojo.state :as cst]
-            [chessdojo.game :as cg]
-            [reagent.core :as reagent]))
+  (:require [reagent.core :as reagent]))
 
 (def current-value
   (reagent/atom ""))
@@ -16,7 +13,7 @@
     [:div.modal-content
      [:div.modal-header
       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-       [:span {:aria-hidden true} (gstring/unescapeEntities "&times;")]]
+       [:span {:aria-hidden true} "×"]]
       [:h4.modal-title "Import PGN to inbox "]
       [:textarea.full-width {:rows 10 :value (str @current-value) :on-change update-current-value}]
       [:div.modal-footer
