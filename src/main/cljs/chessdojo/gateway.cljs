@@ -34,3 +34,17 @@
   (go
     (let [response (<! (http/post (str "http://localhost:3449/api/inbox") {:body pgn :content-type "text/plain"}))]
       (load-game-list))))
+
+(defn load-taxonomy []
+  (go
+    (let [response (<! (http/get (str "http://localhost:3449/api/taxonomy")))]
+      (reset! cst/taxonomy (js->clj (:body response)))
+      (println "Loaded taxonomy:" @cst/taxonomy))))
+
+(defn save-taxon [{id :_id :as body-map}]
+  (go
+    (let [response (<! (http/put (str "http://localhost:3449/api/taxonomy/" id)
+                         {:body (pr-str (dissoc body-map :_id)) :content-type "application/edn"}))]
+      (println "Taxon saved:" body-map (:status response))
+      (load-taxonomy)
+      )))

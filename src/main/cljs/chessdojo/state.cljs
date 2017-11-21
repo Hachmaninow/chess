@@ -40,3 +40,9 @@
 (defn active-node []
   (zip/node (:game (active-buffer))))
 
+
+; taxonomy handling
+
+(def taxonomy
+  (reagent/atom nil))
+

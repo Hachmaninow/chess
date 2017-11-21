@@ -8,5 +8,4 @@
   (layout/mount-grid)
   (layout/mount-dialogs)
   (gateway/load-game-list)
-  ;(fetch-taxonomy)
-  )
+  (gateway/load-taxonomy))

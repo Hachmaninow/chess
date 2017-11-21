@@ -11,7 +11,9 @@
 
 (defroutes rest-api
   (GET "/api/taxonomy" []
-    (response (ct/read-taxonomy)))
+    (response (ct/organize-taxonomy)))
+  (PUT "/api/taxonomy/:id" [id :as request]
+    (response (cdb/store-taxon (assoc (:body-params request) :_id id))))
 
   (GET "/api/games" []
     (response (cdb/list-games)))

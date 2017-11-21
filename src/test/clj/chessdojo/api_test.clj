@@ -28,7 +28,7 @@
     }])
 
 (deftest get-taxonomy
-  (with-redefs [ct/read-taxonomy read-taxonomy-stub]
+  (with-redefs [ct/organize-taxonomy read-taxonomy-stub]
     (is (= {:body    (str "[{\"name\":\"Openings\",\"text\":\"Openings\","
                        "\"nodes\":[{\"name\":\"Sicilian\",\"line\":\"1.e4 c5\",\"text\":\"Sicilian\","
                        "\"nodes\":[]}]}]")

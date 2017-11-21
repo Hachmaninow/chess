@@ -8,7 +8,7 @@
 
 (defn reset-database []
   (assert (str/includes? database "test"))
-  (mc/remove @db collection {}))
+  (mc/remove @db games-collection {}))
 
 (def sample-game
   (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/inflate-game))

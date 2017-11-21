@@ -128,7 +128,6 @@
 
               :env          {
                              :mongo-database-name   "chessdojo_test"
-                             :mongo-collection-name "games"
                              }
 
               :cljsbuild    {:builds {:app {:source-paths ["env/dev/cljs"]
@@ -137,14 +136,12 @@
              :test
              {:env {
                     :mongo-database-name   "chessdojo_test"
-                    :mongo-collection-name "games"
                     }
               }
 
              :prod
              {:env {
                     :mongo-database-name   "chessdojo_test"
-                    :mongo-collection-name "games"
                     }
               }
 

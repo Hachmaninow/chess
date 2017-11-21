@@ -47,3 +47,7 @@ div.board {
 textarea.full-width {
     width: 100%;
 }
+
+div.taxonomy-level {
+    margin-left: 10px;
+}
