@@ -24,6 +24,12 @@
 (defn update-current-value [control]
   (reset! current-value (-> control .-target .-value)))
 
+(defn- render-taxon-option [taxon]
+  ^{:key (:_id taxon)} [:option {:value (:_id taxon)} (:name taxon)])
+
+(defn flatten-taxonomy [taxon]
+  (concat [taxon] (map flatten-taxonomy (:children taxon))))
+
 (defn render []
   [:div#game-info-editor.modal.fade {:tab-index "-1" :role "dialog"}
    [:div.modal-dialog {:role "document"}
@@ -32,12 +38,12 @@
       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
        [:span {:aria-hidden true} "×"]]
       [:h4.modal-title "Edit game info"]
+      [:select.form-control
+       (map render-taxon-option (flatten (map flatten-taxonomy @cst/taxonomy)))]
       [:textarea.full-width {:rows 10 :value (str @current-value) :on-change update-current-value}]
       [:div.modal-footer
-       [:button.btn.btn-default {:type "button" :data-dismiss "modal"}
-        "Cancel"]
-       [:button.btn.btn-primary {:type "button" :data-dismiss "modal" :on-click update-game-info}
-        "Ok"]]]]]])
+       [:button.btn.btn-default {:type "button" :data-dismiss "modal"} "Cancel"]
+       [:button.btn.btn-primary {:type "button" :data-dismiss "modal" :on-click update-game-info} "Ok"]]]]]])
 
 (defn init-current-value []
   (let [game-info (cg/game-info (cst/active-game))]

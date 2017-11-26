@@ -1,6 +1,7 @@
 (ns chessdojo.dialogs.taxonomy-editor
   (:require [reagent.core :as reagent]
-            [chessdojo.gateway :as gateway]))
+            [chessdojo.gateway :as gateway]
+            [chessdojo.state :as cst]))
 
 (enable-console-print!)
 
@@ -34,7 +35,7 @@
        [:span {:aria-hidden true} "×"]]
       [:h4.modal-title "Edit taxonomy"]
       [:div.well {:style {:height 450}}
-       (map render-taxon @chessdojo.state/taxonomy)]
+       (map render-taxon @cst/taxonomy)]
       [:div.modal-footer
        [:a.btn.btn-primary {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! current-taxon (init-taxon new-taxon nil))} "New main taxon"]
        [:button.btn.btn-primary {:type "button" :data-dismiss "modal"} "Close"]]]]]])
