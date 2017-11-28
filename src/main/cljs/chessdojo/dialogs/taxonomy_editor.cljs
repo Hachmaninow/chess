@@ -5,7 +5,7 @@
 
 (enable-console-print!)
 
-(def new-taxon {:_id (random-uuid) :name ""})
+(defn new-taxon []  {:_id (random-uuid) :name ""})
 
 (defn- init-taxon
   ([taxon] (init-taxon taxon (:parent taxon)))
@@ -22,7 +22,7 @@
   ^{:key (:_id taxon)}
   [:div.taxonomy-level {:style {:clear "both"}}
    [:span.pull-left (:name taxon) " [" (:_id taxon) "]"]
-   [:button.btn.btn-link.pull-right {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! current-taxon (init-taxon new-taxon (:_id taxon)))} "Create sub taxon"]
+   [:button.btn.btn-link.pull-right {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! current-taxon (init-taxon (new-taxon) (:_id taxon)))} "Create sub taxon"]
    [:button.btn.btn-link.pull-right {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! current-taxon (init-taxon taxon))} "Edit"]
    (when (:children taxon) (map render-taxon (:children taxon)))])
 
@@ -37,7 +37,7 @@
       [:div.well {:style {:height 450}}
        (map render-taxon @cst/taxonomy)]
       [:div.modal-footer
-       [:a.btn.btn-primary {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! current-taxon (init-taxon new-taxon nil))} "New main taxon"]
+       [:a.btn.btn-primary {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! current-taxon (init-taxon (new-taxon) nil))} "New main taxon"]
        [:button.btn.btn-primary {:type "button" :data-dismiss "modal"} "Close"]]]]]])
 
 
