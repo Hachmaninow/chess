@@ -6,9 +6,12 @@
 
 (enable-console-print!)
 
-; backing atom for state of modal
+; backing atom for state of textarea
 (def current-value
   (reagent/atom ""))
+
+(def current-taxonomy-placement
+  (reagent/atom nil))
 
 (defn str->game-info [game-info-str]
   (into {} (map #(string/split % "=") (string/split-lines game-info-str))))
@@ -30,6 +33,13 @@
 (defn flatten-taxonomy [taxon]
   (concat [taxon] (map flatten-taxonomy (:children taxon))))
 
+(defn taxonomy-placement-select []
+  [:select.form-control
+   (map render-taxon-option (flatten (map flatten-taxonomy @cst/taxonomy)))])
+
+(defn game-info-textarea []
+  [:textarea.full-width {:rows 10 :value (str @current-value) :on-change update-current-value}])
+
 (defn render []
   [:div#game-info-editor.modal.fade {:tab-index "-1" :role "dialog"}
    [:div.modal-dialog {:role "document"}
@@ -38,16 +48,19 @@
       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
        [:span {:aria-hidden true} "×"]]
       [:h4.modal-title "Edit game info"]
-      [:select.form-control
-       (map render-taxon-option (flatten (map flatten-taxonomy @cst/taxonomy)))]
-      [:textarea.full-width {:rows 10 :value (str @current-value) :on-change update-current-value}]
+      [taxonomy-placement-select]
+      [game-info-textarea]
       [:div.modal-footer
        [:button.btn.btn-default {:type "button" :data-dismiss "modal"} "Cancel"]
        [:button.btn.btn-primary {:type "button" :data-dismiss "modal" :on-click update-game-info} "Ok"]]]]]])
 
 (defn init-current-value []
   (let [game-info (cg/game-info (cst/active-game))]
-    (reset! current-value (game-info->str game-info))))
+    (reset! current-value (game-info->str game-info))
+    (reset! current-taxonomy-placement (game-info->str game-info))
+
+    )
+  )
 
 (defn edit-game-info-button []
   [:button.btn.btn-default

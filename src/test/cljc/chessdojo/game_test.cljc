@@ -268,3 +268,8 @@
                                                           (cg/soak-into :d5)
                                                           (cg/assoc-game-info :year 2015)
                                                           (cg/game-info))))))
+
+(deftest test-with-taxonomy-placement
+  (testing "when a taxonomy-placement is set for a game, then it can be retrieved anywhere"
+    (let [game (cg/soak :d4 :d5 :Nf3 :back :back :Nf6 :c4 :back :c3 :g6 :g3 :out :h4)]
+      (is (= "xyz" (-> game (cg/with-taxonomy-placement "xyz") (cg/soak-into :start) cg/taxonomy-placement))))))

@@ -121,7 +121,22 @@
 
 
 ;
+; game meta
+;
+
+; since a Zipper itself unfortunately has no meta, the meta of the start-node is used instead
+(defn with-game-meta
+  [game key value]
+  (let [cur-path (current-path game)
+        at-start (navigate game :start)
+        with-info (zip/replace at-start
+                    (vary-meta (zip/node at-start) assoc key value))]
+    (jump with-info cur-path)))
+
+
+;
 ; game info
+; game-info is a map of attributes about a game maintained as game meta
 ;
 
 (defn game-info
@@ -130,16 +145,24 @@
 
 (defn with-game-info
   [game game-info]
-  (let [cur-path (current-path game)
-        at-start (navigate game :start)
-        keywordized-game-info (walk/keywordize-keys game-info)
-        with-info (zip/replace at-start
-                    (vary-meta (zip/node at-start) assoc :game-info keywordized-game-info))]
-    (jump with-info cur-path)))
+  (with-game-meta game :game-info (walk/keywordize-keys game-info)))
 
 (defn assoc-game-info
   [game key val]
   (with-game-info game (assoc (game-info game) key val)))
+
+
+;
+; taxonomy-placement
+;
+
+(defn taxonomy-placement
+  [game]
+  (-> game (navigate :start) zip/node meta :taxonomy-placement))
+
+(defn with-taxonomy-placement
+  [game taxon-id]
+  (with-game-meta game :taxonomy-placement taxon-id))
 
 
 ;
