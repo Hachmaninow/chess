@@ -24,8 +24,14 @@
     (cst/update-game (cg/with-game-info (cst/active-game) (str->game-info @current-value)))
     (println (cg/game-info (cst/active-game)))))
 
-(defn update-current-value [control]
-  (reset! current-value (-> control .-target .-value)))
+(defn update-current-value [event]
+  (reset! current-value (-> event .-target .-value)))
+
+(defn update-taxonomy-placement [event]
+  (let [selected-taxon (-> event .-target .-value)]
+    (println selected-taxon)
+    (reset! current-taxonomy-placement selected-taxon))
+  )
 
 (defn- render-taxon-option [taxon]
   ^{:key (:_id taxon)} [:option {:value (:_id taxon)} (:name taxon)])
@@ -34,7 +40,7 @@
   (concat [taxon] (map flatten-taxonomy (:children taxon))))
 
 (defn taxonomy-placement-select []
-  [:select.form-control
+  [:select.form-control  {:value @current-taxonomy-placement :on-change update-taxonomy-placement}
    (map render-taxon-option (flatten (map flatten-taxonomy @cst/taxonomy)))])
 
 (defn game-info-textarea []
@@ -55,12 +61,8 @@
        [:button.btn.btn-primary {:type "button" :data-dismiss "modal" :on-click update-game-info} "Ok"]]]]]])
 
 (defn init-current-value []
-  (let [game-info (cg/game-info (cst/active-game))]
-    (reset! current-value (game-info->str game-info))
-    (reset! current-taxonomy-placement (game-info->str game-info))
-
-    )
-  )
+  (reset! current-value (game-info->str (cg/game-info (cst/active-game))))
+  (reset! current-taxonomy-placement (cg/taxonomy-placement (cst/active-game))))
 
 (defn edit-game-info-button []
   [:button.btn.btn-default

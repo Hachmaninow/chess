@@ -8,12 +8,16 @@
 
 (enable-console-print!)
 
+(defn build-body-map [game]
+  {:dgn (pr-str (cd/deflate game))
+   :game-info (cg/game-info game)
+   :taxonomy-placement (cg/taxonomy-placement game)})
+
 (defn save-game []
   (go
     (let [id @cst/active-buffer-id
           game (cst/active-game)
-          body-map {:dgn (pr-str (cd/deflate game)) :game-info (cg/game-info game)}
-          response (<! (http/put (str "http://localhost:3449/api/games/" id) {:body (pr-str body-map) :content-type "application/edn"}))]
+          response (<! (http/put (str "http://localhost:3449/api/games/" id) {:body (pr-str (build-body-map game)) :content-type "application/edn"}))]
       (println "Game saved: " (:status response) (:body response)))))
 
 (defn load-game-list []
@@ -25,9 +29,12 @@
   (go
     (println "Loading game:" id)
     (let [response (<! (http/get (str "http://localhost:3449/api/games/" id)))
-          {id :_id dgn :dgn game-info :game-info} (js->clj (:body response))
-          game (cg/with-game-info (cd/inflate-game (cljs.reader/read-string dgn)) game-info)
-          game (-> dgn cljs.reader/read-string cd/inflate-game (cg/with-game-info game-info))]
+          {id :_id dgn :dgn game-info :game-info taxonomy-placement :taxonomy-placement} (js->clj (:body response))
+          game (-> dgn
+                 cljs.reader/read-string
+                 cd/inflate-game
+                 (cg/with-game-info game-info)
+                 (cg/with-taxonomy-placement taxonomy-placement))]
       (cst/open-buffer id game))))
 
 (defn import-to-inbox [pgn]
