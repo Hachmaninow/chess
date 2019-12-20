@@ -5,11 +5,11 @@
   :plugins
   [[lein-environ "1.1.0" :hooks false]
    [lein-cljsbuild "1.1.7"]
-   [lein-doo "0.1.8"]]
+   [lein-doo "0.1.10"]]
 
   :dependencies
   [[org.flatland/ordered "1.5.7"]
-   [org.clojure/clojure "1.8.0"]
+   [org.clojure/clojure "1.10.1"]
    [org.clojure/clojurescript "1.10.597"]
 
    [ring "1.6.2"]
@@ -31,7 +31,7 @@
    [clj-time "0.12.0"]
    [environ "1.1.0"]                                        ; Library for managing environment variables in Clojure
 
-   [com.novemberain/monger "3.0.2"]
+   [com.novemberain/monger "3.1.0"]
 
    [cljs-http "0.1.42"]                                     ; A ClojureScript HTTP library.
 
@@ -78,9 +78,9 @@
                                              :main          "chessdojo.test-suite"
                                              :optimizations :none}}}}
 
-  :doo {
-        :paths {:karma "./node_modules/karma/bin/karma"}
-        }
+  ;{:doo {:paths {:karma "./node_modules/karma/bin/karma"}
+  ;       :build {:source-paths ["src" "test"]}
+  ;       :alias {:default [:firefox]}}}
 
   :test-selectors {:default    (complement :functional)
                    :functional :functional
