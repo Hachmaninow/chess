@@ -3,12 +3,13 @@
   :license {:name "Eclipse Public License" :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :plugins
-  [[lein-environ "1.1.0"]
+  [[lein-environ "1.1.0" :hooks false]
    [lein-cljsbuild "1.1.7"]
    [lein-doo "0.1.8"]]
 
   :dependencies
-  [[org.clojure/clojure "1.8.0"]
+  [[org.flatland/ordered "1.5.7"]
+   [org.clojure/clojure "1.8.0"]
    [org.clojure/clojurescript "1.9.854"]
 
    [ring "1.6.2"]
@@ -20,7 +21,7 @@
    [cljsjs/react "15.6.1-1"]
    [reagent "0.8.0-alpha1"]
 
-   [compojure "1.6.0"]                                      ; A concise routing library for Ring/Clojure
+   [compojure "1.6.1"]                                      ; A concise routing library for Ring/Clojure
 
    [hiccup "1.0.5"]                                         ; Fast library for rendering HTML in Clojure
 
