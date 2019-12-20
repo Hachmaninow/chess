@@ -10,7 +10,7 @@
   :dependencies
   [[org.flatland/ordered "1.5.7"]
    [org.clojure/clojure "1.8.0"]
-   [org.clojure/clojurescript "1.9.854"]
+   [org.clojure/clojurescript "1.10.597"]
 
    [ring "1.6.2"]
    [ring-server "0.5.0"]
@@ -37,7 +37,6 @@
 
    [spyscope "0.1.5"]
    [com.taoensso/timbre "4.7.4"]]
-
 
   :min-lein-version "2.6.1"
 
@@ -90,7 +89,7 @@
   :profiles {:dev
              {:dependencies [[ring/ring-mock "0.3.0"]
                              [ring/ring-devel "1.4.0"]
-                             [lein-figwheel "0.5.14" :exclusions [org.clojure/core.memoize
+                             [lein-figwheel "0.5.19" :exclusions [org.clojure/core.memoize
                                                                   ring/ring-core
                                                                   org.clojure/clojure
                                                                   org.ow2.asm/asm-all
@@ -104,7 +103,7 @@
                              [prone "0.8.3"]]
 
               :source-paths ["env/dev/clj"]
-              :plugins      [[lein-figwheel "0.5.14" :exclusions [org.clojure/core.memoize
+              :plugins      [[lein-figwheel "0.5.19" :exclusions [org.clojure/core.memoize
                                                                   ring/ring-core
                                                                   org.clojure/clojure
                                                                   org.ow2.asm/asm-all
