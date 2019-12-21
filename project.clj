@@ -8,9 +8,9 @@
    [lein-doo "0.1.10"]]
 
   :dependencies
-  [[org.flatland/ordered "1.5.7"]
-   [org.clojure/clojure "1.10.1"]
+  [[org.clojure/clojure "1.10.1"]
    [org.clojure/clojurescript "1.10.597"]
+   [org.flatland/ordered "1.5.7"]
 
    [ring "1.6.2"]
    [ring-server "0.5.0"]
@@ -18,8 +18,8 @@
    [ring/ring-json "0.4.0"]
    [ring-middleware-format "0.7.2"]                         ; Ring middleware for parsing parameters and emitting responses in JSON or other formats
 
-   [cljsjs/react "15.6.1-1"]
-   [reagent "0.8.0-alpha1"]
+   [cljsjs/react "16.12.0-1"]
+   [reagent "0.8.1"]
 
    [compojure "1.6.1"]                                      ; A concise routing library for Ring/Clojure
 
@@ -38,7 +38,7 @@
    [spyscope "0.1.5"]
    [com.taoensso/timbre "4.7.4"]]
 
-  :min-lein-version "2.6.1"
+  :min-lein-version "2.9.1"
 
   :source-paths ["src/main/clj" "src/main/cljc"]
 
@@ -46,9 +46,9 @@
 
   :resource-paths ["resources" "target/cljsbuild"]
 
-  :clean-targets ^{:protect false} [:target-path
-                                    [:cljsbuild :builds :app :compiler :output-dir]
-                                    [:cljsbuild :builds :app :compiler :output-to]]
+  :clean-targets [:target-path
+                  [:cljsbuild :builds :app :compiler :output-dir]
+                  [:cljsbuild :builds :app :compiler :output-to]]
 
   :uberjar-name "chessdojo.jar"
 
@@ -59,7 +59,7 @@
 
   :ring {:handler chessdojo.app/api-and-site :uberwar-name "chessdojo.war"}
 
-  :minify-assets {:assets {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
+  ;:minify-assets {:assets {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
 
   :cljsbuild {
               :builds {:app  {:source-paths ["src/main/cljs"
@@ -127,7 +127,7 @@
                              }
 
               :env          {
-                             :mongo-database-name   "chessdojo_test"
+                             :mongo-database-name "chessdojo_test"
                              }
 
               :cljsbuild    {:builds {:app {:source-paths ["env/dev/cljs"]
@@ -135,13 +135,13 @@
                                                            :source-map true}}}}}
              :test
              {:env {
-                    :mongo-database-name   "chessdojo_test"
+                    :mongo-database-name "chessdojo_test"
                     }
               }
 
              :prod
              {:env {
-                    :mongo-database-name   "chessdojo_test"
+                    :mongo-database-name "chessdojo_test"
                     }
               }
 
