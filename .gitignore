@@ -18,3 +18,4 @@ pom.xml.asc
 /data
 /vendor
 /node_modules
+.rebel_readline_history

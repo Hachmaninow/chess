@@ -1,6 +1,5 @@
 (ns chessdojo.rules
-  (:require [clojure.set :refer [intersection]]
-            [taoensso.timbre :as t]))
+  (:require [clojure.set :refer [intersection]]))
 
 ;
 ; basics

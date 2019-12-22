@@ -6,18 +6,23 @@
 
 (enable-console-print!)
 
-; backing atom for state of textarea
+; backing atoms for state
+
 (def current-value
   (reagent/atom ""))
 
 (def current-taxonomy-placement
   (reagent/atom nil))
 
+; helpers to convert newline-separated key-values to a map and vice-versa
+
 (defn str->game-info [game-info-str]
   (into {} (map #(string/split % "=") (string/split-lines game-info-str))))
 
 (defn game-info->str [game-info]
   (string/join "\n" (map (fn [[k v]] (str (name k) "=" v)) game-info)))
+
+; event handlers
 
 (defn update-game-info []
   (do

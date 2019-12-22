@@ -1,6 +1,8 @@
 (ns chessdojo.notation
   (:require [chessdojo.rules :as cr]
-            [clojure.zip :as zip]))
+            [clojure.zip :as zip]
+            [clojure.string :as string]
+            ))
 
 ; standard algebraic notation
 ; https://chessprogramming.wikispaces.com/Algebraic+Chess+Notation
@@ -24,12 +26,12 @@
             (if promote-to (str "=" (name (cr/piece-type promote-to)))))))
 
 (defn- variation->str [variation-vec focussed-move]
-  (clojure.string/join " " (map #(cond
-                                  (vector? %) (str "(" (variation->str % focussed-move) ")")
-                                  (:move %) (str
-                                              (when (identical? (:move %) focussed-move) ">")
-                                              (san (:move %)))
-                                  ) variation-vec)))
+  (string/join " " (map #(cond
+                           (vector? %) (str "(" (variation->str % focussed-move) ")")
+                           (:move %) (str
+                                       (when (identical? (:move %) focussed-move) ">")
+                                       (san (:move %)))
+                           ) variation-vec)))
 
 (defn notation [game]
   (variation->str (rest (zip/root game)) (:move (zip/node game)))) ; skip the first element which is the start position
