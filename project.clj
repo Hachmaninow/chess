@@ -12,29 +12,27 @@
   [[org.clojure/clojure "1.10.1"]
    [org.clojure/clojurescript "1.10.597"]
 
+   [environ "1.1.0"]                                        ; Library for managing environment variables in Clojure
+
    [ring "1.8.0"]                                           ; Clojure HTTP server abstraction
    [ring-server "0.5.0"]                                    ; Web server to serve a Ring handler
    [ring/ring-defaults "0.3.2"]                             ; A library to provide sensible Ring middleware defaults
    [ring/ring-json "0.5.0"]                                 ; Ring middleware for handling JSON
    [ring-middleware-format "0.7.2"]                         ; Ring middleware for parsing parameters and emitting responses in JSON or other formats
-
-   [cljsjs/react "16.12.0-1"]
-   [reagent "0.8.1"]
-
    [compojure "1.6.1"]                                      ; A concise routing library for Ring/Clojure
-
    [hiccup "1.0.5"]                                         ; Fast library for rendering HTML in Clojure
 
+   [cljsjs/react "16.12.0-1"]                               ; React packaged up with Google Closure externs
+   [reagent "0.8.1"]                                        ; Minimalistic React for ClojureScript
+
    [instaparse "1.4.10"]
-
    [cheshire "5.8.0"]                                       ; Clojure JSON and JSON SMILE (binary json format) encoding/decoding
-   [environ "1.1.0"]                                        ; Library for managing environment variables in Clojure
 
-   [com.novemberain/monger "3.1.0"]
+   [com.novemberain/monger "3.1.0"]                         ; MongoDB client
 
    [cljs-http "0.1.42"]                                     ; A ClojureScript HTTP library.
 
-   [spyscope "0.1.6"]
+   [spyscope "0.1.6"]                                       ; Debugging
    [com.taoensso/timbre "4.10.0"]]                          ; Profiling
 
   :managed-dependencies [[org.flatland/ordered "1.5.7"]]
@@ -68,6 +66,9 @@
                                              :output-to     "target/browser_tests.js"
                                              :main          "chessdojo.test-suite"
                                              :optimizations :none}}}}
+  ;
+  ;:doo {:builds [{:id "test"}]
+  ;      :alias  {:default [:firefox]}}
 
   ;{:doo {:paths {:karma "./node_modules/karma/bin/karma"}
   ;       :build {:source-paths ["src" "test"]}
