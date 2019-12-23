@@ -1,6 +1,6 @@
 # Chessdojo
 
-Manage chess games and positions.
+Manage and practice chess studies.
 
 ## Usage
 
@@ -10,7 +10,7 @@ Manage chess games and positions.
 
 ## Development
 
-I personally use "lein-test-refresh" to automatically rerun tests for Clojure.
+I use "lein-test-refresh" to automatically rerun tests for Clojure.
 
 `lein test-refresh :changes-only`
 
@@ -20,15 +20,13 @@ which is then called by doo [https://github.com/bensu/doo].
 
 To run tests I use:
 
-`lein doo chrome browser-test auto` 
-
+`lein doo chrome test auto` 
 
 To run the whole application using figwheel.
 
 `lein figwheel`
 
-
-### MongoDB
+## MongoDB
 
 For simple maintenance/debugging tasks the Mongo shell can be used:
 `docker exec -it chessdojo_mongo-db_1 mongo`
