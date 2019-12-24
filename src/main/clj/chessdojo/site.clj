@@ -22,7 +22,6 @@
       [:div#mount]
       [:div#dialogs]
       (include-js "js/chessground.js")
-      (include-js "js/chessdojo.js")
       (include-js "js/jquery-2.1.4.min.js")
       (include-js "js/bootstrap.min.js")
       (include-js "js/app.js")]]))

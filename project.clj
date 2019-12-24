@@ -23,18 +23,21 @@
 
                  [cljsjs/react "16.12.0-1"]                 ; React packaged up with Google Closure externs
                  [reagent "0.8.1"]                          ; Minimalistic React for ClojureScript
+                 [reagent-forms "0.5.43"]                   ; Bootstrap form components for Reagent
 
                  [instaparse "1.4.10"]                      ; Build parsers in Clojure
                  [cheshire "5.9.0"]                         ; JSON support
 
-                 [com.novemberain/monger "3.1.0"]           ; MongoDB client
+                 [com.novemberain/monger "3.5.0"]           ; MongoDB client
 
-                 [cljs-http "0.1.42"]                       ; A ClojureScript HTTP library
+                 [cljs-http "0.1.46"]                       ; A ClojureScript HTTP library
 
                  [spyscope "0.1.6"]                         ; Debugging
                  [com.taoensso/timbre "4.10.0"]]            ; Profiling
 
-  :managed-dependencies [[org.flatland/ordered "1.5.7"]]    ; Explicitly manage because of problems in Java 9
+  :managed-dependencies [[org.flatland/ordered "1.5.7"]     ; Explicitly manage because of problems in Java 9
+                         [com.cognitect/transit-cljs "0.8.243"]]
+
 
   :min-lein-version "2.9.1"
 
