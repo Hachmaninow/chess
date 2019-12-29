@@ -3,7 +3,8 @@
     [chessdojo.state :as cst]
     [chessdojo.game :as cg]
     [chessdojo.views.board :refer [board]]
-    [chessdojo.views.browser :refer [browser inbox-view]]
+    [chessdojo.views.browser :refer [browser]]
+    [chessdojo.views.inbox :refer [inbox]]
     [chessdojo.views.buffers :refer [buffers]]
     [chessdojo.views.editor :refer [editor]]
     [chessdojo.views.navbar :refer [navbar]]
@@ -24,11 +25,11 @@
       (reset! cst/active-tab :study)
       (cst/switch-active-buffer activated-tab-or-id))))
 
-(def browser-tab
-  [:li.nav-item
-   [:a#browser-tab {:on-click   #(toggle-tab :browser)
-                    :class-name (if (= @cst/active-tab :browser) "nav-link active" "nav-link")}
-    [:i.material-icons "home"]]])
+(defn- named-tab [name icon]
+  [:li.nav-item {:id name}
+   [:a {:on-click   #(toggle-tab name)
+        :class-name (if (= @cst/active-tab name) "nav-link active" "nav-link")}
+    [:i.material-icons icon]]])
 
 (defn- study-tab-name [{title :Title white :White black :Black}]
   (cond
@@ -39,7 +40,7 @@
 (defn- study-tab [id]
   (let [game (:game (get @cst/buffers id))
         game-info (cg/game-info game)]
-    ^{:key id} [:li.nav-item
+    ^{:key id} [:li.nav-item {:id (str "study-tab-" id)}
                 [:a {:on-click   #(toggle-tab id)
                      :class-name (if (and (= @cst/active-tab :study) (= id @cst/active-buffer-id)) "nav-link active" "nav-link")}
                  (study-tab-name game-info)]]))
@@ -57,24 +58,30 @@
    [:div.row
     [:div.col-12
      [:ul.nav.nav-tabs
-      (cons browser-tab (study-tabs))]]]
+      [named-tab :browser "home"]
+      [named-tab :inbox "inbox"]
+      (study-tabs)
+
+      ;(cons [browser-tab] (cons [inbox-tab] (study-tabs)))
+      ;[inbox-tab browser-tab (study-tabs)]
+      ;(cons inbox-tab (study-tabs))
+      ]]]
 
 
    [:div#browser {:class-name (if (= @cst/active-tab :browser) "row" "d-none")}
-    [browser]
-    ]
+    [browser]]
+
+   [:div#inbox {:class-name (if (= @cst/active-tab :inbox) "row" "d-none")}
+    [inbox]]
 
    [:div#board-with-editor {:class-name (if (= @cst/active-tab :study) "row " "d-none")}
 
-    [:div.col-sm-7
-     ;[buffers]
+    [:div#board.col-sm-7
      [board]
-     [navbar]
-     ]
+     [navbar]]
 
-    [:div.col-sm-5
+    [:div#editor.col-sm-5
      [editor]]
-
     ]
 
    ])

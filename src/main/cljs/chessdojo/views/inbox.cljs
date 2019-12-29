@@ -1,0 +1,28 @@
+(ns chessdojo.views.inbox
+  (:require
+    [chessdojo.gateway :as gateway]
+    [chessdojo.state :as cst]
+    [chessdojo.dialogs.import-inbox-editor :as import-inbox-editor]
+    [chessdojo.dialogs.taxonomy-editor :as taxonomy-editor]))
+
+(defn listed-game-view [game]
+  (let [id (:_id game)
+        {white :White black :Black result :Result} (:game-info game)]
+    ^{:key id} [:tr {:on-click #(gateway/load-game id)}
+                [:td id]
+                [:td white]
+                [:td black]
+                [:td result]]))
+
+(defn inbox-view []
+  [:table.table.table-striped.table-hover.table-condensed.small
+   [:tbody
+    (for [game @cst/game-list]
+      (listed-game-view game))]])
+
+(defn inbox []
+  [:div.panel.panel-default
+   [:div.panel-heading
+    [:span.button-group.pull-right
+     [import-inbox-editor/open-import-inbox-editor-button]]]
+   [inbox-view]])
