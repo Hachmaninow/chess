@@ -13,22 +13,21 @@
     [chessdojo.dialogs.taxonomy-editor]
     [reagent.core :as reagent]))
 
-(enable-console-print!)
+;
+; tabs
+;
 
-(def active-tab
-  (reagent/atom :board-with-editor))
-
-(defn toggle-tab [activated-tab]
-  (reset! active-tab activated-tab))
-
-(defn open-study [id]
-  (do
-    (reset! active-tab :board-with-editor)
-    (cst/switch-active-buffer id)))
+(defn- toggle-tab [activated-tab-or-id]
+  (if (keyword? activated-tab-or-id)
+    (reset! cst/active-tab activated-tab-or-id)             ; either specific named tab
+    (do                                                     ; ...or some study with a specific id
+      (reset! cst/active-tab :study)
+      (cst/switch-active-buffer activated-tab-or-id))))
 
 (def browser-tab
   [:li.nav-item
-   [:a#browser-tab {:on-click #(toggle-tab :browser) :class-name (if (= @active-tab :browser) "nav-link active" "nav-link")}
+   [:a#browser-tab {:on-click   #(toggle-tab :browser)
+                    :class-name (if (= @cst/active-tab :browser) "nav-link active" "nav-link")}
     [:i.material-icons "home"]]])
 
 (defn- study-tab-name [{title :Title white :White black :Black}]
@@ -41,13 +40,17 @@
   (let [game (:game (get @cst/buffers id))
         game-info (cg/game-info game)]
     ^{:key id} [:li.nav-item
-                [:a {:class-name (if (and (= @active-tab :board-with-editor) (= id @cst/active-buffer-id)) "nav-link active" "nav-link")
-                     :on-click #(open-study id)
-                     :style    {:padding "10px 5px"}} (study-tab-name game-info)]]))
+                [:a {:on-click   #(toggle-tab id)
+                     :class-name (if (and (= @cst/active-tab :study) (= id @cst/active-buffer-id)) "nav-link active" "nav-link")}
+                 (study-tab-name game-info)]]))
 
 (defn study-tabs []
   (doall
     (map study-tab (keys @cst/buffers))))
+
+;
+; grid
+;
 
 (defn grid-layout []
   [:div.container-fluid
@@ -56,11 +59,11 @@
      [:ul.nav.nav-tabs
       (cons browser-tab (study-tabs))]]]
 
-   [:div#browser {:class-name (if (= @active-tab :browser) "row d-block" "d-none")}
+   [:div#browser {:class-name (if (= @cst/active-tab :browser) "row d-block" "d-none")}
     [browser]
     ]
 
-   [:div#board-with-editor {:class-name (if (= @active-tab :board-with-editor) "row d-inline" "d-none")}
+   [:div#board-with-editor {:class-name (if (= @cst/active-tab :study) "row d-inline" "d-none")}
     [:div.col-8
      ;[buffers]
      [board]

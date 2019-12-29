@@ -7,6 +7,10 @@
 (def game-list
   (reagent/atom nil))
 
+; tab handling
+
+(def active-tab
+  (reagent/atom :study))
 
 ; buffer handling
 
