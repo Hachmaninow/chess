@@ -53,24 +53,29 @@
 ;
 
 (defn grid-layout []
-  [:div.container-fluid
+  [:div.container
    [:div.row
     [:div.col-12
      [:ul.nav.nav-tabs
       (cons browser-tab (study-tabs))]]]
 
-   [:div#browser {:class-name (if (= @cst/active-tab :browser) "row d-block" "d-none")}
+
+   [:div#browser {:class-name (if (= @cst/active-tab :browser) "row" "d-none")}
     [browser]
     ]
 
-   [:div#board-with-editor {:class-name (if (= @cst/active-tab :study) "row d-inline" "d-none")}
-    [:div.col-8
+   [:div#board-with-editor {:class-name (if (= @cst/active-tab :study) "row " "d-none")}
+
+    [:div.col-sm-7
      ;[buffers]
      [board]
      [navbar]
      ]
-    [:div.col-4
-     [editor]]]
+
+    [:div.col-sm-5
+     [editor]]
+
+    ]
 
    ])
 

@@ -9,6 +9,7 @@
   (let [id (:_id game)
         {white :White black :Black result :Result} (:game-info game)]
     ^{:key id} [:tr {:on-click #(gateway/load-game id)}
+                [:td id]
                 [:td white]
                 [:td black]
                 [:td result]]))
@@ -22,7 +23,6 @@
 (defn browser []
   [:div.panel.panel-default
    [:div.panel-heading
-    [:span "Inbox"]
     [:span.button-group.pull-right
      [import-inbox-editor/open-import-inbox-editor-button]
      [taxonomy-editor/open-taxonomy-editor-button]]]
