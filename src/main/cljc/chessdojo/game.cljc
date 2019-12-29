@@ -6,7 +6,7 @@
 
 (def new-game
   (-> {:position (setup-position) :mark :start}
-    (with-meta {:game-info {} :path [0 0 nil]})             ; the path identifies every node in this game (c.f. with-path)
+    (with-meta {:game-info {:Title "New study"} :path [0 0 nil]})             ; the path identifies every node in this game (c.f. with-path)
     vector
     zip/vector-zip
     zip/down))

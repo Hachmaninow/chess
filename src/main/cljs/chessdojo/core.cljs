@@ -6,6 +6,6 @@
 
 (defn init! []
   (layout/mount-grid)
-  (layout/mount-dialogs)
+  ;(layout/mount-dialogs)
   (gateway/load-game-list)
   (gateway/load-taxonomy))

@@ -15,7 +15,7 @@
   (reagent/atom (str (random-uuid))))
 
 (def buffers
-  (reagent/atom {@active-buffer-id {:game cg/new-game}}))
+  (reagent/atom {@active-buffer-id {:game cg/new-game} (str (random-uuid)) {:game cg/new-game}}))
 
 (defn switch-active-buffer [id]
   (reset! active-buffer-id id))

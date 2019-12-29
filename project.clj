@@ -38,7 +38,6 @@
   :managed-dependencies [[org.flatland/ordered "1.5.7"]     ; Explicitly manage because of problems in Java 9
                          [com.cognitect/transit-cljs "0.8.243"]]
 
-
   :min-lein-version "2.9.1"
 
   :source-paths ["src/main/clj" "src/main/cljc"]

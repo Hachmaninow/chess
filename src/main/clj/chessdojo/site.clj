@@ -17,7 +17,9 @@
       (include-css "css/bootstrap.min.css")
       (include-css "css/chessdojo.css")
       (include-css "css/chessground.css")
-      (include-css "css/chessground-theme.css")]
+      (include-css "css/chessground-theme.css")
+      (include-css "https://fonts.googleapis.com/icon?family=Material+Icons")
+      ]
      [:body
       [:div#mount]
       [:div#dialogs]

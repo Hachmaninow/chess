@@ -28,6 +28,7 @@
   (let [game (cst/active-game)]
     {:fen         (cf/fen game)
      :orientation "white"
+     :resizable? true
      :movable     {
                    :free       false
                    :dests      (move-destinations game)
@@ -39,16 +40,17 @@
      }))
 
 (defn render-chessground []
-  [:div#chessground.chessground.merida.center-block])
+  [:div.cg-wrap])
 
 (def chessground-board
   (reagent/atom nil))
 
 (defn chessground-mounted [this]
   (reset! chessground-board
-    (js/Chessground
-      (reagent/dom-node this)
-      (clj->js (create-chessground-options)))))
+          (js/Chessground
+            (reagent/dom-node this)
+            (clj->js (create-chessground-options))
+            )))
 
 (defn chessground []
   (reagent/create-class
@@ -62,5 +64,5 @@
 (defonce board-updater (reagent/track! update-board))
 
 (defn board []
-  [:div.blue.board
+  [:div.blue.merida
    [chessground]])

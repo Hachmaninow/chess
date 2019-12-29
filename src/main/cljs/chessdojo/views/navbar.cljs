@@ -6,12 +6,12 @@
   (cst/update-game (cg/navigate (cst/active-game) direction)))
 
 (defn navbar []
-  [:div.button-group.navbar.text-center
-   [:button.btn.btn-default {:type "button" :on-click (partial move :start)}
-    [:span.glyphicon.glyphicon-fast-backward]]
-   [:button.btn.btn-default {:type "button" :on-click (partial move :back)}
-    [:span.glyphicon.glyphicon-step-backward]]
-   [:button.btn.btn-default {:type "button" :on-click (partial move :forward)}
-    [:span.glyphicon.glyphicon-step-forward]]
-   [:button.btn.btn-default {:type "button" :on-click (partial move :end)}
-    [:span.glyphicon.glyphicon-fast-forward]]])
+  [:div.btn-group.text-center
+   [:button.btn {:type "button" :on-click (partial move :start)}
+    [:i.material-icons "first_page"]]
+   [:button.btn {:type "button" :on-click (partial move :back)}
+    [:i.material-icons "chevron_left"]]
+   [:button.btn {:type "button" :on-click (partial move :forward)}
+    [:i.material-icons "chevron_right"]]
+   [:button.btn {:type "button" :on-click (partial move :end)}
+    [:i.material-icons "last_page"]]])

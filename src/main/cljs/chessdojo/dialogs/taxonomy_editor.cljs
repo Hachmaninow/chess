@@ -17,7 +17,6 @@
 (defn update-current-taxon-name [control]
   (swap! current-taxon assoc :name (-> control .-target .-value)))
 
-
 (defn render-taxon [taxon]
   ^{:key (:_id taxon)}
   [:div.taxonomy-level {:style {:clear "both"}}
@@ -40,7 +39,6 @@
        [:a.btn.btn-primary {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! current-taxon (init-taxon (new-taxon) nil))} "New main taxon"]
        [:button.btn.btn-primary {:type "button" :data-dismiss "modal"} "Close"]]]]]])
 
-
 (defn render-edit-taxon []
   [:div#taxon-editor.modal.fade {:role "dialog"}
    [:div.modal-dialog {:role "document"}
@@ -59,8 +57,6 @@
       [:div.modal-footer
        [:button.btn.btn-default {:type "button" :data-dismiss "modal"} "Cancel"]
        [:button.btn.btn-primary {:type "button" :data-dismiss "modal" :on-click #(gateway/save-taxon @current-taxon)} "Ok"]]]]]])
-
-
 
 (defn open-taxonomy-editor-button []
   [:button.btn.btn-default
