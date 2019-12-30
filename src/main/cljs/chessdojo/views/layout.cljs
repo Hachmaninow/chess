@@ -4,7 +4,7 @@
     [chessdojo.game :as cg]
     [chessdojo.views.board :refer [board]]
     [chessdojo.views.browser :refer [browser]]
-    [chessdojo.views.inbox :refer [inbox]]
+    [chessdojo.views.inbox :refer [inbox-games import-pgn]]
     [chessdojo.views.buffers :refer [buffers]]
     [chessdojo.views.editor :refer [editor]]
     [chessdojo.views.navbar :refer [navbar]]
@@ -60,30 +60,26 @@
      [:ul.nav.nav-tabs
       [named-tab :browser "home"]
       [named-tab :inbox "inbox"]
-      (study-tabs)
-
-      ;(cons [browser-tab] (cons [inbox-tab] (study-tabs)))
-      ;[inbox-tab browser-tab (study-tabs)]
-      ;(cons inbox-tab (study-tabs))
-      ]]]
-
+      (study-tabs)]]]
 
    [:div#browser {:class-name (if (= @cst/active-tab :browser) "row" "d-none")}
     [browser]]
 
    [:div#inbox {:class-name (if (= @cst/active-tab :inbox) "row" "d-none")}
-    [inbox]]
+    [:div#board.col-sm-8
+     [inbox-games]]
+
+    [:div#board.col-sm-4
+     [import-pgn]]]
 
    [:div#board-with-editor {:class-name (if (= @cst/active-tab :study) "row " "d-none")}
-
     [:div#board.col-sm-7
      [board]
      [navbar]]
 
     [:div#editor.col-sm-5
-     [editor]]
-    ]
-
+     [chessdojo.dialogs.study-metadata-editor/render]
+     [editor]]]
    ])
 
 (defn mount-grid []
@@ -93,7 +89,6 @@
   [:div
    [chessdojo.dialogs.move-comment-editor/render]
    [chessdojo.dialogs.game-info-editor/render]
-   [chessdojo.dialogs.study-metadata-editor/render]
    [chessdojo.dialogs.import-inbox-editor/render]
    [chessdojo.dialogs.taxonomy-editor/render-main]
    [chessdojo.dialogs.taxonomy-editor/render-edit-taxon]])

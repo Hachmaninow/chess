@@ -2,8 +2,22 @@
   (:require
     [chessdojo.gateway :as gateway]
     [chessdojo.state :as cst]
-    [chessdojo.dialogs.import-inbox-editor :as import-inbox-editor]
-    [chessdojo.dialogs.taxonomy-editor :as taxonomy-editor]))
+    [reagent.core :as reagent]))
+
+(enable-console-print!)
+
+(def current-value
+  (reagent/atom ""))
+
+(defn update-current-value [control]
+  (reset! current-value (-> control .-target .-value)))
+
+(defn import-pgn []
+  [:div
+   [:textarea.full-width {:rows 20 :value (str @current-value) :on-change update-current-value}]
+   [:button.btn.btn-primary.float-right.mt-1 {:type     "button"
+                                              :on-click #(do (println "Importing" @current-value)
+                                                             (chessdojo.gateway/import-to-inbox @current-value))} "Import"]])
 
 (defn listed-game-view [game]
   (let [id (:_id game)
@@ -14,15 +28,8 @@
                 [:td black]
                 [:td result]]))
 
-(defn inbox-view []
+(defn inbox-games []
   [:table.table.table-striped.table-hover.table-condensed.small
    [:tbody
     (for [game @cst/game-list]
       (listed-game-view game))]])
-
-(defn inbox []
-  [:div.panel.panel-default
-   [:div.panel-heading
-    [:span.button-group.pull-right
-     [import-inbox-editor/open-import-inbox-editor-button]]]
-   [inbox-view]])

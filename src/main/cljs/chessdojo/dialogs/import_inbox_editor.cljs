@@ -24,4 +24,4 @@
 (defn open-import-inbox-editor-button []
   [:button.btn.btn-default
    {:type "button" :data-toggle "modal" :data-target "#import-inbox-editor"}
-   [:span.glyphicon.glyphicon-cloud-upload]])
+   "Import"])
