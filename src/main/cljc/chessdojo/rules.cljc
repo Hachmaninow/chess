@@ -397,11 +397,12 @@
 
 (def rank-names {"1" 0 "2" 1 "3" 2 "4" 3 "5" 4 "6" 5 "7" 6 "8" 7}) ; TODO: investigate (int \a) not supported in cljs (???)
 (def file-names {"a" 0 "b" 1 "c" 2 "d" 3 "e" 4 "f" 5 "g" 6 "h" 7}) ; TODO: investigate (int \1) not supported in cljs (???)
-(defn- ext-piece [str] (keyword (subs str 0 1)))
+(defn- ext-piece [str index] (keyword (subs str index (inc index))))
 (defn- ext-sqr [str index] (to-idx (keyword (subs str index))))
 (defn- ext-file [str index] (get file-names (subs str index (inc index))))
 (defn- ext-rank [str index] (get rank-names (subs str index (inc index))))
 
+; TODO: This seems super ugly. I guess it was done because Instaparse is not available in Clojurescript?
 (defn parse-move
   "Regexp-based parsing of single moves into move criterias."
   [input]
@@ -410,14 +411,16 @@
       (re-matches #"O-O" s) {:piece :K :castling :O-O}
       (re-matches #"O-O-O" s) {:piece :K :castling :O-O-O}
       (re-matches #"[a-h][1-8]" s) {:piece :P :to (ext-sqr s 0)}
-      (re-matches #"[N|B|R|Q|K].." s) {:piece (ext-piece s) :to (ext-sqr s 1)}
+      (re-matches #"[a-h][1-8]=[N|B|R|Q|K]" s) {:piece :P :to (ext-sqr s 0) :promote-to (ext-piece s 3)}
+      (re-matches #"[N|B|R|Q|K].." s) {:piece (ext-piece s 0) :to (ext-sqr s 1)}
       (re-matches #"[a-h]x[a-h][1-8]" s) {:piece :P :from-file (ext-file s 0) :capture :X :to (ext-sqr s 2)}
-      (re-matches #"[N|B|R|Q|K]x[a-h][1-8]" s) {:piece (ext-piece s) :capture :X :to (ext-sqr s 2)}
-      (re-matches #"[N|B|R|Q|K][a-h][a-h][1-8]" s) {:piece (ext-piece s) :from-file (ext-file s 1) :to (ext-sqr s 2)}
-      (re-matches #"[N|B|R|Q|K][1-8][a-h][1-8]" s) {:piece (ext-piece s) :from-rank (ext-rank s 1) :to (ext-sqr s 2)}
-      (re-matches #"[N|B|R|Q|K][a-h]x[a-h][1-8]" s) {:piece (ext-piece s) :from-file (ext-file s 1) :capture :X :to (ext-sqr s 3)}
-      (re-matches #"[N|B|R|Q|K][1-8]x[a-h][1-8]" s) {:piece (ext-piece s) :from-rank (ext-rank s 1) :capture :X :to (ext-sqr s 3)}
-      :default (throw (ex-info (str "Could not parse move") {:input s}))
+      (re-matches #"[a-h]x[a-h][1-8]=[N|B|R|Q|K]" s) {:piece :P :from-file (ext-file s 0) :capture :X :to (ext-sqr s 2) :promote-to (ext-piece s 5)}
+      (re-matches #"[N|B|R|Q|K]x[a-h][1-8]" s) {:piece (ext-piece s 0) :capture :X :to (ext-sqr s 2)}
+      (re-matches #"[N|B|R|Q|K][a-h][a-h][1-8]" s) {:piece (ext-piece s 0) :from-file (ext-file s 1) :to (ext-sqr s 2)}
+      (re-matches #"[N|B|R|Q|K][1-8][a-h][1-8]" s) {:piece (ext-piece s 0) :from-rank (ext-rank s 1) :to (ext-sqr s 2)}
+      (re-matches #"[N|B|R|Q|K][a-h]x[a-h][1-8]" s) {:piece (ext-piece s 0) :from-file (ext-file s 1) :capture :X :to (ext-sqr s 3)}
+      (re-matches #"[N|B|R|Q|K][1-8]x[a-h][1-8]" s) {:piece (ext-piece s 0) :from-rank (ext-rank s 1) :capture :X :to (ext-sqr s 3)}
+      :default (throw (ex-info (str "Could not parse move: " input) {:input s}))
       )))
 
 (defn disambiguate
