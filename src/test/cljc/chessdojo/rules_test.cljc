@@ -1,7 +1,7 @@
 (ns chessdojo.rules-test
   (:require #?(:clj [clojure.test :refer :all] :cljs [cljs.test :refer-macros [deftest is testing run-tests]])
-                    [chessdojo.rules :as cr :refer [to-idx to-sqr]]
-                    [chessdojo.fen :as cf]))
+            [chessdojo.rules :as cr :refer [to-idx to-sqr]]
+            [chessdojo.fen :as cf]))
 
 (deftest test-piece-color
   (is (= :white (cr/piece-color :P) (cr/piece-color :B) (cr/piece-color :N) (cr/piece-color :R) (cr/piece-color :Q) (cr/piece-color :K)))
@@ -257,7 +257,8 @@
 
 (deftest test-find-moves
   (testing "pawn move"
-    (is (= [{:piece :P :from 12 :to 20} {:piece :P :from 12 :to 28 :ep-info [20 28]}] (cr/find-moves (cr/place-pieces [:P :e2]) :white))))
+    (is (= [{:piece :P :from 12 :to 20} {:piece :P :from 12 :to 28 :ep-info [20 28]}] (cr/find-moves (cr/place-pieces [:P :e2]) :white)))
+    (is (= [{:piece :p :from 46 :to 38}] (cr/find-moves (cr/place-pieces [:p :g6]) :black))))
   (testing "en-passant"
     (is (= [{:ep-capture (to-idx :c4) :piece :p :from (to-idx :d4) :to (to-idx :c3) :capture nil}] (cr/find-moves (cr/place-pieces [:p :d4 :P :c4 :P :d3]) :black [(to-idx :c3) (to-idx :c4)] nil))))
   (testing "promotion"
@@ -385,7 +386,8 @@
   (testing "handles pawn-promotions"
     (is (= "B7/8/8/8/8/8/8/8" (play-move-on-board [:P :b7 :r :a8] {:piece :P :from 49 :to 56 :capture :r :promote-to :B}))))
   (testing "en-passant-capture clears the captured-pawn"
-    (is (= "8/8/5P2/8/8/8/8/8" (play-move-on-board [:P :e5 :p :f5] {:ep-info [(to-idx :f6) (to-idx :f5)]} {:from (to-idx :e5) :to (to-idx :f6) :ep-capture (to-idx :f5)})))))
+    (is (= "8/8/5P2/8/8/8/8/8" (play-move-on-board [:P :e5 :p :f5] {:ep-info [(to-idx :f6) (to-idx :f5)]} {:from (to-idx :e5) :to (to-idx :f6) :ep-capture (to-idx :f5)}))))
+  )
 
 (deftest test-update-position-castling-availability
   (testing "updates castling-availability after own kings- or rook-move"
@@ -402,6 +404,16 @@
   (is (= 1 (:ply cr/start-position)))
   (is (= 2 (:ply (cr/update-position cr/start-position {:from (to-idx :d2) :to (to-idx :d4)}))))
   (is (= 3 (:ply (cr/update-position (cr/update-position cr/start-position {:from (to-idx :g1) :to (to-idx :f3)}) {:from (to-idx :b8) :to (to-idx :c6)})))))
+
+(deftest test-update-fifty-move-rule-clock
+  (let [p1 (cr/update-position cr/start-position {:piece :P :from (to-idx :d2) :to (to-idx :d4)})]
+    (is (= 0 (:fifty-move-rule-clock p1)))
+    (let [p2 (cr/update-position p1 {:piece :n :from (to-idx :b8) :to (to-idx :c6)})]
+      (is (= 1 (:fifty-move-rule-clock p2)))
+      (let [p3 (cr/update-position p2 {:piece :n :from (to-idx :g1) :to (to-idx :f3)})]
+        (is (= 2 (:fifty-move-rule-clock p3)))
+        (let [p4 (cr/update-position p3 {:piece :n :capture :P :from (to-idx :c6) :to (to-idx :d5)})]
+          (is (= 0 (:fifty-move-rule-clock p4))))))))
 
 ;
 ; move selection

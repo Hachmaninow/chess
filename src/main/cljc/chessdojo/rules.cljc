@@ -297,7 +297,7 @@
             (when capture (fn [move] (or (move :capture) (move :ep-capture))))
             (when from-file (fn [move] (= (file (:from move)) from-file)))
             (when from-rank (fn [move] (= (rank (:from move)) from-rank)))
-            ;(when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
+            (when promote-to (fn [move] (= (keyword promote-to) (piece-type (move :promote-to)))))
             )))
 
 (defn matches-criteria? [valid-move criteria]
@@ -371,6 +371,7 @@
       :turn                  :white
       :castling-availability (deduce-castling-availability board)
       :ply                   1                              ; half-move clock awaited move
+      :fifty-move-rule-clock 0
       })))
 
 (def start-position (setup-position))
@@ -378,7 +379,7 @@
 
 (defn update-position
   "Update the given position by playing the given move."
-  [{:keys [board turn castling-availability ply]} move]
+  [{:keys [board turn castling-availability ply fifty-move-rule-clock]} move]
   (let [new-board (update-board board move)]
     {
      :board                 new-board
@@ -386,6 +387,7 @@
      :castling-availability (intersect-castling-availability castling-availability (deduce-castling-availability new-board))
      :ep-info               (:ep-info move)
      :ply                   (inc ply)
+     :fifty-move-rule-clock (if (or (= :P (piece-type (:piece move))) (contains? move :capture) (contains? move :ep-capture)) 0 (inc fifty-move-rule-clock))
      }))
 
 
@@ -400,8 +402,9 @@
 (defn- ext-file [str index] (get file-names (subs str index (inc index))))
 (defn- ext-rank [str index] (get rank-names (subs str index (inc index))))
 
-(defn parse-move [input]
+(defn parse-move
   "Regexp-based parsing of single moves into move criterias."
+  [input]
   (let [s (name input)]
     (cond
       (re-matches #"O-O" s) {:piece :K :castling :O-O}
@@ -426,11 +429,13 @@
     (= 1 (count (filter #(matches-criteria? % {:piece piece :to to :from-rank (rank from)}) valid-moves))) (assoc move :disambig-rank (rank from))
     :else (assoc move :disambig-square from)))
 
-(defn select-move [position criteria]
-   (let [valid-moves (valid-moves position criteria)
-         matching-moves (filter #(matches-criteria? % criteria) valid-moves)]
-     (condp = (count matching-moves)
-       1 (disambiguate (first matching-moves) valid-moves)
-       0 (throw (ex-info "No matching moves" {:for criteria :valid-moves (seq valid-moves)}))
-       (throw (ex-info "Multiple matching moves" {:for criteria :valid-moves (seq valid-moves) :matching-moves matching-moves})))))
+(defn select-move
+  "Select a move in the given position based on the given move criteria."
+  [position criteria]
+  (let [valid-moves (valid-moves position criteria)
+        matching-moves (filter #(matches-criteria? % criteria) valid-moves)]
+    (condp = (count matching-moves)
+      1 (disambiguate (first matching-moves) valid-moves)
+      0 (throw (ex-info "No matching moves" {:for criteria :valid-moves (seq valid-moves)}))
+      (throw (ex-info "Multiple matching moves" {:for criteria :valid-moves (seq valid-moves) :matching-moves matching-moves})))))
 

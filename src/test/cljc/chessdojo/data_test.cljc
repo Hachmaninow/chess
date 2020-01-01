@@ -23,7 +23,7 @@
 ; todo: fix
 #?(:clj
    (deftest test-load-game
-     (is (= "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
+     (is (= "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 0 2"
            (-> (cd/inflate-game (read-string "(e4 e5 (c5 Nc3 (g3 g6 Bg2 (a3 Bg7 (h5)))) Nf3)")) cf/fen)))
      (is (= "the sicilian defence"
            (-> (cd/inflate-game (read-string "(e4 c5 \"the sicilian defence\")")) zip/node :comment)))
@@ -32,7 +32,7 @@
      (is (= {:move-assessment :$1, :positional-assessment :$13}
            (-> (cd/inflate-game (read-string "(e4 c5 $1 $13)")) zip/node :annotations)))
      (is (nil? (-> (cd/inflate-game (read-string "(e4 c5 $0)")) zip/node :annotations)))
-     (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44"
+     (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 0 44"
            (-> "games/deflated/complete-with-annotations.dgn" io/resource slurp read-string cd/inflate-game cf/fen)))
      )
    )

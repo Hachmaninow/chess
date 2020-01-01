@@ -2,14 +2,15 @@
   (:require [chessdojo.rules :as cr :refer [piece-type to-sqr setup-position select-move update-position]]
             [chessdojo.fen :refer [board->fen]]
             [clojure.zip :as zip :refer [up down left lefts right rights rightmost insert-right branch?]]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            ))
 
 (def new-game
   (-> {:position (setup-position) :mark :start}
-    (with-meta {:game-info {:Title "New study"} :path [0 0 nil]})             ; the path identifies every node in this game (c.f. with-path)
-    vector
-    zip/vector-zip
-    zip/down))
+      (with-meta {:game-info {} :path [0 0 nil]})           ; the path identifies every node in this game (c.f. with-path)
+      vector
+      zip/vector-zip
+      zip/down))
 
 
 ;
@@ -69,13 +70,13 @@
   (cond
     ; end of a variation -> continue that variation
     (end-of-variation? game) (-> (find-insert-loc game)
-                               (insert-right (with-successor-path game node))
-                               right)
+                                 (insert-right (with-successor-path game node))
+                                 right)
     ; there are already items following -> create a new variation and insert as last sibling
     (right game) (-> (let [anchor (find-insert-loc game)]
                        (insert-right anchor (make-variation (with-variation-path game anchor node))))
-                   right
-                   down)))
+                     right
+                     down)))
 
 (defn create-move-node
   "Given a game and move criteria find a matching valid move and create a new map
@@ -130,7 +131,7 @@
   (let [cur-path (current-path game)
         at-start (navigate game :start)
         with-info (zip/replace at-start
-                    (vary-meta (zip/node at-start) assoc key value))]
+                               (vary-meta (zip/node at-start) assoc key value))]
     (jump with-info cur-path)))
 
 
@@ -171,10 +172,10 @@
 
 (defn- merge-annotations [annotations new-annotation]
   (merge annotations
-    (cond
-      (move-assessments new-annotation) {:move-assessment new-annotation}
-      (positional-assessments new-annotation) {:positional-assessment new-annotation}
-      :default nil)))
+         (cond
+           (move-assessments new-annotation) {:move-assessment new-annotation}
+           (positional-assessments new-annotation) {:positional-assessment new-annotation}
+           :default nil)))
 
 (defn set-annotation
   [game annotation]

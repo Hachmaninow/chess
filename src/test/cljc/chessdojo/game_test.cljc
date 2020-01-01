@@ -90,7 +90,7 @@
   (testing "given a new-game, then insert-move extends zipper and loc contains move and resulting position"
     (is (= {
             :move     {:ep-info [20 28] :from 12 :piece :P :to 28}
-            :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black :ply 2}
+            :position {:board [:R :N :B :Q :K :B :N :R :P :P :P :P nil :P :P :P nil nil nil nil nil nil nil nil nil nil nil nil :P nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil :p :p :p :p :p :p :p :p :r :n :b :q :k :b :n :r] :castling-availability {:black #{:O-O :O-O-O} :white #{:O-O :O-O-O}} :ep-info [20 28] :turn :black :ply 2 :fifty-move-rule-clock 0}
             }
           (node (cg/insert-move cg/new-game (cr/parse-move :e4)))))))
 
@@ -141,19 +141,19 @@
     (is (= "d4 (e4 e5 (>c5)) d5" (cn/notation (cg/soak :d4 :d5 :back :back :e4 :e5 :back :c5))))))
 
 (deftest test-soak-updates-position
-  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 1" (cf/fen (cg/soak))))
-  (is (= "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 1 1" (cf/fen (cg/soak :e4))))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 1 2" (cf/fen (cg/soak :e4 :c5))))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2" (cf/fen (cg/soak :e4 :c5 :Nf3))))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 1 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back))))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3))))
-  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 1 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6))))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 1 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out))))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR b KQkq - 1 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3))))
-  (is (= "rnbqkb1r/pp1ppppp/5n2/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR w KQkq - 1 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6))))
-  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward))))
-  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 1 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6))))
-  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 1 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4)))))
+  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" (cf/fen (cg/soak))))
+  (is (= "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1" (cf/fen (cg/soak :e4))))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2" (cf/fen (cg/soak :e4 :c5))))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 0 2" (cf/fen (cg/soak :e4 :c5 :Nf3))))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back))))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 0 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3))))
+  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6))))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out))))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR b KQkq - 0 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3))))
+  (is (= "rnbqkb1r/pp1ppppp/5n2/2p5/4P3/2P5/PP1P1PPP/RNBQKBNR w KQkq - 0 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6))))
+  (is (= "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 0 2" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward))))
+  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6))))
+  (is (= "r1bqkbnr/pp1ppppp/2n5/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq d3 0 3" (cf/fen (cg/soak :e4 :c5 :Nf3 :back :Nc3 :Nc6 :out :c3 :Nf6 :out :forward :Nc6 :d4)))))
 
 (deftest test-soak-updates-game-path
   (testing "basics"

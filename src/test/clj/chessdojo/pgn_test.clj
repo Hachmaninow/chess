@@ -54,27 +54,27 @@
 (deftest test-pgn->events
   (is (= [{:piece :P :to 27} {:piece :P :to 35}] (pgn->events "d4 d5")))
   (is (= [{:piece :P :to 27} {:piece :P :to 35} :back {:piece :N :to 45} :out :forward {:piece :N :to 21}]
-        (pgn->events "d4 d5 (Nf6) Nf3")))
+         (pgn->events "d4 d5 (Nf6) Nf3")))
   (is (= [{:piece :P :to 27} {:piece :P :to 35} :back
           {:piece :N :to 45} {:piece :P :to 26} :back
           {:piece :P :to 22} :out :forward :out :forward
           {:piece :N :to 21}]
-        (pgn->events "d4 d5 (Nf6 c4 (g3)) Nf3")))
+         (pgn->events "d4 d5 (Nf6 c4 (g3)) Nf3")))
   (is (= [{:piece :P :to 28} {:piece :P :to 36} {:piece :N :to 21}
           :back {:piece :N :to 18} :out :forward
           {:piece :N :to 42} {:piece :B :to 33} {:piece :P :to 40}
           {:piece :B :to 42 :capture :X}]
-        (pgn->events "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6")))
+         (pgn->events "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6")))
   (is (= [{:piece :N :from-file 6 :to 21} {:piece :N :from-rank 0 :to 18}]
-        (pgn->events "Ngf3 N1c3")))
+         (pgn->events "Ngf3 N1c3")))
+  (is (= [{:piece :P :from-file 6 :to 61 :capture :X :promote-to :N}]
+         (pgn->events "gxf8=N")))
   (testing "comments"
     (is (= [{:piece :P :to 27} {:piece :P :to 35} "a closed game"]
-          (pgn->events "d4 d5 {a closed game}"))))
+           (pgn->events "d4 d5 {a closed game}"))))
   (testing "annotations"
     (is (= [{:piece :P :to 27} {:piece :P :to 35} :$5]
-          (pgn->events "d4 d5 $5"))))
-
-  )
+           (pgn->events "d4 d5 $5")))))
 
 (deftest test-error
   (is (thrown? Exception (pgn->events (slurp "src/test/cljc/test-pgns/invalid.pgn")))))
@@ -84,21 +84,26 @@
     (let [game (load-pgn pgn)]
       (is (= fen (cf/fen game)))
       (is (= game-str (cn/notation game))))
-    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4" "e4 e5 Nf3 Nc6 Bb5 a6 >Bxc6"
-    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4" "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 >Bxc6"
-    "d4 d5 (Nf6 c4 (g3)) Nf3" "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq - 1 2" "d4 d5 (Nf6 c4 (g3)) >Nf3"))
+    "e4 e5 Nf3 Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4" "e4 e5 Nf3 Nc6 Bb5 a6 >Bxc6"
+    "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 Bxc6" "r1bqkbnr/1ppp1ppp/p1B5/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4" "e4 e5 Nf3 (Nc3) Nc6 Bb5 a6 >Bxc6"
+    "d4 d5 (Nf6 c4 (g3)) Nf3" "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq - 0 2" "d4 d5 (Nf6 c4 (g3)) >Nf3"))
 
 (deftest load-complex-pgn
   (let [game (load-pgn (slurp "src/test/cljc/test-pgns/complete.pgn"))]
     (testing "when game has been loaded, then the position reflects the end of the game"
-      (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 1 44" (cf/fen game))))
+      (is (= "8/Q6p/6p1/5p2/5P2/2p3P1/3r3P/2K1k3 b - - 0 44" (cf/fen game))))
     (testing "when game has been loaded, then game-info contains the tags from the PGN"
-      (is (= {:Event "Hoogovens",
-              :Site "Wijk aan Zee",
-              :White "Kasparov, Garry",
-              :Black "Topalov, Veselin",
-              :Date "1999.01.20",
+      (is (= {:Event  "Hoogovens",
+              :Site   "Wijk aan Zee",
+              :White  "Kasparov, Garry",
+              :Black  "Topalov, Veselin",
+              :Date   "1999.01.20",
               :Result "1-0"} (cg/game-info game))))))
+
+(deftest load-pgn-with-promotions
+  (let [game (load-pgn (slurp "src/test/cljc/test-pgns/promotions.pgn"))]
+    (testing "when game has been loaded, then the position reflects the end of the game"
+      (is (= "rnbqkbBN/pp6/8/8/3p4/8/P1P1PP1P/qNBQKBNR b Kq - 0 10" (cf/fen game))))))
 
 
 ;(time

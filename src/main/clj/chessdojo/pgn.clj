@@ -58,8 +58,8 @@
 (declare tokens->events)
 
 (defn- normalize-move
-  ""
-  [{:keys [:castling :piece :from-file :from-rank :to-file :to-rank :capture]}]
+  "Convert parsed token info into move criteria."
+  [{:keys [:castling :piece :from-file :from-rank :to-file :to-rank :capture :promote-to]}]
   (into {}
         (remove nil?
                 (vector
@@ -71,6 +71,7 @@
                   (when capture [:capture (piece-type (keyword capture))])
                   (when from-file [:from-file (get file-names from-file)])
                   (when from-rank [:from-rank (get rank-names from-rank)])
+                  (when promote-to [:promote-to (keyword promote-to)])
                   ))))
 
 (defn- cleanup-whitespace [comment]
@@ -96,8 +97,3 @@
 
 (defn load-pgn [pgn]
   (apply cg/soak (pgn->events pgn)))
-
-;⁈
-;⁉
-;‼
-;⁇
