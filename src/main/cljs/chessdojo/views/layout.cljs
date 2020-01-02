@@ -89,7 +89,6 @@
   [:div
    [chessdojo.dialogs.move-comment-editor/render]
    [chessdojo.dialogs.game-info-editor/render]
-   [chessdojo.dialogs.import-inbox-editor/render]
    [chessdojo.dialogs.taxonomy-editor/render-main]
    [chessdojo.dialogs.taxonomy-editor/render-edit-taxon]])
 
