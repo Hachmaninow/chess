@@ -50,3 +50,6 @@
 (def taxonomy
   (reagent/atom nil))
 
+
+(def current-taxon
+  (reagent/atom nil))
