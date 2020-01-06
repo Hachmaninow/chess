@@ -24,6 +24,6 @@
 
 (defn browser []
   [:div
-   [:span.pull-right [:a {:href "#taxon-editor" :data-toggle "modal" :on-click #(init-taxon (new-taxon) nil)} "New root taxon"]]
+   [:a {:href "#taxon-editor" :data-toggle "modal" :on-click #(reset! cst/current-taxon (init-taxon (new-taxon) nil) )} "New root taxon"]
    [:hr]
    (map render-single-taxon @cst/taxonomy)])
